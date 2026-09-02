@@ -1,0 +1,22 @@
+{
+  "name": "software-quality-hub-frontend",
+  "version": "0.1.0",
+  "description": "Interfaz de usuario del sistema de gestion de incidencias Software Quality Hub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "author": "Miguel M.",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.2.2"
+  }
+}

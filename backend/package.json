@@ -1,0 +1,30 @@
+{
+  "name": "software-quality-hub-backend",
+  "version": "0.1.0",
+  "description": "API REST del sistema de gestion de incidencias Software Quality Hub",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "db:seed": "node src/db/seed.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "incidencias",
+    "calidad-software",
+    "express",
+    "sqlite"
+  ],
+  "author": "Miguel M.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "morgan": "^1.12.0"
+  }
+}
