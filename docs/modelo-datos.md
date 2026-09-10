@@ -149,17 +149,39 @@ Motor: SQLite 3
    ┌───────────┐        ┌──────────────┐        ┌───────────┐        ┌───────────┐
    │  ABIERTA  │ ─────► │ EN_PROGRESO  │ ─────► │ RESUELTA  │ ─────► │  CERRADA  │
    └───────────┘        └──────────────┘        └───────────┘        └───────────┘
-                               ▲                       │
-                               │                       │
-                               └───────────────────────┘
-                        la solución no se valida correctamente
-                                    (REAPERTURA)
+         │                     ▲                       │                   ▲
+         │                     │                       │                   │
+         │                     └───────────────────────┘                   │
+         │              la solución no se valida correctamente             │
+         │                          (REAPERTURA)                           │
+         │                                                                 │
+         └─────────────────────────────────────────────────────────────────┘
+                    cierre sin resolución (CIERRE DIRECTO):
+                 duplicada · no se reproduce · no aplica
 ```
 
 La base de datos restringe **qué** valores son admisibles (mediante `CHECK`),
 pero no **en qué orden** pueden ocurrir. La validación de transiciones se
 implementa en la capa de lógica de negocio (`backend/src/services/`), donde cada
 cambio de estado deja además su registro en `HISTORIAL_INCIDENCIA`.
+
+La tabla de transiciones vive en `backend/src/services/incidencia.service.js`
+(constante `TRANSICIONES`) y es la traducción directa de este diagrama.
+
+### Cierre directo desde ABIERTA
+
+Una incidencia puede cerrarse sin pasar por `EN_PROGRESO` cuando no hay nada
+que resolver. El caso principal lo produce el propio sistema: cuando el
+detector de duplicados marca una incidencia como repetida
+(`posible_duplicado_de`), obligarla a recorrer `EN_PROGRESO` y `RESUELTA`
+registraría un trabajo que nunca ocurrió y distorsionaría las métricas de
+tiempo de resolución.
+
+En este camino `fecha_resolucion` permanece nula, porque no hubo resolución.
+Esa nulidad es justamente lo que permite excluir estas incidencias del cálculo
+de tiempo medio de resolución. Para preservar la trazabilidad, la transición
+`ABIERTA → CERRADA` es la única que **exige comentario obligatorio**: el motivo
+del cierre es el único dato que quedará registrado en la bitácora.
 
 ### Medición de la reapertura
 

@@ -59,6 +59,69 @@ if (esBaseNueva) {
 }
 
 /**
+ * Fecha y hora actual (UTC) en el mismo formato que usa el esquema:
+ * 'YYYY-MM-DD HH:MM:SS'.
+ *
+ * Se le pregunta a SQLite en vez de usar el reloj de Node para que TODAS las
+ * fechas del sistema vengan de la misma fuente. Las columnas fecha_creacion y
+ * fecha_cambio ya se llenan con el DEFAULT datetime('now') de la base; si
+ * fecha_resolucion se calculara en JavaScript, bastaria una diferencia minima
+ * entre ambos relojes para que una incidencia apareciera resuelta antes de
+ * haber sido creada, y las metricas de tiempo de resolucion saldrian negativas.
+ */
+export function ahora() {
+  return db.prepare("SELECT datetime('now') AS ahora").get().ahora;
+}
+
+/**
+ * Ejecuta varias operaciones como una sola unidad indivisible.
+ *
+ * El problema que resuelve: cambiar el estado de una incidencia son DOS
+ * escrituras (actualizar INCIDENCIA y agregar una fila a HISTORIAL_INCIDENCIA).
+ * Si la primera funciona y la segunda falla, queda una incidencia RESUELTA sin
+ * registro de quien ni cuando la resolvio. Ese dano no se arregla despues, y
+ * ademas falsea la tasa de reapertura del indice de salud, que se calcula
+ * justamente contando filas del historial.
+ *
+ * Con una transaccion hay solo dos desenlaces posibles: se guarda todo, o no
+ * se guarda nada. Si la funcion lanza un error se deshace lo hecho (ROLLBACK)
+ * y el error sigue subiendo hasta el errorHandler.
+ *
+ *     const resultado = enTransaccion(() => {
+ *       Incidencia.actualizar(id, { estado });
+ *       Historial.registrar({ ... });
+ *       return Incidencia.obtenerPorId(id);
+ *     });
+ *
+ * Vive en este archivo, y no en un service, porque BEGIN/COMMIT/ROLLBACK son
+ * asunto de la conexion a la base de datos. Un service lo usa, pero no
+ * necesita saber como esta implementado.
+ *
+ * Nota: si ya hay una transaccion abierta, la funcion se ejecuta dentro de
+ * esa transaccion en lugar de abrir otra. SQLite no admite transacciones
+ * anidadas, y un BEGIN dentro de otro BEGIN lanzaria un error.
+ *
+ * @param {Function} operacion  Funcion sincrona con las escrituras.
+ * @returns Lo que devuelva `operacion`.
+ */
+export function enTransaccion(operacion) {
+  if (db.isTransaction) {
+    return operacion();
+  }
+
+  db.exec('BEGIN');
+
+  try {
+    const resultado = operacion();
+    db.exec('COMMIT');
+    return resultado;
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error; // se vuelve a lanzar: deshacer no es lo mismo que ocultar
+  }
+}
+
+/**
  * Cierra la conexion de forma ordenada.
  * Se invoca al detener el servidor para que SQLite consolide el archivo WAL.
  */

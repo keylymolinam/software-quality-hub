@@ -65,9 +65,12 @@ CREATE TABLE IF NOT EXISTS PROYECTO (
 --
 -- Flujo de estados (Cap. IV.5):
 --     ABIERTA -> EN_PROGRESO -> RESUELTA -> CERRADA
---                     ^              |
---                     +--------------+
---            (la solucion no se valida correctamente)
+--        |             ^              |         ^
+--        |             +--------------+         |
+--        |    (la solucion no se valida bien)   |
+--        +-------------------------------------+
+--          (cierre sin resolucion: duplicada,
+--           no se reproduce, no aplica)
 --
 -- La validez de cada transicion se controla en la capa de logica de negocio
 -- (services/), no en la base de datos: SQL puede restringir QUE valores son
