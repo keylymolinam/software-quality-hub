@@ -1,11 +1,18 @@
 /**
  * Rutas de PROYECTO.
  *
- *   GET     /api/proyectos        listado con filtros y paginacion
- *   POST    /api/proyectos        crear
- *   GET     /api/proyectos/:id    ver uno, con recuento de incidencias
- *   PUT     /api/proyectos/:id    actualizar (parcial)
- *   DELETE  /api/proyectos/:id    eliminar (409 si tiene incidencias)
+ *   Metodo  Direccion             Quien puede
+ *   ------  --------------------  ---------------------------
+ *   GET     /api/proyectos        cualquier sesion
+ *   POST    /api/proyectos        ADMINISTRADOR
+ *   GET     /api/proyectos/:id    cualquier sesion
+ *   PUT     /api/proyectos/:id    ADMINISTRADOR
+ *   DELETE  /api/proyectos/:id    ADMINISTRADOR
+ *
+ * Los proyectos son la estructura sobre la que trabaja todo el equipo: quien
+ * los crea, renombra o da por finalizados toma una decision que afecta a todos.
+ * Por eso escribir queda reservado a ADMINISTRADOR, mientras que leer lo
+ * necesita cualquiera para poder registrar incidencias.
  *
  * No hay ruta de transicion de estado como en incidencias: el estado de un
  * proyecto (ACTIVO / FINALIZADO / PAUSADO) no sigue ningun flujo obligatorio,
@@ -20,16 +27,21 @@ import {
   actualizar,
   eliminar,
 } from '../controllers/proyecto.controller.js';
+import { requiereAutenticacion, requiereRol } from '../middlewares/autenticacion.js';
 
 const router = Router();
 
+router.use(requiereAutenticacion);
+
+const soloAdmin = requiereRol('ADMINISTRADOR');
+
 // --- Coleccion ------------------------------------------------------------
 router.get('/', listar);
-router.post('/', crear);
+router.post('/', soloAdmin, crear);
 
 // --- Recurso individual ---------------------------------------------------
 router.get('/:id', obtener);
-router.put('/:id', actualizar);
-router.delete('/:id', eliminar);
+router.put('/:id', soloAdmin, actualizar);
+router.delete('/:id', soloAdmin, eliminar);
 
 export default router;

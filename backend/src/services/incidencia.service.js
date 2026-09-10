@@ -276,8 +276,14 @@ export function obtenerIncidencia(id) {
  * un valor legal al crear, asi que forzarlo no le quita nada. En cambio al
  * ACTUALIZAR el mismo campo se rechaza con un error, porque ahi ignorarlo si
  * seria una sorpresa: el usuario creeria haber cerrado la incidencia.
+ *
+ * @param {object} datos            Cuerpo de la peticion.
+ * @param {number} idUsuarioSesion  Quien reporta. Viene de la sesion, NO del
+ *                                  cuerpo: si el cliente pudiera declararlo,
+ *                                  cualquiera podria registrar incidencias a
+ *                                  nombre de otra persona.
  */
-export function crearIncidencia(datos = {}) {
+export function crearIncidencia(datos = {}, idUsuarioSesion) {
   const errores = [];
 
   const titulo = validarTexto(datos.titulo, 'titulo', LARGO_TITULO, errores);
@@ -303,13 +309,23 @@ export function crearIncidencia(datos = {}) {
     errores.push({ campo: 'id_proyecto', mensaje: 'Es obligatorio.' });
   }
 
-  let reportadoPor;
-  if (vino(datos.reportado_por)) {
-    reportadoPor = validarId(datos.reportado_por, 'reportado_por', errores);
-    reportadoPor = validarReferencia(reportadoPor, 'reportado_por', Usuario.existe, 'el usuario', errores);
-  } else {
-    errores.push({ campo: 'reportado_por', mensaje: 'Es obligatorio.' });
+  // reportado_por sale de la sesion, no del cuerpo. Si llega en el JSON se
+  // rechaza en vez de ignorarse: quien lo envio cree estar decidiendo algo, y
+  // conviene que sepa que no es asi.
+  if (Object.hasOwn(datos, 'reportado_por')) {
+    errores.push({
+      campo: 'reportado_por',
+      mensaje: 'No se envia: la incidencia queda a nombre del usuario que inicio sesion.',
+    });
   }
+
+  const reportadoPor = validarReferencia(
+    validarId(idUsuarioSesion, 'sesion', errores),
+    'sesion',
+    Usuario.existe,
+    'el usuario',
+    errores
+  );
 
   // asignado_a es opcional: una incidencia recien reportada puede no tener
   // responsable todavia. null es un valor perfectamente valido.
@@ -485,13 +501,17 @@ export function actualizarIncidencia(id, cambios = {}) {
  *
  * @param {number|string} id
  * @param {object} datos
- * @param {string} datos.estado          Estado al que se quiere pasar.
- * @param {number} datos.modificado_por  Usuario responsable del cambio.
- * @param {string} [datos.comentario]    Motivo, opcional pero recomendado.
+ * @param {string} datos.estado         Estado al que se quiere pasar.
+ * @param {string} [datos.comentario]   Motivo, opcional pero recomendado.
+ * @param {number} idUsuarioSesion      Quien realiza el cambio. Viene de la
+ *                                      sesion, NO del cuerpo: la bitacora es
+ *                                      la base de la trazabilidad del
+ *                                      Cap. IV.5, y si el cliente pudiera
+ *                                      declarar el autor, seria falsificable.
  * @throws {ErrorHttp} 404 si no existe, 400 si los datos son invalidos,
  *                     409 si la transicion no esta permitida.
  */
-export function cambiarEstado(id, datos = {}) {
+export function cambiarEstado(id, datos = {}, idUsuarioSesion) {
   const idIncidencia = exigirIdValido(id);
 
   const actual = Incidencia.obtenerCrudo(idIncidencia);
@@ -510,19 +530,24 @@ export function cambiarEstado(id, datos = {}) {
     errores.push({ campo: 'estado', mensaje: 'Es obligatorio: indica el estado al que se quiere pasar.' });
   }
 
-  // modificado_por no es opcional. Un cambio de estado sin responsable dejaria
-  // la bitacora sin valor: la trazabilidad del Cap. IV.5 exige saber quien
-  // hizo cada cambio. El esquema tambien lo declara NOT NULL.
-  let modificadoPor;
-  if (vino(datos.modificado_por)) {
-    modificadoPor = validarId(datos.modificado_por, 'modificado_por', errores);
-    modificadoPor = validarReferencia(modificadoPor, 'modificado_por', Usuario.existe, 'el usuario', errores);
-  } else {
+  // El autor del cambio sale de la sesion. El esquema declara modificado_por
+  // NOT NULL justamente porque un cambio de estado sin responsable dejaria la
+  // bitacora sin valor; tomarlo de la sesion asegura ademas que el responsable
+  // sea el real y no el que alguien quiso escribir.
+  if (Object.hasOwn(datos, 'modificado_por')) {
     errores.push({
       campo: 'modificado_por',
-      mensaje: 'Es obligatorio: todo cambio de estado debe quedar atribuido a un usuario.',
+      mensaje: 'No se envia: el cambio queda a nombre del usuario que inicio sesion.',
     });
   }
+
+  const modificadoPor = validarReferencia(
+    validarId(idUsuarioSesion, 'sesion', errores),
+    'sesion',
+    Usuario.existe,
+    'el usuario',
+    errores
+  );
 
   let comentario = null;
   if (vino(datos.comentario)) {

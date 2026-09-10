@@ -50,6 +50,17 @@ export function errorSolicitud(mensaje, detalles = null) {
   return new ErrorHttp(mensaje, 400, detalles);
 }
 
+/**
+ * 403 Forbidden: se sabe quien hace la peticion, pero no le corresponde.
+ *
+ * No confundir con 401, que significa "no se quien eres". La diferencia es
+ * practica: ante un 401 el frontend manda a iniciar sesion; ante un 403 no
+ * sirve de nada volver a entrar, porque el problema es el rol.
+ */
+export function errorProhibido(mensaje, detalles = null) {
+  return new ErrorHttp(mensaje, 403, detalles);
+}
+
 /** 404 Not Found: el recurso pedido no existe. */
 export function errorNoEncontrado(mensaje) {
   return new ErrorHttp(mensaje, 404);

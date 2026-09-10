@@ -3,7 +3,9 @@
 Sistema de gestión de incidencias de software desarrollado como proyecto de título de
 Ingeniería en Computación e Informática.
 
-> **Estado:** en construcción — Semana 2 de 12 (estructura del proyecto).
+> **Estado:** en construcción. API REST operativa con las tres entidades principales
+> (incidencias, proyectos y usuarios), máquina de estados con bitácora de cambios y
+> autenticación. Pendientes: los tres diferenciadores y la interfaz de usuario.
 
 ## Diferenciadores
 
@@ -119,11 +121,112 @@ muestra el indicador **"API conectada"** con los datos del servicio.
 > El backend permite peticiones desde el origen definido en `CORS_ORIGIN`
 > (`backend/.env`). Si cambias el puerto del frontend, actualiza esa variable.
 
+## Autenticación
+
+Salvo `/api/health` y el propio inicio de sesión, **todas las rutas exigen un token**.
+Se obtiene con `POST /api/auth/login` y se envía en cada petición siguiente:
+
+```
+Authorization: Bearer <token>
+```
+
+Los usuarios de prueba comparten la contraseña **`Demo1234`**. Para entrar como
+administrador:
+
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d "{\"correo_electronico\":\"carolina.nunez@ejemplo.cl\",\"contrasena\":\"Demo1234\"}"
+```
+
+La respuesta incluye `token`, su vigencia y los datos del usuario. La contraseña
+nunca se guarda en texto plano: se almacena su hash bcrypt, y ninguna respuesta
+de la API devuelve esa columna.
+
+> En producción, `JWT_SECRET` es obligatorio en el archivo `.env`; el servidor se
+> niega a arrancar sin él. En desarrollo usa una clave fija y avisa por consola.
+
+Quién es el autor de una incidencia o de un cambio de estado **sale siempre del
+token**, nunca del cuerpo de la petición: de lo contrario, la bitácora que
+alimenta el índice de salud podría falsificarse.
+
+### Permisos por rol
+
+| Recurso | Leer | Crear | Editar | Eliminar |
+|---|---|---|---|---|
+| Incidencias | cualquier sesión | cualquier sesión | cualquier sesión | `ADMINISTRADOR` |
+| Proyectos | cualquier sesión | `ADMINISTRADOR` | `ADMINISTRADOR` | `ADMINISTRADOR` |
+| Usuarios | cualquier sesión | `ADMINISTRADOR` | uno mismo o `ADMINISTRADOR` | `ADMINISTRADOR` |
+
+Cambiar una contraseña es la única operación que ni un administrador puede hacer
+por otra persona: exige conocer la contraseña vigente.
+
 ## Endpoints disponibles
+
+### Servicio
 
 | Método | Ruta | Descripción |
 |---|---|---|
 | `GET` | `/api/health` | Verifica que la API y la base de datos estén operativas |
+
+### Autenticación
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `POST` | `/api/auth/login` | Inicia sesión y devuelve un token |
+| `GET` | `/api/auth/yo` | Datos del usuario de la sesión actual |
+
+### Incidencias
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/api/incidencias` | Listado con filtros, búsqueda, orden y paginación |
+| `POST` | `/api/incidencias` | Crea una incidencia (nace `ABIERTA`) |
+| `GET` | `/api/incidencias/:id` | Detalle de una incidencia |
+| `PUT` | `/api/incidencias/:id` | Actualización parcial (no el estado) |
+| `DELETE` | `/api/incidencias/:id` | Elimina la incidencia y su bitácora |
+| `POST` | `/api/incidencias/:id/transicion` | Cambia el estado según el flujo permitido |
+| `GET` | `/api/incidencias/:id/historial` | Bitácora de cambios de estado |
+
+Filtros del listado: `estado`, `prioridad`, `categoria`, `id_proyecto`,
+`asignado_a`, `reportado_por`, `busqueda`, `ordenarPor`, `direccion`, `pagina`,
+`limite`.
+
+### Proyectos
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/api/proyectos` | Listado con recuento de incidencias por proyecto |
+| `POST` | `/api/proyectos` | Crea un proyecto |
+| `GET` | `/api/proyectos/:id` | Detalle de un proyecto |
+| `PUT` | `/api/proyectos/:id` | Actualización parcial |
+| `DELETE` | `/api/proyectos/:id` | Elimina; falla si tiene incidencias asociadas |
+
+### Usuarios
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/api/usuarios` | Listado con filtro por rol y búsqueda |
+| `POST` | `/api/usuarios` | Crea un usuario |
+| `GET` | `/api/usuarios/:id` | Detalle de un usuario |
+| `PUT` | `/api/usuarios/:id` | Actualización parcial (no la contraseña) |
+| `PUT` | `/api/usuarios/:id/contrasena` | Cambia la contraseña; exige la actual |
+| `DELETE` | `/api/usuarios/:id` | Elimina; falla si tiene incidencias o historial |
+
+### Códigos de respuesta
+
+| Código | Significado en esta API |
+|---|---|
+| `400` | Los datos enviados no son válidos. El campo `detalles` lista cada problema |
+| `401` | No hay sesión, o el token es inválido o expiró |
+| `403` | Hay sesión, pero el rol no alcanza para esta operación |
+| `404` | El recurso no existe |
+| `409` | Los datos son válidos, pero chocan con el estado actual del sistema |
+
+La diferencia entre `400` y `409` es deliberada: un `409` no significa que la
+petición esté mal escrita, sino que no corresponde *ahora*. Pasar una incidencia
+de `ABIERTA` a `RESUELTA`, o eliminar un proyecto que todavía tiene incidencias,
+son peticiones bien formadas que podrían funcionar más adelante.
 
 ## Base de datos
 
@@ -152,6 +255,15 @@ npm run db:seed
 
 El comando vacía las tablas y las repuebla. Es seguro ejecutarlo las veces que
 se necesite durante el desarrollo.
+
+Los cinco usuarios de prueba quedan con la contraseña **`Demo1234`**, guardada
+como hash bcrypt. Para regenerar el hash con otra contraseña:
+
+```bash
+node -e "console.log(require('bcryptjs').hashSync('TuClave', 10))"
+```
+
+y reemplazar el valor en `backend/src/db/seed.sql`.
 
 ### Empezar desde cero
 

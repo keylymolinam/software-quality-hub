@@ -31,16 +31,28 @@ DELETE FROM sqlite_sequence
 -- USUARIO
 -- Un usuario por cada rol definido en el modelo.
 --
--- ATENCION: el valor de contrasena_hash es un marcador de posicion, no un hash
--- valido. Se reemplazara por hashes reales generados con bcrypt cuando se
--- implemente la autenticacion (semanas 3-5).
+-- Todos los usuarios de prueba comparten la contrasena:  Demo1234
+--
+-- El valor guardado NO es esa contrasena, sino su hash bcrypt. bcrypt es una
+-- funcion de un solo sentido: de la contrasena se obtiene el hash, pero del
+-- hash no se puede volver a la contrasena. Al iniciar sesion no se compara
+-- texto con texto, se vuelve a calcular el hash de lo escrito y se comparan
+-- los hashes.
+--
+-- Las cinco filas repiten el mismo hash solo porque comparten la contrasena de
+-- demostracion. En uso real cada persona elige la suya, y bcrypt genera una
+-- "sal" distinta en cada llamada, de modo que dos personas con la misma
+-- contrasena tendrian hashes diferentes.
+--
+-- Para regenerarlo con otra contrasena:
+--   node -e "console.log(require('bcryptjs').hashSync('TuClave', 10))"
 -- =============================================================================
 INSERT INTO USUARIO (nombre, correo_electronico, contrasena_hash, rol, fecha_creacion) VALUES
-    ('Carolina Nunez',  'carolina.nunez@ejemplo.cl',  'PENDIENTE_HASH_BCRYPT', 'ADMINISTRADOR', datetime('now', '-180 days')),
-    ('Luis Fuentes',    'luis.fuentes@ejemplo.cl',    'PENDIENTE_HASH_BCRYPT', 'DESARROLLADOR', datetime('now', '-175 days')),
-    ('Daniela Rojas',   'daniela.rojas@ejemplo.cl',   'PENDIENTE_HASH_BCRYPT', 'TESTER',        datetime('now', '-170 days')),
-    ('Matias Herrera',  'matias.herrera@ejemplo.cl',  'PENDIENTE_HASH_BCRYPT', 'ANALISTA',      datetime('now', '-160 days')),
-    ('Javiera Soto',    'javiera.soto@ejemplo.cl',    'PENDIENTE_HASH_BCRYPT', 'DESARROLLADOR', datetime('now', '-120 days'));
+    ('Carolina Nunez',  'carolina.nunez@ejemplo.cl',  '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'ADMINISTRADOR', datetime('now', '-180 days')),
+    ('Luis Fuentes',    'luis.fuentes@ejemplo.cl',    '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'DESARROLLADOR', datetime('now', '-175 days')),
+    ('Daniela Rojas',   'daniela.rojas@ejemplo.cl',   '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'TESTER',        datetime('now', '-170 days')),
+    ('Matias Herrera',  'matias.herrera@ejemplo.cl',  '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'ANALISTA',      datetime('now', '-160 days')),
+    ('Javiera Soto',    'javiera.soto@ejemplo.cl',    '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'DESARROLLADOR', datetime('now', '-120 days'));
 
 
 -- =============================================================================

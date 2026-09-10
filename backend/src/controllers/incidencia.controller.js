@@ -63,7 +63,8 @@ export function obtener(req, res) {
  * pintar la fila nueva sin hacer una segunda peticion.
  */
 export function crear(req, res) {
-  const incidencia = servicioIncidencias.crearIncidencia(req.body);
+  // El autor sale de req.usuario, que llena el middleware requiereAutenticacion.
+  const incidencia = servicioIncidencias.crearIncidencia(req.body, req.usuario.id_usuario);
 
   res
     .status(201)
@@ -103,7 +104,11 @@ export function eliminar(req, res) {
 /**
  * POST /api/incidencias/:id/transicion
  *
- * Cuerpo: { estado, modificado_por, comentario? }
+ * Cuerpo: { estado, comentario? }
+ *
+ * `modificado_por` NO se envia: se toma de la sesion. Aceptarlo desde el
+ * cuerpo permitiria firmar cambios con el nombre de otra persona, y la
+ * bitacora dejaria de ser una fuente confiable.
  *
  * Es la unica via para cambiar el estado de una incidencia. Se modela como una
  * ACCION sobre el recurso y no como un PUT del campo `estado` porque no es una
@@ -115,7 +120,11 @@ export function eliminar(req, res) {
  * existia.
  */
 export function transicionar(req, res) {
-  const incidencia = servicioIncidencias.cambiarEstado(req.params.id, req.body);
+  const incidencia = servicioIncidencias.cambiarEstado(
+    req.params.id,
+    req.body,
+    req.usuario.id_usuario
+  );
   res.json(incidencia);
 }
 
