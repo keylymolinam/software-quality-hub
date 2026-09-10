@@ -20,6 +20,7 @@ import * as Historial from '../models/historial.model.js';
 import * as Proyecto from '../models/proyecto.model.js';
 import * as Usuario from '../models/usuario.model.js';
 import { buscarDuplicado } from './duplicados.service.js';
+import { clasificar } from './clasificacion.service.js';
 import { enTransaccion, ahora } from '../db/database.js';
 import { errorSolicitud, errorNoEncontrado, errorConflicto } from '../utils/errores.js';
 import {
@@ -270,7 +271,7 @@ export function obtenerIncidencia(id) {
  *
  * Campos que el cliente no controla:
  *   estado                    siempre ABIERTA (ver ESTADO_INICIAL).
- *   clasificacion_automatica  0 mientras el motor no exista.
+ *   clasificacion_automatica  1 si el motor dedujo ambos campos.
  *   posible_duplicado_de      lo determina el detector de duplicados.
  *
  * Si el cliente manda `estado` en el cuerpo, se ignora en silencio: solo hay
@@ -290,13 +291,16 @@ export function crearIncidencia(datos = {}, idUsuarioSesion) {
   const titulo = validarTexto(datos.titulo, 'titulo', LARGO_TITULO, errores);
   const descripcion = validarTexto(datos.descripcion, 'descripcion', LARGO_DESCRIPCION, errores);
 
-  const prioridad = vino(datos.prioridad)
+  // Se registra si vinieron indicadas o no. La diferencia importa: lo que la
+  // persona eligio se respeta siempre, y solo lo que dejo en blanco lo deduce
+  // el motor de clasificacion mas abajo.
+  const prioridadIndicada = vino(datos.prioridad)
     ? validarEnumerado(datos.prioridad, PRIORIDADES, 'prioridad', errores)
-    : PRIORIDAD_POR_DEFECTO;
+    : undefined;
 
-  const categoria = vino(datos.categoria)
+  const categoriaIndicada = vino(datos.categoria)
     ? validarEnumerado(datos.categoria, CATEGORIAS, 'categoria', errores)
-    : CATEGORIA_POR_DEFECTO;
+    : undefined;
 
   // --- Claves foraneas ---
   // Dos pasos por cada una: primero que el valor sea un id valido, y despues
@@ -342,6 +346,27 @@ export function crearIncidencia(datos = {}, idUsuarioSesion) {
   // linea de su bitacora. La transaccion garantiza que no pueda quedar una sin
   // la otra. Es el unico registro del historial con estado_anterior = null,
   // tal como lo previo el esquema: no venia de ningun estado, esta naciendo.
+  // --- Clasificacion automatica ---
+  //
+  // Solo se ejecuta si falta al menos uno de los dos campos: quien reporta y
+  // eligio la categoria sabe mas sobre su propia incidencia que un diccionario
+  // de palabras, asi que su eleccion nunca se sobreescribe.
+  const clasificacion =
+    prioridadIndicada === undefined || categoriaIndicada === undefined
+      ? clasificar({ titulo, descripcion })
+      : null;
+
+  const categoria = categoriaIndicada ?? clasificacion?.categoria ?? CATEGORIA_POR_DEFECTO;
+  const prioridad = prioridadIndicada ?? clasificacion?.prioridad ?? PRIORIDAD_POR_DEFECTO;
+
+  // La marca vale 1 solo cuando AMBOS campos los puso el motor, que es lo que
+  // dice el esquema ("categoria y prioridad las asigno el motor de reglas").
+  // Si la persona eligio uno de los dos, la clasificacion es mixta y no
+  // corresponde atribuirsela al motor: contarla como automatica al medir su
+  // acierto falsearia el resultado.
+  const clasificacionAutomatica =
+    prioridadIndicada === undefined && categoriaIndicada === undefined ? 1 : 0;
+
   // Deteccion de duplicados. Se ejecuta ANTES de insertar, de modo que la
   // referencia quede escrita en el mismo INSERT: si se hiciera despues haria
   // falta un UPDATE adicional, y entre ambas operaciones la incidencia
@@ -364,7 +389,7 @@ export function crearIncidencia(datos = {}, idUsuarioSesion) {
       prioridad,
       estado: ESTADO_INICIAL,
       categoria,
-      clasificacion_automatica: 0,
+      clasificacion_automatica: clasificacionAutomatica,
       posible_duplicado_de: duplicado?.id_incidencia ?? null,
       id_proyecto: idProyecto,
       reportado_por: reportadoPor,
@@ -384,14 +409,18 @@ export function crearIncidencia(datos = {}, idUsuarioSesion) {
     return creada;
   });
 
-  // El aviso viaja como un campo aparte y solo cuando hay algo que avisar, de
-  // modo que el frontend pueda mostrar la alerta sin tener que interpretar
-  // posible_duplicado_de por su cuenta.
-  if (duplicado) {
-    return { ...incidencia, advertencia_duplicado: duplicado };
-  }
+  // Los resultados de los diferenciadores viajan como campos aparte y solo
+  // cuando hay algo que informar, de modo que el frontend pueda mostrarlos sin
+  // tener que deducirlos de posible_duplicado_de ni de clasificacion_automatica.
+  const respuesta = { ...incidencia };
 
-  return incidencia;
+  if (duplicado) respuesta.advertencia_duplicado = duplicado;
+
+  // Se incluye tambien cuando la clasificacion fue parcial: aunque la marca
+  // quede en 0, la persona tiene derecho a ver que dedujo el sistema y por que.
+  if (clasificacion) respuesta.clasificacion = clasificacion;
+
+  return respuesta;
 }
 
 /**

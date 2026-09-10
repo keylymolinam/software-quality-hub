@@ -18,6 +18,7 @@
  * Poner try/catch en cada funcion solo agregaria ruido.
  */
 import * as servicioIncidencias from '../services/incidencia.service.js';
+import { clasificar } from '../services/clasificacion.service.js';
 
 /**
  * GET /api/incidencias
@@ -142,4 +143,22 @@ export function historial(req, res) {
     total: movimientos.length,
     movimientos,
   });
+}
+
+/**
+ * POST /api/incidencias/clasificar
+ *
+ * Cuerpo: { titulo, descripcion }
+ *
+ * Devuelve lo que el motor DEDUCIRIA, sin crear ni guardar nada. Existe para
+ * que el formulario pueda mostrar la categoria y prioridad sugeridas mientras
+ * la persona escribe, con la evidencia que las justifica.
+ *
+ * Es un POST y no un GET porque la descripcion de una incidencia puede tener
+ * miles de caracteres, y eso no cabe razonablemente en una direccion. Que no
+ * modifique nada no obliga a usar GET: obliga a no tener efectos secundarios,
+ * y no los tiene.
+ */
+export function clasificarTexto(req, res) {
+  res.json(clasificar(req.body ?? {}));
 }

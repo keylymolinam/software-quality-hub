@@ -9,7 +9,14 @@ Ingeniería en Computación e Informática.
 
 ## Diferenciadores
 
-1. **Motor de clasificación automática** de categoría y prioridad basado en reglas léxicas.
+1. **Motor de clasificación automática** de categoría y prioridad basado en reglas
+   léxicas. *(implementado)* Busca términos conocidos en el título y la descripción,
+   suma sus pesos y se queda con la categoría más puntuada; la prioridad parte de la
+   típica de esa categoría y se ajusta según señales de alcance y gravedad. Solo
+   rellena los campos que quien reporta dejó en blanco, **nunca sobreescribe una
+   elección humana**, y cada resultado viene con los términos que lo justifican.
+   El diccionario vive en `backend/src/utils/lexico.js`: ajustarlo es editar
+   palabras, no código.
 2. **Detección de incidencias duplicadas** por similitud de texto. *(implementado)*
    Coeficiente de Jaccard sobre las palabras de título y descripción, comparando
    contra las incidencias no cerradas del mismo proyecto. Si supera el umbral

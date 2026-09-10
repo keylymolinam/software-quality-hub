@@ -16,6 +16,7 @@
  *   DELETE  /api/incidencias/:id             ADMINISTRADOR
  *   POST    /api/incidencias/:id/transicion  cualquier sesion
  *   GET     /api/incidencias/:id/historial   cualquier sesion
+ *   POST    /api/incidencias/clasificar      cualquier sesion
  *
  * Todas exigen sesion iniciada. Trabajar sobre incidencias es la tarea diaria
  * de cualquier rol del equipo, asi que no se restringen por rol; la excepcion
@@ -38,6 +39,7 @@ import {
   eliminar,
   transicionar,
   historial,
+  clasificarTexto,
 } from '../controllers/incidencia.controller.js';
 import { requiereAutenticacion, requiereRol } from '../middlewares/autenticacion.js';
 
@@ -50,6 +52,12 @@ router.use(requiereAutenticacion);
 // --- Coleccion ------------------------------------------------------------
 router.get('/', listar);
 router.post('/', crear);
+
+// --- Herramientas ---------------------------------------------------------
+// Va antes de las rutas con :id. Aunque POST /clasificar y POST /:id no
+// chocarian hoy, mantener las rutas fijas arriba evita que una ruta futura
+// quede capturada por el parametro.
+router.post('/clasificar', clasificarTexto);
 
 // --- Recurso individual ---------------------------------------------------
 router.get('/:id', obtener);
