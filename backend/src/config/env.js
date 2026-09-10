@@ -31,6 +31,30 @@ export const config = {
   // la base de datos se filtrara. Subirlo aumenta la seguridad y el tiempo
   // de respuesta del login en la misma proporcion.
   bcryptRondas: Number(process.env.BCRYPT_RONDAS) || 10,
+
+  // --- Diferenciadores ---
+
+  // Similitud minima (coeficiente de Jaccard, de 0 a 1) para marcar una
+  // incidencia como posible duplicado.
+  //
+  // El valor se fijo midiendo sobre los datos de prueba, no a ojo. Sobre los
+  // 27 pares de incidencias del mismo proyecto que existen en el seed:
+  //
+  //   duplicado real (#1 y #2, la misma falla contada con otras palabras)  0.550
+  //   par no relacionado mas parecido que le sigue                         0.071
+  //
+  // Entre ambos hay un factor de casi ocho, y nada en medio. Cualquier umbral
+  // dentro de ese hueco separa igual de bien; 0.45 se elige por quedar holgado
+  // de los dos lados.
+  //
+  // Un umbral mas alto (0.75, por ejemplo) solo detecta textos casi copiados:
+  // dos personas que describen la misma falla con su propio vocabulario
+  // comparten alrededor de la mitad de las palabras, no tres cuartos.
+  //
+  // Advertencia: un solo duplicado real es poca evidencia. Conviene recalibrar
+  // con datos de uso verdadero, y por eso el valor es una variable de entorno
+  // y existe analizarIncidencia() para recalcular sin tocar codigo.
+  umbralDuplicado: Number(process.env.UMBRAL_DUPLICADO) || 0.45,
 };
 
 export const isDevelopment = config.nodeEnv === 'development';

@@ -307,6 +307,37 @@ export function eliminar(id) {
 }
 
 /**
+ * Devuelve los textos de las incidencias contra las que se busca un duplicado.
+ *
+ * Se acotan de dos maneras, y ambas tienen motivo:
+ *
+ *   Mismo proyecto. Dos equipos distintos pueden reportar "la pantalla se
+ *   queda en blanco" sobre sistemas que no tienen nada que ver. Comparar entre
+ *   proyectos produciria coincidencias que no son duplicados.
+ *
+ *   No cerradas. Una incidencia CERRADA ya termino su ciclo; si el problema
+ *   volvio a ocurrir, corresponde una incidencia nueva y no una marca de
+ *   duplicado sobre algo que ya se dio por concluido. Se incluyen en cambio
+ *   ABIERTA, EN_PROGRESO y RESUELTA: reportar de nuevo algo que otra persona
+ *   ya esta arreglando, o que se resolvio pero aun no se cierra, es justamente
+ *   el caso que este detector debe atrapar.
+ *
+ * Solo se traen las tres columnas necesarias para el calculo: el detector
+ * compara textos, no necesita el resto de la fila.
+ */
+export function listarCandidatosDuplicado(idProyecto) {
+  return db
+    .prepare(
+      `SELECT id_incidencia, titulo, descripcion
+         FROM INCIDENCIA
+        WHERE id_proyecto = ?
+          AND estado <> 'CERRADA'
+        ORDER BY id_incidencia`
+    )
+    .all(idProyecto);
+}
+
+/**
  * Indica si un id corresponde a una incidencia existente.
  * Se usa para validar el campo posible_duplicado_de.
  */

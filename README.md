@@ -10,7 +10,12 @@ Ingeniería en Computación e Informática.
 ## Diferenciadores
 
 1. **Motor de clasificación automática** de categoría y prioridad basado en reglas léxicas.
-2. **Detección de incidencias duplicadas** por similitud de texto.
+2. **Detección de incidencias duplicadas** por similitud de texto. *(implementado)*
+   Coeficiente de Jaccard sobre las palabras de título y descripción, comparando
+   contra las incidencias no cerradas del mismo proyecto. Si supera el umbral
+   (`UMBRAL_DUPLICADO`, 0.45), guarda la referencia en `posible_duplicado_de` y
+   avisa en la respuesta, **sin impedir el registro**: el algoritmo compara
+   palabras, no comprende el problema, y la decisión final es de quien reporta.
 3. **Índice de salud / deuda técnica** calculado desde la antigüedad de incidencias abiertas,
    la tasa de reapertura y la densidad por categoría.
 

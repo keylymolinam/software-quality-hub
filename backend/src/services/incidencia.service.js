@@ -19,6 +19,7 @@ import * as Incidencia from '../models/incidencia.model.js';
 import * as Historial from '../models/historial.model.js';
 import * as Proyecto from '../models/proyecto.model.js';
 import * as Usuario from '../models/usuario.model.js';
+import { buscarDuplicado } from './duplicados.service.js';
 import { enTransaccion, ahora } from '../db/database.js';
 import { errorSolicitud, errorNoEncontrado, errorConflicto } from '../utils/errores.js';
 import {
@@ -270,7 +271,7 @@ export function obtenerIncidencia(id) {
  * Campos que el cliente no controla:
  *   estado                    siempre ABIERTA (ver ESTADO_INICIAL).
  *   clasificacion_automatica  0 mientras el motor no exista.
- *   posible_duplicado_de      null; lo llenara el detector de duplicados.
+ *   posible_duplicado_de      lo determina el detector de duplicados.
  *
  * Si el cliente manda `estado` en el cuerpo, se ignora en silencio: solo hay
  * un valor legal al crear, asi que forzarlo no le quita nada. En cambio al
@@ -341,30 +342,56 @@ export function crearIncidencia(datos = {}, idUsuarioSesion) {
   // linea de su bitacora. La transaccion garantiza que no pueda quedar una sin
   // la otra. Es el unico registro del historial con estado_anterior = null,
   // tal como lo previo el esquema: no venia de ningun estado, esta naciendo.
-  return enTransaccion(() => {
-    const incidencia = Incidencia.crear({
+  // Deteccion de duplicados. Se ejecuta ANTES de insertar, de modo que la
+  // referencia quede escrita en el mismo INSERT: si se hiciera despues haria
+  // falta un UPDATE adicional, y entre ambas operaciones la incidencia
+  // existiria sin su marca.
+  //
+  // El resultado no condiciona la creacion. Aunque se encuentre un duplicado,
+  // la incidencia se registra igual: el detector compara palabras, no entiende
+  // el problema, y bloquear por su criterio convertiria cada equivocacion del
+  // algoritmo en trabajo perdido de una persona.
+  const duplicado = buscarDuplicado({
+    titulo,
+    descripcion,
+    id_proyecto: idProyecto,
+  });
+
+  const incidencia = enTransaccion(() => {
+    const creada = Incidencia.crear({
       titulo,
       descripcion,
       prioridad,
       estado: ESTADO_INICIAL,
       categoria,
       clasificacion_automatica: 0,
-      posible_duplicado_de: null,
+      posible_duplicado_de: duplicado?.id_incidencia ?? null,
       id_proyecto: idProyecto,
       reportado_por: reportadoPor,
       asignado_a: asignadoA ?? null,
     });
 
     Historial.registrar({
-      id_incidencia: incidencia.id_incidencia,
+      id_incidencia: creada.id_incidencia,
       estado_anterior: null,
       estado_nuevo: ESTADO_INICIAL,
       modificado_por: reportadoPor,
-      comentario: 'Incidencia registrada en el sistema.',
+      comentario: duplicado
+        ? `Incidencia registrada. Posible duplicado de la #${duplicado.id_incidencia} (similitud ${duplicado.similitud}).`
+        : 'Incidencia registrada en el sistema.',
     });
 
-    return incidencia;
+    return creada;
   });
+
+  // El aviso viaja como un campo aparte y solo cuando hay algo que avisar, de
+  // modo que el frontend pueda mostrar la alerta sin tener que interpretar
+  // posible_duplicado_de por su cuenta.
+  if (duplicado) {
+    return { ...incidencia, advertencia_duplicado: duplicado };
+  }
+
+  return incidencia;
 }
 
 /**
