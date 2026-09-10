@@ -21,6 +21,16 @@ import * as Proyecto from '../models/proyecto.model.js';
 import * as Usuario from '../models/usuario.model.js';
 import { enTransaccion, ahora } from '../db/database.js';
 import { errorSolicitud, errorNoEncontrado, errorConflicto } from '../utils/errores.js';
+import {
+  vino,
+  validarTexto,
+  validarEnumerado,
+  validarId,
+  validarEntero,
+  validarReferencia,
+  lanzarSiHayErrores,
+  exigirIdValido,
+} from '../utils/validacion.js';
 
 // ---------------------------------------------------------------------------
 // Valores admitidos
@@ -153,143 +163,6 @@ const CAMPOS_RESERVADOS = {
   clasificacion_automatica: 'Lo determina el motor de clasificacion, no el cliente.',
   reportado_por: 'Quien reporto la incidencia es un dato historico y no se reasigna.',
 };
-
-// ---------------------------------------------------------------------------
-// Utilidades de validacion
-//
-// Todas comparten el mismo contrato: si el valor es valido lo devuelven ya
-// normalizado; si no, agregan una entrada a `errores` y devuelven undefined.
-//
-// El objetivo de acumular en un arreglo, en vez de lanzar en el primer
-// problema, es informar TODOS los errores de una sola vez. Si no, el usuario
-// corrige el titulo, reenvia, y recien ahi se entera de que la categoria
-// tambien estaba mal.
-// ---------------------------------------------------------------------------
-
-/** Un campo "viene" si no es undefined, null ni cadena vacia. */
-function vino(valor) {
-  return valor !== undefined && valor !== null && valor !== '';
-}
-
-function validarTexto(valor, campo, largo, errores) {
-  if (typeof valor !== 'string') {
-    errores.push({ campo, mensaje: 'Debe ser un texto.' });
-    return undefined;
-  }
-
-  // trim() evita que un titulo de puros espacios ("   ") pase como valido.
-  const limpio = valor.trim();
-
-  if (limpio.length < largo.min) {
-    errores.push({ campo, mensaje: `Debe tener al menos ${largo.min} caracteres.` });
-    return undefined;
-  }
-
-  if (limpio.length > largo.max) {
-    errores.push({ campo, mensaje: `No puede superar los ${largo.max} caracteres.` });
-    return undefined;
-  }
-
-  return limpio;
-}
-
-/**
- * Valida contra una lista de valores admitidos.
- * Acepta minusculas por comodidad: "alta" se guarda como "ALTA".
- */
-function validarEnumerado(valor, permitidos, campo, errores) {
-  if (typeof valor !== 'string') {
-    errores.push({ campo, mensaje: `Debe ser uno de: ${permitidos.join(', ')}.` });
-    return undefined;
-  }
-
-  const normalizado = valor.trim().toUpperCase();
-
-  if (!permitidos.includes(normalizado)) {
-    errores.push({
-      campo,
-      mensaje: `Debe ser uno de: ${permitidos.join(', ')}.`,
-      recibido: valor,
-    });
-    return undefined;
-  }
-
-  return normalizado;
-}
-
-/**
- * Valida un identificador: entero positivo.
- *
- * Se usa Number() y no parseInt() porque parseInt('12abc') devuelve 12 sin
- * quejarse, y aqui interesa rechazar la basura, no adivinar la intencion.
- * Los identificadores llegan como texto cuando vienen de la URL ("/api/
- * incidencias/7") y como numero cuando vienen de un cuerpo JSON; Number()
- * resuelve ambos casos.
- */
-function validarId(valor, campo, errores) {
-  const numero = Number(valor);
-
-  if (!Number.isInteger(numero) || numero <= 0) {
-    errores.push({ campo, mensaje: 'Debe ser un numero entero positivo.', recibido: valor });
-    return undefined;
-  }
-
-  return numero;
-}
-
-/** Valida un entero dentro de un rango, con valor por defecto. */
-function validarEntero(valor, campo, { min, max, porDefecto }, errores) {
-  if (!vino(valor)) return porDefecto;
-
-  const numero = Number(valor);
-
-  if (!Number.isInteger(numero) || numero < min || numero > max) {
-    errores.push({
-      campo,
-      mensaje: `Debe ser un numero entero entre ${min} y ${max}.`,
-      recibido: valor,
-    });
-    return porDefecto;
-  }
-
-  return numero;
-}
-
-/**
- * Comprueba que un id apunte a un registro existente.
- * Convierte un futuro error de clave foranea (500) en un 400 comprensible.
- */
-function validarReferencia(id, campo, existeEnBase, nombreEntidad, errores) {
-  if (id === undefined) return undefined; // ya fallo antes; no se insiste
-
-  if (!existeEnBase(id)) {
-    errores.push({ campo, mensaje: `No existe ${nombreEntidad} con id ${id}.` });
-    return undefined;
-  }
-
-  return id;
-}
-
-/** Si se acumulo al menos un problema, lanza un unico 400 con la lista completa. */
-function lanzarSiHayErrores(errores) {
-  if (errores.length > 0) {
-    throw errorSolicitud('Los datos enviados no son validos.', errores);
-  }
-}
-
-/**
- * Valida un id que viene de la URL. Aqui si conviene lanzar de inmediato:
- * si el identificador no sirve, no tiene sentido seguir validando nada mas.
- */
-function exigirIdValido(id) {
-  const numero = Number(id);
-
-  if (!Number.isInteger(numero) || numero <= 0) {
-    throw errorSolicitud(`El identificador "${id}" no es valido: debe ser un entero positivo.`);
-  }
-
-  return numero;
-}
 
 // ---------------------------------------------------------------------------
 // Operaciones

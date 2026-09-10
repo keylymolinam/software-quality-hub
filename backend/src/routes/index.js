@@ -8,10 +8,12 @@
 import { Router } from 'express';
 import healthRoutes from './health.routes.js';
 import incidenciaRoutes from './incidencia.routes.js';
+import proyectoRoutes from './proyecto.routes.js';
 
 const router = Router();
 
 router.use('/health', healthRoutes);
 router.use('/incidencias', incidenciaRoutes);
+router.use('/proyectos', proyectoRoutes);
 
 export default router;
