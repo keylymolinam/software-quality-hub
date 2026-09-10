@@ -3,9 +3,10 @@
 Sistema de gestión de incidencias de software desarrollado como proyecto de título de
 Ingeniería en Computación e Informática.
 
-> **Estado:** en construcción. API REST operativa con las tres entidades principales
-> (incidencias, proyectos y usuarios), máquina de estados con bitácora de cambios y
-> autenticación. Pendientes: los tres diferenciadores y la interfaz de usuario.
+> **Estado:** en construcción. La API REST está completa: las tres entidades
+> principales (incidencias, proyectos y usuarios), la máquina de estados con bitácora
+> de cambios, la autenticación con control de acceso por rol y los tres
+> diferenciadores. Pendiente: la interfaz de usuario.
 
 ## Diferenciadores
 
@@ -23,8 +24,15 @@ Ingeniería en Computación e Informática.
    (`UMBRAL_DUPLICADO`, 0.45), guarda la referencia en `posible_duplicado_de` y
    avisa en la respuesta, **sin impedir el registro**: el algoritmo compara
    palabras, no comprende el problema, y la decisión final es de quien reporta.
-3. **Índice de salud / deuda técnica** calculado desde la antigüedad de incidencias abiertas,
-   la tasa de reapertura y la densidad por categoría.
+3. **Índice de salud / deuda técnica** calculado desde la antigüedad de incidencias
+   abiertas, la tasa de reapertura y la densidad por categoría. *(implementado)*
+   Resume el estado de un proyecto en un número de 0 a 100 —donde 100 es el estado
+   ideal— y **entrega siempre el desglose que lo produjo**: cada componente con su
+   puntaje, su peso y los datos de los que sale. Los pesos y los límites son una
+   convención declarada, no un resultado derivado de los datos; están en un solo
+   lugar (`backend/src/services/salud.service.js`) para poder discutirlos y
+   recalcular. Un proyecto sin incidencias se informa como `SIN_DATOS`, no como
+   saludable: no está sano, está sin medir.
 
 ## Stack técnico
 
@@ -32,7 +40,7 @@ Ingeniería en Computación e Informática.
 |---|---|
 | Frontend | React 19 + Vite |
 | Backend | Node.js + Express |
-| Base de datos | SQLite (better-sqlite3) |
+| Base de datos | SQLite (módulo integrado `node:sqlite`) |
 | Arquitectura | Tres capas: presentación, lógica de negocio, persistencia |
 
 ## Estructura del proyecto
@@ -199,6 +207,7 @@ por otra persona: exige conocer la contraseña vigente.
 | `DELETE` | `/api/incidencias/:id` | Elimina la incidencia y su bitácora |
 | `POST` | `/api/incidencias/:id/transicion` | Cambia el estado según el flujo permitido |
 | `GET` | `/api/incidencias/:id/historial` | Bitácora de cambios de estado |
+| `POST` | `/api/incidencias/clasificar` | Vista previa de la clasificación, sin crear nada |
 
 Filtros del listado: `estado`, `prioridad`, `categoria`, `id_proyecto`,
 `asignado_a`, `reportado_por`, `busqueda`, `ordenarPor`, `direccion`, `pagina`,
@@ -224,6 +233,24 @@ Filtros del listado: `estado`, `prioridad`, `categoria`, `id_proyecto`,
 | `PUT` | `/api/usuarios/:id` | Actualización parcial (no la contraseña) |
 | `PUT` | `/api/usuarios/:id/contrasena` | Cambia la contraseña; exige la actual |
 | `DELETE` | `/api/usuarios/:id` | Elimina; falla si tiene incidencias o historial |
+
+### Métricas e índice de salud
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/api/metricas/salud` | Índice global y de cada proyecto, de peor a mejor |
+| `GET` | `/api/metricas/salud/:id` | Índice de un proyecto, con su desglose |
+| `GET` | `/api/metricas/historico` | Evolución de una métrica en el tiempo |
+| `POST` | `/api/metricas/snapshot` | Guarda la medición actual en `METRICA` (`ADMINISTRADOR`) |
+
+`/api/metricas/historico` acepta `tipo_metrica` (`INDICE_SALUD`, `TASA_REAPERTURA`,
+`ANTIGUEDAD_MEDIA_DIAS`, `CONCENTRACION_CATEGORIA`) e `id_proyecto` (un id, o
+`TODOS`). Sin `id_proyecto` devuelve la serie global: una serie de tiempo debe ser
+de una sola cosa.
+
+El `snapshot` guarda los cuatro valores y no solo el índice, porque un índice que
+baja no dice **por qué** bajó. Con los componentes guardados se puede reconstruir
+después si la causa fue la antigüedad acumulada o las reaperturas.
 
 ### Códigos de respuesta
 

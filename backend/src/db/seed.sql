@@ -305,4 +305,6 @@ INSERT INTO METRICA (tipo_metrica, valor, fecha_calculo, id_proyecto) VALUES
     ('INDICE_SALUD',            74.0,  datetime('now', '-1 days'), 2),
     ('TASA_REAPERTURA',         0.25,  datetime('now', '-1 days'), 2),
     ('ANTIGUEDAD_MEDIA_DIAS',   19.5,  datetime('now', '-1 days'), 2),
-    ('INDICE_SALUD_GLOBAL',     68.3,  datetime('now', '-1 days'), NULL);
+    -- Metrica global: se distingue por id_proyecto NULL, no por el nombre del
+    -- tipo. Codificar el ambito tambien en el nombre lo diria dos veces.
+    ('INDICE_SALUD',            68.3,  datetime('now', '-1 days'), NULL);

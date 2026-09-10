@@ -11,6 +11,7 @@ import incidenciaRoutes from './incidencia.routes.js';
 import proyectoRoutes from './proyecto.routes.js';
 import usuarioRoutes from './usuario.routes.js';
 import authRoutes from './auth.routes.js';
+import metricaRoutes from './metrica.routes.js';
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use('/auth', authRoutes);
 router.use('/incidencias', incidenciaRoutes);
 router.use('/proyectos', proyectoRoutes);
 router.use('/usuarios', usuarioRoutes);
+router.use('/metricas', metricaRoutes);
 
 export default router;
