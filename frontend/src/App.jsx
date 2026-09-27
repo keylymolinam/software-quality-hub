@@ -1,73 +1,77 @@
 /**
  * Componente raiz de la aplicacion.
  *
- * Por ahora solo verifica la conexion con el backend. En las semanas 3-5
- * este archivo pasara a contener el enrutador con las pantallas reales
- * (login, incidencias, dashboard).
+ * Su unica responsabilidad es decidir QUE se muestra segun el estado de la
+ * sesion. Son tres situaciones y conviene distinguirlas:
+ *
+ *   comprobando   todavia no se sabe si el token guardado sirve
+ *   sin sesion    hay que entrar
+ *   con sesion    la aplicacion
+ *
+ * El primer estado suele olvidarse, y su ausencia produce un defecto visible:
+ * quien tiene sesion valida ve parpadear la pantalla de login mientras el
+ * backend confirma su token.
+ *
+ * ---------------------------------------------------------------------------
+ * SOBRE EL ENRUTADOR
+ *
+ * Entra aqui al aparecer la segunda pantalla dentro de la sesion, tal como
+ * estaba previsto. Con una sola pantalla era una dependencia sin uso; con dos
+ * resuelve algo que no conviene escribir a mano: que la direccion del navegador
+ * describa lo que se esta viendo. De eso dependen el boton atras, poder
+ * compartir un enlace a un listado filtrado y que recargar no pierda el sitio.
+ *
+ * Las rutas se declaran solo para quien tiene sesion. Estando fuera no hay nada
+ * que enrutar: la unica pantalla accesible es el login, y cualquier direccion
+ * que alguien escriba debe llevar alli.
  */
-import { useEffect, useState } from 'react';
-import { obtenerEstadoApi } from './api/health.js';
+import { Navigate, Route, Routes } from 'react-router-dom';
+
+import Cabecera from './components/Cabecera.jsx';
+import Incidencias from './pages/Incidencias.jsx';
+import Inicio from './pages/Inicio.jsx';
+import Login from './pages/Login.jsx';
+import NuevaIncidencia from './pages/NuevaIncidencia.jsx';
+import { useSesion } from './context/SesionContext.jsx';
 
 export default function App() {
-  // "estado" guarda en que situacion esta la consulta al backend.
-  const [estado, setEstado] = useState('cargando'); // cargando | ok | error
-  const [datos, setDatos] = useState(null);
-  const [mensajeError, setMensajeError] = useState('');
+  const { usuario, comprobando } = useSesion();
 
-  // useEffect ejecuta este codigo una sola vez, cuando el componente aparece
-  // en pantalla. El array vacio [] del final es lo que significa "solo una vez".
-  useEffect(() => {
-    obtenerEstadoApi()
-      .then((respuesta) => {
-        setDatos(respuesta);
-        setEstado('ok');
-      })
-      .catch((error) => {
-        setMensajeError(error.message);
-        setEstado('error');
-      });
-  }, []);
+  if (comprobando) {
+    return (
+      <main className="pantalla-centrada">
+        <span className="estado estado--cargando">Cargando sesion...</span>
+      </main>
+    );
+  }
+
+  if (!usuario) {
+    return <Login />;
+  }
 
   return (
-    <main className="contenedor">
-      <h1 className="titulo">Software Quality Hub</h1>
-      <p className="subtitulo">Sistema de gestion de incidencias de software</p>
+    <>
+      <Cabecera />
 
-      <section className="tarjeta">
-        <h2>Conexion con el backend</h2>
+      {/* Cada pagina dibuja su propio <main> con el ancho que necesita: el
+          listado de incidencias pide una tabla ancha, y las tarjetas del inicio
+          se leen mejor en una columna angosta. Un contenedor unico aqui obligaria
+          a las dos a conformarse con el mismo ancho. */}
+      <Routes>
+        <Route path="/" element={<Inicio />} />
+        <Route path="/incidencias" element={<Incidencias />} />
 
-        {estado === 'cargando' && (
-          <span className="estado estado--cargando">Verificando...</span>
-        )}
+        {/* Va junto al listado y no dentro de el: registrar no es "ver una
+            incidencia", es otra pantalla. React Router resuelve por
+            especificidad, asi que /incidencias/nueva no compite con un futuro
+            /incidencias/:id aunque se declaren en cualquier orden. */}
+        <Route path="/incidencias/nueva" element={<NuevaIncidencia />} />
 
-        {estado === 'ok' && (
-          <>
-            <span className="estado estado--ok">API conectada</span>
-            <dl className="detalle">
-              <dt>Servicio</dt>
-              <dd>{datos.servicio}</dd>
-              <dt>Version</dt>
-              <dd>{datos.version}</dd>
-              <dt>Entorno</dt>
-              <dd>{datos.entorno}</dd>
-              <dt>Respuesta</dt>
-              <dd>{new Date(datos.marcaTiempo).toLocaleString('es-CL')}</dd>
-            </dl>
-          </>
-        )}
-
-        {estado === 'error' && (
-          <>
-            <span className="estado estado--error">Sin conexion</span>
-            <p className="ayuda">
-              <strong>{mensajeError}</strong>
-              <br />
-              Revisa que el backend este ejecutandose: abre otra terminal, entra
-              a la carpeta <code>backend</code> y ejecuta <code>npm run dev</code>.
-            </p>
-          </>
-        )}
-      </section>
-    </main>
+        {/* Una direccion que no existe vuelve al inicio en lugar de dejar la
+            pantalla en blanco. Se reemplaza la entrada del historial para que el
+            boton atras no traiga de vuelta la direccion equivocada. */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }

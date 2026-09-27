@@ -106,3 +106,830 @@ body {
   font-size: 0.875rem;
   color: var(--color-texto-suave);
 }
+
+/* ===========================================================================
+   Sesion: login, cabecera y contenido
+   Se apoyan en las variables de color definidas arriba.
+   =========================================================================== */
+
+/* Centra su contenido en la ventana completa. Lo usan el login y el estado
+   de carga inicial, que son pantallas sin cabecera. */
+.pantalla-centrada {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.tarjeta--login {
+  width: 100%;
+  max-width: 380px;
+}
+
+.tarjeta--login .titulo {
+  font-size: 1.35rem;
+}
+
+.tarjeta--login .subtitulo {
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+}
+
+/* --- Formularios --------------------------------------------------------- */
+
+.campo {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.campo__etiqueta {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  color: var(--color-texto-suave);
+  font-weight: 600;
+}
+
+.campo__control {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: inherit;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.campo__control:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  /* El anillo exterior mantiene visible el foco para quien navega con el
+     teclado, sin desplazar el resto del formulario como haria un borde mas
+     grueso. */
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+}
+
+/* --- Botones ------------------------------------------------------------- */
+
+.boton {
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 600;
+  border-radius: var(--radio);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.boton--primario {
+  width: 100%;
+  color: #fff;
+  background: var(--color-primario);
+}
+
+.boton--primario:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.boton--discreto {
+  background: transparent;
+  border-color: var(--color-borde);
+  color: var(--color-texto-suave);
+}
+
+.boton--discreto:hover {
+  background: var(--color-fondo);
+}
+
+/* --- Avisos -------------------------------------------------------------- */
+
+.alerta {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radio);
+  font-size: 0.875rem;
+}
+
+.alerta--error {
+  background: #fff6f5;
+  border: 1px solid #f5c6c0;
+  color: var(--color-error);
+}
+
+.alerta--aviso {
+  background: #fff9e8;
+  border: 1px solid #f0dca4;
+  color: #7a5b00;
+}
+
+.ayuda--neutra {
+  background: var(--color-fondo);
+  border-color: var(--color-borde);
+}
+
+/* --- Cabecera ------------------------------------------------------------ */
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  background: var(--color-superficie);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.cabecera__sesion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cabecera__usuario {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.etiqueta-rol {
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+/* --- Contenido ----------------------------------------------------------- */
+
+.contenido > .tarjeta {
+  margin-bottom: 16px;
+}
+
+.indice-grande {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+
+.etiqueta-salud {
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+}
+
+.etiqueta-salud--saludable {
+  color: var(--color-ok);
+  background: #e8f5ec;
+}
+
+.etiqueta-salud--atencion {
+  color: #7a5b00;
+  background: #fff9e8;
+}
+
+.etiqueta-salud--critico {
+  color: var(--color-error);
+  background: #fff6f5;
+}
+
+.etiqueta-salud--sin_datos {
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+}
+
+.lista-simple {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-texto-suave);
+  font-size: 0.9rem;
+}
+
+.lista-simple li {
+  margin-bottom: 4px;
+}
+
+/* ===========================================================================
+   Navegacion de la cabecera
+   =========================================================================== */
+
+.cabecera__nav {
+  display: flex;
+  gap: 4px;
+  /* Ocupa el espacio sobrante para que la marca quede a la izquierda y los
+     datos de sesion a la derecha, con la navegacion junto a la marca. */
+  flex: 1;
+  margin-left: 16px;
+}
+
+.cabecera__enlace {
+  padding: 6px 12px;
+  border-radius: var(--radio);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--color-texto-suave);
+}
+
+.cabecera__enlace:hover {
+  background: var(--color-fondo);
+}
+
+.cabecera__enlace--activo {
+  color: var(--color-primario);
+  background: rgba(31, 111, 235, 0.08);
+}
+
+/* ===========================================================================
+   Listado de incidencias
+   =========================================================================== */
+
+/* El listado necesita mas ancho que las tarjetas del inicio: una tabla de ocho
+   columnas en 720px obliga a partir los titulos en cuatro lineas. */
+.contenedor--ancho {
+  max-width: 1180px;
+}
+
+.contenido__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.contenido__cabecera .subtitulo {
+  margin-bottom: 24px;
+}
+
+/* --- Filtros ------------------------------------------------------------- */
+
+.filtros {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.filtros__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.filtros__fila + .filtros__fila {
+  margin-top: 12px;
+}
+
+/* Los campos dentro de los filtros no llevan el margen inferior que usan en un
+   formulario vertical: aqui el espaciado lo da el gap de la fila. */
+.filtros .campo {
+  margin-bottom: 0;
+  min-width: 150px;
+}
+
+/* La busqueda es el filtro que mas se usa, asi que se lleva el espacio que
+   sobra en su fila en lugar de quedar del mismo ancho que un desplegable. */
+.campo--busqueda {
+  flex: 1;
+  min-width: 220px;
+}
+
+.filtros__limpiar {
+  /* Se alinea con los controles y no con sus etiquetas, que estan mas arriba. */
+  margin-left: auto;
+}
+
+/* --- Tabla --------------------------------------------------------------- */
+
+/* El desplazamiento horizontal se queda dentro de este contenedor. Si se
+   permitiera en el body, en una pantalla angosta se desplazaria tambien la
+   cabecera y se perderia la navegacion de vista. */
+.tabla-contenedor {
+  overflow-x: auto;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabla th,
+.tabla td {
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.tabla thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-fondo);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+}
+
+/* La ultima fila no lleva linea: el borde del contenedor ya cierra la tabla. */
+.tabla tbody tr:last-child th,
+.tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla tbody tr:hover {
+  background: var(--color-fondo);
+}
+
+.tabla__num {
+  width: 1%;
+  color: var(--color-texto-suave);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  white-space: nowrap;
+}
+
+.tabla__titulo {
+  display: block;
+  font-weight: 600;
+  /* Evita que un titulo de 150 caracteres estire la columna y aplaste el
+     resto de la tabla. */
+  max-width: 420px;
+}
+
+.tabla__marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.tabla__categoria,
+.tabla__fecha {
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+}
+
+.sin-dato {
+  color: var(--color-texto-suave);
+  font-style: italic;
+}
+
+.vacio {
+  margin: 0;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+/* --- Distintivos de estado y prioridad ----------------------------------- */
+
+.etiqueta-estado {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.etiqueta-estado--abierta {
+  color: #9a3412;
+  background: #fff1e6;
+}
+
+.etiqueta-estado--en_progreso {
+  color: var(--color-primario);
+  background: rgba(31, 111, 235, 0.1);
+}
+
+.etiqueta-estado--resuelta {
+  color: var(--color-ok);
+  background: #e8f5ec;
+}
+
+.etiqueta-estado--cerrada {
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+}
+
+/* La prioridad se dibuja con un punto al costado y no como etiqueta rellena,
+   para no confundirla con el estado a simple vista. */
+.prioridad {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prioridad::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.prioridad--alta {
+  color: var(--color-error);
+}
+
+.prioridad--media {
+  color: #7a5b00;
+}
+
+.prioridad--baja {
+  color: var(--color-texto-suave);
+}
+
+/* --- Marcas de los diferenciadores --------------------------------------- */
+
+.marca {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  /* Indica que el texto tiene una explicacion al pasar el cursor (title). */
+  cursor: help;
+}
+
+.marca--duplicado {
+  color: #7a5b00;
+  background: #fff9e8;
+  border: 1px solid #f0dca4;
+}
+
+.marca--automatica {
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+}
+
+/* --- Paginacion ---------------------------------------------------------- */
+
+.paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.paginacion__resumen {
+  margin: 16px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.paginacion .paginacion__resumen {
+  margin: 0;
+}
+
+.paginacion__controles {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.paginacion__posicion {
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+/* --- Estados de carga ---------------------------------------------------- */
+
+/* Atenua la tabla mientras se piden datos nuevos, en lugar de vaciarla. Deja
+   ver que lo mostrado ya no esta vigente sin hacer parpadear la pantalla.
+   pointer-events evita que se pulse algo de la tabla que esta por cambiar. */
+.cargando-suave {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 120ms ease-in;
+}
+
+/* Boton que se lee como un enlace. Se usa para acciones dentro de un texto,
+   como reintentar una peticion que fallo: la accion no navega a ninguna parte,
+   asi que corresponde un <button> y no un <a>. */
+.enlace-boton {
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ===========================================================================
+   Registro de incidencias
+   =========================================================================== */
+
+/* .boton--primario ocupa todo el ancho porque nacio para el boton de un
+   formulario angosto. Cuando el mismo estilo se usa en una cabecera hace falta
+   devolverlo a su tamano natural. Va despues para ganar por orden, no por
+   especificidad. */
+.boton--auto {
+  width: auto;
+}
+
+/* Un enlace que se ve como boton. Se usa cuando la accion navega: asi se puede
+   abrir en otra pestana, cosa que un <button> no permite. */
+a.boton {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* El formulario y el panel de la sugerencia, lado a lado. El panel va segundo
+   en el HTML para que quien navegue con teclado o lector de pantalla recorra
+   primero los campos, que es donde tiene que escribir. */
+.formulario-con-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .formulario-con-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+.campos-en-fila {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+/* El margen inferior del campo lo pone .campo; dentro de la fila lo da el gap,
+   asi que se quita para no sumar dos espacios. */
+.campos-en-fila .campo {
+  margin-bottom: 16px;
+}
+
+.campo__control--area {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+.campo__ayuda,
+.campo__error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.8rem;
+}
+
+.campo__ayuda {
+  color: var(--color-texto-suave);
+}
+
+.campo__error {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+/* El borde rojo acompana al mensaje, no lo sustituye: el color solo no sirve
+   para quien no lo distingue. */
+.campo--con-error .campo__control {
+  border-color: var(--color-error);
+}
+
+/* --- Panel de la sugerencia ---------------------------------------------- */
+
+.sugerencia {
+  position: sticky;
+  /* Se queda a la vista al desplazar el formulario largo: la sugerencia cambia
+     mientras se escribe la descripcion, y perderla de vista justo entonces
+     anularia su utilidad. */
+  top: 16px;
+  padding: 18px 20px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio);
+  transition: opacity 150ms ease-in;
+}
+
+/* Cuando no hay nada que sugerir, el panel deja de reclamar atencion. */
+.sugerencia--inactiva {
+  border-color: var(--color-borde);
+  border-style: dashed;
+  background: transparent;
+}
+
+/* Atenua mientras llega una sugerencia nueva, sin vaciar la anterior. */
+.sugerencia--actualizando {
+  opacity: 0.6;
+}
+
+.sugerencia__rotulo {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+}
+
+.sugerencia__texto {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-texto-suave);
+}
+
+.sugerencia__veredicto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-bottom: 4px;
+}
+
+.sugerencia__categoria {
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.sugerencia__confianza {
+  margin: 0 0 16px;
+  font-size: 0.82rem;
+  color: var(--color-texto-suave);
+}
+
+.sugerencia__detalle {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sugerencia__detalle dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+  margin-bottom: 5px;
+}
+
+.sugerencia__detalle dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 0.85rem;
+}
+
+/* Un termino del lexico que el motor reconocio en el texto. */
+.termino {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 0.78rem;
+  padding: 2px 7px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+}
+
+.sugerencia__puntajes {
+  flex-direction: column;
+  gap: 3px;
+}
+
+.puntaje {
+  font-size: 0.82rem;
+  color: var(--color-texto-suave);
+}
+
+/* La categoria que se llevo la decision. Verla destacada entre las demas es lo
+   que explica el mecanismo: gana la mas puntuada. */
+.puntaje--gana {
+  color: var(--color-texto);
+  font-weight: 600;
+}
+
+.sugerencia__aviso {
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-borde);
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+}
+
+/* --- Confirmacion y aviso de duplicado ----------------------------------- */
+
+.confirmacion {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  padding: 28px 32px;
+}
+
+.confirmacion__rotulo {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 3px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ok);
+  background: #e8f5ec;
+  border-radius: 999px;
+}
+
+.confirmacion .titulo {
+  margin-bottom: 2px;
+}
+
+.confirmacion .subtitulo {
+  margin-bottom: 24px;
+}
+
+.confirmacion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+/* Tono de aviso, no de error: la incidencia se registro bien. Lo que se informa
+   es un parecido que conviene revisar. */
+.aviso-duplicado {
+  margin-top: 24px;
+  padding: 18px 20px;
+  background: #fff9e8;
+  border: 1px solid #f0dca4;
+  border-radius: var(--radio);
+}
+
+.aviso-duplicado__rotulo {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a5b00;
+}
+
+.aviso-duplicado__texto {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+}
+
+.aviso-duplicado__cifras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin: 0 0 16px;
+}
+
+.aviso-duplicado__cifras dt {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7a5b00;
+  margin-bottom: 2px;
+}
+
+.aviso-duplicado__cifras dd {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.aviso-duplicado__nota {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #7a5b00;
+}

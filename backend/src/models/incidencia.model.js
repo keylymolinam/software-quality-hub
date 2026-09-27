@@ -59,12 +59,41 @@ const CAMPOS_ACTUALIZABLES = [
   'asignado_a',
 ];
 
-/** Columnas por las que se permite ordenar el listado. */
+/**
+ * Expresiones por las que se permite ordenar el listado.
+ *
+ * `prioridad` y `estado` no ordenan por la columna directamente, y ahi esta lo
+ * importante: se guardan como texto, asi que SQLite los ordenaria en orden
+ * alfabetico. Eso da resultados sin sentido, porque el alfabeto no coincide con
+ * la gravedad ni con el avance del flujo:
+ *
+ *   alfabetico:  ALTA, BAJA, MEDIA        <- BAJA quedaria sobre MEDIA
+ *   alfabetico:  ABIERTA, CERRADA, EN_PROGRESO, RESUELTA
+ *
+ * El CASE traduce cada valor al numero que si refleja el orden del dominio, de
+ * modo que "ordenar por prioridad" ponga primero lo urgente. Como el listado
+ * usa DESC por defecto, el valor mas alto es el mas grave y el mas avanzado del
+ * flujo.
+ *
+ * Estas expresiones se concatenan en el SQL, por eso viven aqui como lista
+ * blanca y nunca se construyen con datos del usuario.
+ */
 const ORDENES_PERMITIDOS = {
   fecha_creacion: 'i.fecha_creacion',
-  prioridad: 'i.prioridad',
-  estado: 'i.estado',
   titulo: 'i.titulo',
+
+  prioridad: `CASE i.prioridad
+                WHEN 'ALTA'  THEN 3
+                WHEN 'MEDIA' THEN 2
+                ELSE 1
+              END`,
+
+  estado: `CASE i.estado
+             WHEN 'ABIERTA'     THEN 1
+             WHEN 'EN_PROGRESO' THEN 2
+             WHEN 'RESUELTA'    THEN 3
+             ELSE 4
+           END`,
 };
 
 // ---------------------------------------------------------------------------
