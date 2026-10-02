@@ -18,7 +18,7 @@ export default function AvisoDuplicado({ advertencia }) {
       <span className="aviso-duplicado__rotulo">Posible duplicado</span>
 
       <p className="aviso-duplicado__texto">
-        Se parece a la incidencia <strong>#{idOriginal}</strong>, «{titulo}».
+        Se parece a la incidencia <strong>#{idOriginal}</strong>, &laquo;{titulo}&raquo;.
       </p>
 
       {/* Los tres numeros que justifican el aviso. Se muestran juntos porque
@@ -40,8 +40,8 @@ export default function AvisoDuplicado({ advertencia }) {
       </dl>
 
       <p className="aviso-duplicado__nota">
-        Se registro igual. Si confirmas que es la misma falla, puedes cerrar esta
-        incidencia indicando el motivo, y la bitacora guardara por que se cerro
+        Se registr&oacute; igual. Si confirmas que es la misma falla, puedes cerrar esta
+        incidencia indicando el motivo, y la bit&aacute;cora guardar&aacute; por qu&eacute; se cerr&oacute;
         sin trabajarla.
       </p>
     </div>

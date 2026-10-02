@@ -79,7 +79,7 @@ async function request(ruta, opciones = {}) {
     // apagado, sin red, CORS mal configurado. Conviene distinguirlo de un
     // error devuelto por el backend, porque la solucion es otra.
     throw new ErrorApi(
-      'No se pudo conectar con el servidor. Revisa que el backend este ejecutandose.',
+      'No se pudo conectar con el servidor. Revisa que el backend est\u00e9 ejecut\u00e1ndose.',
       0
     );
   }

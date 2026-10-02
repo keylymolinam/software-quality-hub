@@ -150,7 +150,7 @@ export default function Incidencias() {
         <div>
           <h1 className="titulo">Incidencias</h1>
           <p className="subtitulo">
-            Listado completo, con filtros, busqueda y orden.
+            Listado completo, con filtros, b&uacute;squeda y orden.
           </p>
         </div>
 

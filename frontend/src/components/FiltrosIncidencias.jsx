@@ -59,7 +59,7 @@ export default function FiltrosIncidencias({
           <input
             className="campo__control"
             type="search"
-            placeholder="Titulo o descripcion"
+            placeholder="T&iacute;tulo o descripci&oacute;n"
             value={textoBusqueda}
             onChange={(e) => setTextoBusqueda(e.target.value)}
           />
@@ -80,7 +80,7 @@ export default function FiltrosIncidencias({
         />
 
         <Desplegable
-          etiqueta="Categoria"
+          etiqueta="Categor&iacute;a"
           valor={valores.categoria}
           opciones={CATEGORIAS}
           onCambiar={(v) => onCambiar('categoria', v)}
@@ -121,7 +121,7 @@ export default function FiltrosIncidencias({
         />
 
         <Desplegable
-          etiqueta="Direccion"
+          etiqueta="Direcci&oacute;n"
           valor={valores.direccion}
           opciones={[
             { valor: 'DESC', etiqueta: 'Descendente' },

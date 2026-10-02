@@ -69,11 +69,40 @@ export const CATEGORIAS = [
  * defecto, y el usuario veria un listado que no obedece al criterio que eligio.
  */
 export const ORDENES = [
-  { valor: 'fecha_creacion', etiqueta: 'Fecha de creacion' },
+  { valor: 'fecha_creacion', etiqueta: 'Fecha de creaci\u00f3n' },
   { valor: 'prioridad', etiqueta: 'Prioridad' },
   { valor: 'estado', etiqueta: 'Estado' },
-  { valor: 'titulo', etiqueta: 'Titulo' },
+  { valor: 'titulo', etiqueta: 'T\u00edtulo' },
 ];
+
+/**
+ * Como se llama en pantalla cada cambio de estado.
+ *
+ * La clave es 'ORIGEN->DESTINO' y no solo el destino, porque el mismo estado de
+ * llegada significa cosas distintas segun de donde se venga: pasar a
+ * EN_PROGRESO desde ABIERTA es empezar a trabajar, y desde RESUELTA es reabrir
+ * porque la solucion no resulto. Un boton que dijera "En progreso" en los dos
+ * casos obligaria a mirar el estado actual para entender que va a hacer.
+ *
+ * Lo que esta tabla NO contiene es la forma de la maquina de estados: que
+ * transiciones existen lo dice el backend en `transiciones_posibles`. Aqui solo
+ * esta el texto, que es lo unico que el servidor no puede aportar.
+ *
+ * Sobre `exigeMotivo`: marca el comentario como obligatorio antes de enviar, y
+ * repite TRANSICIONES_QUE_EXIGEN_MOTIVO de services/incidencia.service.js. La
+ * duplicacion es una comodidad, no la regla: la hace cumplir el servidor, que
+ * responde 400 con el detalle en el campo `comentario`. Si las dos listas
+ * discreparan, lo peor que puede pasar es pedir un motivo que no hacia falta, o
+ * no pedirlo y recibir el 400 que la pantalla ya sabe mostrar junto al campo.
+ * Nunca se guarda algo que el backend no haya aceptado.
+ */
+export const ACCIONES_TRANSICION = {
+  'ABIERTA->EN_PROGRESO': { etiqueta: 'Tomar y empezar', exigeMotivo: false },
+  'ABIERTA->CERRADA': { etiqueta: 'Cerrar sin resolver', exigeMotivo: true },
+  'EN_PROGRESO->RESUELTA': { etiqueta: 'Marcar resuelta', exigeMotivo: false },
+  'RESUELTA->EN_PROGRESO': { etiqueta: 'Reabrir', exigeMotivo: false },
+  'RESUELTA->CERRADA': { etiqueta: 'Cerrar', exigeMotivo: false },
+};
 
 /**
  * Devuelve el texto legible de un valor.
@@ -91,26 +120,80 @@ export function etiquetaDe(lista, valor) {
 }
 
 /**
- * Formatea una fecha del backend para mostrarla.
+ * Describe una transicion para la interfaz: como se llama y si exige motivo.
+ *
+ * Cuando la combinacion no esta en ACCIONES_TRANSICION se arma un texto con el
+ * nombre del estado de destino en vez de devolver undefined. Asi una transicion
+ * agregada en el backend aparece y funciona de inmediato, con un nombre menos
+ * natural que delata que falta nombrarla aqui; devolver undefined habria dejado
+ * un boton sin etiqueta, que es un defecto mucho mas difuso de diagnosticar.
+ */
+export function accionDe(estadoActual, estadoDestino) {
+  return (
+    ACCIONES_TRANSICION[`${estadoActual}->${estadoDestino}`] ?? {
+      etiqueta: `Pasar a ${etiquetaDe(ESTADOS, estadoDestino).toLowerCase()}`,
+      exigeMotivo: false,
+    }
+  );
+}
+
+/**
+ * Convierte una fecha del backend en un Date, o null si no se puede.
  *
  * El backend las entrega en UTC con formato 'YYYY-MM-DD HH:MM:SS'. Ese texto no
  * es una fecha ISO valida para el navegador (le falta la 'T' y la zona), y
  * Safari devuelve "Invalid Date" al intentarlo. Por eso se completa antes de
  * construir el Date, en lugar de confiar en que cada navegador adivine igual.
  *
- * Se muestra solo el dia, sin la hora: en un listado la hora exacta ocupa
- * espacio y no ayuda a decidir nada. El detalle de la incidencia si la mostrara.
+ * Vive aqui, privada, porque las dos funciones de abajo necesitan exactamente
+ * la misma correccion y repetirla seria arriesgarse a corregirla en una sola.
  */
-export function formatearFecha(texto) {
-  if (!texto) return '-';
+function interpretar(texto) {
+  if (!texto) return null;
 
   const fecha = new Date(`${texto.replace(' ', 'T')}Z`);
 
-  if (Number.isNaN(fecha.getTime())) return texto;
+  return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+/**
+ * Formatea una fecha para el listado: solo el dia, sin la hora.
+ *
+ * En una tabla la hora exacta ocupa ancho y no ayuda a decidir nada. El detalle
+ * de la incidencia si la muestra, con formatearFechaHora().
+ *
+ * Si el texto no se puede interpretar se devuelve tal cual en lugar de
+ * "Invalid Date": el dato crudo a la vista permite ver que llego mal.
+ */
+export function formatearFecha(texto) {
+  const fecha = interpretar(texto);
+
+  if (!fecha) return texto || '-';
 
   return fecha.toLocaleDateString('es-CL', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+  });
+}
+
+/**
+ * Formatea una fecha con su hora, para el detalle y la linea de tiempo.
+ *
+ * Aqui la hora si es informacion: dos cambios de estado del mismo dia solo se
+ * distinguen por ella, y sin eso la bitacora no permite decir cuanto tiempo
+ * estuvo la incidencia en cada estado, que es justo lo que se le pregunta.
+ */
+export function formatearFechaHora(texto) {
+  const fecha = interpretar(texto);
+
+  if (!fecha) return texto || '-';
+
+  return fecha.toLocaleString('es-CL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }

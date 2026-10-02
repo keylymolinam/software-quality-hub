@@ -44,7 +44,7 @@ export default function Paginacion({ paginacion, onCambiarPagina }) {
         </button>
 
         <span className="paginacion__posicion">
-          Pagina {pagina} de {paginas}
+          P&aacute;gina {pagina} de {paginas}
         </span>
 
         <button

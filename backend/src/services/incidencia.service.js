@@ -249,7 +249,19 @@ export function listarIncidencias(consulta = {}) {
 }
 
 /**
- * Devuelve una incidencia por su id.
+ * Devuelve una incidencia por su id, junto con lo que se puede hacer con ella.
+ *
+ * `transiciones_posibles` acompana al detalle por el mismo motivo por el que ya
+ * lo devuelve cambiarEstado(): la pantalla de detalle tiene que dibujar un boton
+ * por cada cambio de estado permitido, y la unica forma de saber cuales son es
+ * consultar TRANSICIONES. Si no viniera en la respuesta, el frontend tendria que
+ * reimplementar la maquina de estados, y pasaria a haber dos versiones del flujo
+ * que pueden discrepar: el dia que se edite la tabla, el backend respetaria el
+ * flujo nuevo y la interfaz seguiria ofreciendo el anterior.
+ *
+ * Es un campo derivado, no una columna: se calcula en cada lectura a partir del
+ * estado actual y nunca se guarda.
+ *
  * @throws {ErrorHttp} 404 si no existe.
  */
 export function obtenerIncidencia(id) {
@@ -260,7 +272,10 @@ export function obtenerIncidencia(id) {
     throw errorNoEncontrado(`No existe la incidencia con id ${idIncidencia}.`);
   }
 
-  return incidencia;
+  return {
+    ...incidencia,
+    transiciones_posibles: transicionesPosibles(incidencia.estado),
+  };
 }
 
 /**

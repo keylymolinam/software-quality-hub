@@ -23,9 +23,9 @@ export default function SugerenciaClasificacion({ sugerencia, consultando, sufic
   if (!activa) {
     return (
       <aside className="sugerencia sugerencia--inactiva">
-        <span className="sugerencia__rotulo">Clasificacion</span>
+        <span className="sugerencia__rotulo">Clasificaci&oacute;n</span>
         <p className="sugerencia__texto">
-          Elegiste la categoria y la prioridad, asi que se guardan tal como las
+          Elegiste la categor&iacute;a y la prioridad, as&iacute; que se guardan tal como las
           indicaste. El motor no interviene.
         </p>
       </aside>
@@ -35,10 +35,10 @@ export default function SugerenciaClasificacion({ sugerencia, consultando, sufic
   if (!suficiente) {
     return (
       <aside className="sugerencia sugerencia--inactiva">
-        <span className="sugerencia__rotulo">Clasificacion automatica</span>
+        <span className="sugerencia__rotulo">Clasificaci&oacute;n autom&aacute;tica</span>
         <p className="sugerencia__texto">
-          Escribe el titulo y la descripcion: el motor va a sugerir la categoria
-          y la prioridad, y a mostrarte en que se basa.
+          Escribe el t&iacute;tulo y la descripci&oacute;n: el motor va a sugerir la categor&iacute;a
+          y la prioridad, y a mostrarte en qu&eacute; se basa.
         </p>
       </aside>
     );
@@ -47,7 +47,7 @@ export default function SugerenciaClasificacion({ sugerencia, consultando, sufic
   if (!sugerencia) {
     return (
       <aside className="sugerencia sugerencia--inactiva">
-        <span className="sugerencia__rotulo">Clasificacion automatica</span>
+        <span className="sugerencia__rotulo">Clasificaci&oacute;n autom&aacute;tica</span>
         <p className="sugerencia__texto">
           <span className="estado estado--cargando">Analizando el texto...</span>
         </p>
@@ -78,13 +78,13 @@ export default function SugerenciaClasificacion({ sugerencia, consultando, sufic
           probabilidad de acertar. Se nombra asi para no prometer mas de lo que
           significa. */}
       <p className="sugerencia__confianza">
-        Evidencia concentrada en esta categoria: <strong>{Math.round(confianza * 100)}%</strong>
+        Evidencia concentrada en esta categor&iacute;a: <strong>{Math.round(confianza * 100)}%</strong>
       </p>
 
       <dl className="sugerencia__detalle">
         {evidencia.terminos_categoria.length > 0 && (
           <>
-            <dt>Terminos encontrados</dt>
+            <dt>T&eacute;rminos encontrados</dt>
             <dd>
               {evidencia.terminos_categoria.map((termino) => (
                 <code key={termino} className="termino">{termino}</code>
@@ -132,16 +132,16 @@ export default function SugerenciaClasificacion({ sugerencia, consultando, sufic
             que es una peticion conviene decirlo: cambia como se prioriza. */}
         {evidencia.es_peticion && (
           <>
-            <dt>Observacion</dt>
-            <dd>El texto parece una peticion de mejora, no una falla.</dd>
+            <dt>Observaci&oacute;n</dt>
+            <dd>El texto parece una petici&oacute;n de mejora, no una falla.</dd>
           </>
         )}
       </dl>
 
       <p className="sugerencia__aviso">
-        Es una sugerencia. Si eliges categoria o prioridad mas abajo, se respeta
-        tu eleccion y la incidencia no queda marcada como clasificada
-        automaticamente.
+        Es una sugerencia. Si eliges categor&iacute;a o prioridad m&aacute;s abajo, se respeta
+        tu elecci&oacute;n y la incidencia no queda marcada como clasificada
+        autom&aacute;ticamente.
       </p>
     </aside>
   );

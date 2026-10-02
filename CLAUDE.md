@@ -12,8 +12,19 @@ memoria**, y por eso la justificación escrita de cada decisión tiene el mismo 
 el código que la implementa.
 
 Estado actual: la API REST está completa (tres entidades, máquina de estados,
-autenticación por rol y los tres diferenciadores). El frontend está en construcción: hoy
-existen solo login, cabecera y pantalla de inicio.
+autenticación por rol y los tres diferenciadores). El frontend ya permite recorrer el
+ciclo de trabajo completo, con cinco pantallas:
+
+| Pantalla | Ruta | Qué resuelve |
+|---|---|---|
+| Login | — (fuera de sesión) | Única pantalla sin sesión; `App.jsx` decide |
+| Inicio | `/` | Comprueba la conexión y adelanta el índice de salud como número |
+| Listado | `/incidencias` | Filtros, búsqueda, orden y paginación en la dirección |
+| Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
+| Detalle | `/incidencias/:id` | Transiciones de estado y bitácora |
+
+Pendiente: el panel del índice de salud con su desglose por componente (hoy la pantalla
+de inicio muestra solo el número global) y la administración de proyectos y usuarios.
 
 ## Comandos
 
@@ -122,6 +133,22 @@ de los datos: si se cambian, hay que decir por qué.
 - **Los `.js` y `.jsx` se escriben sin acentos ni `ñ`**, comentarios incluidos. Las tildes
   aparecen solo en `.md`, en `.sql` y en los textos de dominio de
   `clasificacion.service.js` y `similitud.js`. Al escribir código nuevo, mantener ASCII.
+- **El texto que se ve en pantalla sí lleva tildes**, y la regla anterior se sostiene
+  escribiéndolas escapadas. Son dos mecanismos distintos y no son intercambiables:
+  - **En JSX, entidades HTML**: `<span>Contrase&ntilde;a</span>`,
+    `placeholder="Direcci&oacute;n"`. Valen igual en el texto de un elemento que en un
+    atributo literal, porque Babel las decodifica al compilar.
+  - **En literales de JavaScript, escapes `\u`**: `'Todav\u00eda no hay incidencias'`.
+    Aplica a cadenas sueltas, plantillas y todo lo que no pase por JSX; ahí una entidad
+    se mostraría tal cual, con el `&ntilde;` a la vista.
+
+  Las dos comprobaciones: `grep -Prn '[^\x00-\x7F]' --include='*.js' --include='*.jsx'
+  src` no debe devolver nada, y en el bundle de `dist/` no debe quedar ninguna
+  `&entidad;` sin decodificar.
+
+  **Deuda conocida**: los mensajes de error del backend se muestran en la interfaz y
+  todavía no llevan tildes (`'Correo o contrasena incorrectos.'`). Les corresponde el
+  escape `\u`, por ser literales.
 - **SQL**: tablas en MAYÚSCULAS, columnas en `snake_case`, valores de enumerado en
   MAYÚSCULAS. Fechas como TEXT ISO (`YYYY-MM-DD HH:MM:SS`), booleanos como INTEGER 0/1.
 - **Comentarios**: cada archivo abre con un bloque que explica su responsabilidad y por
@@ -136,9 +163,20 @@ de los datos: si se cambian, hay que decir por qué.
 
 ### Frontend
 
-- **Sin dependencias más allá de React.** No hay enrutador todavía: `App.jsx` decide entre
-  login y aplicación según la sesión. El router entra cuando exista la segunda pantalla
-  dentro de la sesión.
+- **Sin dependencias más allá de React y `react-router-dom`.** El enrutador entró al
+  aparecer la segunda pantalla dentro de la sesión, tal como estaba previsto. `App.jsx`
+  sigue decidiendo entre login y aplicación según la sesión, y declara las rutas solo
+  para quien ya entró: fuera de sesión no hay nada que enrutar.
+- **El estado de una pantalla vive en la dirección, no en `useState`.** El listado guarda
+  filtros, orden y página en la cadena de consulta (`?estado=ABIERTA&pagina=2`). Cuesta lo
+  mismo y da tres cosas: enlaces que se pueden compartir, el botón atrás deshaciendo el
+  último filtro, y recargar sin perder el trabajo.
+- **Las dos capas de la máquina de estados no se duplican.** Qué transiciones existen lo
+  dice el backend (`transiciones_posibles`, que viene en el detalle y en la respuesta de
+  la transición); el frontend solo aporta el texto de los botones y si el motivo es
+  obligatorio (`ACCIONES_TRANSICION` en `dominio/incidencias.js`). La regla la hace
+  cumplir el servidor: si las dos discrepan, se pide un motivo de más o llega un 400 que
+  la pantalla ya muestra junto al campo.
 - **Toda llamada HTTP pasa por `api/client.js`**, que adjunta el token, convierte los
   errores en `ErrorApi` (con `status` y `detalles` por campo) y detecta el 401 para cerrar
   la sesión solo. Los archivos de `api/` solo traducen funciones a rutas.

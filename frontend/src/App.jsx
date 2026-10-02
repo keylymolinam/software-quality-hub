@@ -28,6 +28,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import Cabecera from './components/Cabecera.jsx';
+import DetalleIncidencia from './pages/DetalleIncidencia.jsx';
 import Incidencias from './pages/Incidencias.jsx';
 import Inicio from './pages/Inicio.jsx';
 import Login from './pages/Login.jsx';
@@ -40,7 +41,7 @@ export default function App() {
   if (comprobando) {
     return (
       <main className="pantalla-centrada">
-        <span className="estado estado--cargando">Cargando sesion...</span>
+        <span className="estado estado--cargando">Cargando sesi&oacute;n...</span>
       </main>
     );
   }
@@ -66,6 +67,12 @@ export default function App() {
             especificidad, asi que /incidencias/nueva no compite con un futuro
             /incidencias/:id aunque se declaren en cualquier orden. */}
         <Route path="/incidencias/nueva" element={<NuevaIncidencia />} />
+
+        {/* Va DESPUES de /incidencias/nueva. React Router resuelve por
+            especificidad y no por orden, asi que hoy da igual; se declara en
+            este orden para que al leer el archivo se vea que "nueva" es una
+            pantalla y no un id, que es la confusion que produce un :id suelto. */}
+        <Route path="/incidencias/:id" element={<DetalleIncidencia />} />
 
         {/* Una direccion que no existe vuelve al inicio en lugar de dejar la
             pantalla en blanco. Se reemplaza la entrada del historial para que el

@@ -11,6 +11,8 @@
  * duplicado. Son la razon de ser del sistema, asi que se ven en el listado y no
  * escondidas en el detalle.
  */
+import { Link } from 'react-router-dom';
+
 import EtiquetaEstado from './EtiquetaEstado.jsx';
 import EtiquetaPrioridad from './EtiquetaPrioridad.jsx';
 import { CATEGORIAS, etiquetaDe, formatearFecha } from '../dominio/incidencias.js';
@@ -25,7 +27,7 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
       <p className="vacio">
         {hayFiltros
           ? 'Ninguna incidencia coincide con los filtros aplicados.'
-          : 'Todavia no hay incidencias registradas.'}
+          : 'Todav\u00eda no hay incidencias registradas.'}
       </p>
     );
   }
@@ -36,11 +38,11 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
         <thead>
           <tr>
             <th scope="col" className="tabla__num">#</th>
-            <th scope="col">Titulo</th>
+            <th scope="col">T&iacute;tulo</th>
             <th scope="col">Proyecto</th>
             <th scope="col">Estado</th>
             <th scope="col">Prioridad</th>
-            <th scope="col">Categoria</th>
+            <th scope="col">Categor&iacute;a</th>
             <th scope="col">Asignada a</th>
             <th scope="col">Creada</th>
           </tr>
@@ -52,7 +54,13 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
               <td className="tabla__num">{incidencia.id_incidencia}</td>
 
               <td>
-                <span className="tabla__titulo">{incidencia.titulo}</span>
+                {/* El titulo es el enlace al detalle, y no el numero: es lo que
+                    identifica la incidencia para quien la lee, y da un area de
+                    clic grande. El numero queda como referencia para nombrarla
+                    en voz alta o en un comentario. */}
+                <Link className="tabla__titulo" to={`/incidencias/${incidencia.id_incidencia}`}>
+                  {incidencia.titulo}
+                </Link>
 
                 {/* Los avisos van bajo el titulo y no en columnas propias: son
                     la excepcion y no el caso habitual, y dos columnas casi
@@ -63,7 +71,7 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
                       <span
                         className="marca marca--duplicado"
                         title={
-                          'El detector de duplicados encontro similitud con la incidencia ' +
+                          'El detector de duplicados encontr\u00f3 similitud con la incidencia ' +
                           `#${incidencia.posible_duplicado_de}. Es un aviso, no una certeza.`
                         }
                       >
@@ -74,9 +82,9 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
                     {incidencia.clasificacion_automatica === 1 && (
                       <span
                         className="marca marca--automatica"
-                        title="La categoria y la prioridad las dedujo el motor de clasificacion, no una persona."
+                        title="La categor&iacute;a y la prioridad las dedujo el motor de clasificaci&oacute;n, no una persona."
                       >
-                        Clasificada automaticamente
+                        Clasificada autom&aacute;ticamente
                       </span>
                     )}
                   </span>

@@ -933,3 +933,207 @@ a.boton {
   font-size: 0.82rem;
   color: #7a5b00;
 }
+
+/* ===========================================================================
+   Detalle de incidencia
+   Pantalla de una incidencia: sus datos, las acciones de estado y la bitacora.
+   =========================================================================== */
+
+/* Rastro de navegacion. Dice donde se esta sin ocupar el lugar del titulo. */
+.migas {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+}
+
+.migas a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.migas a:hover {
+  color: var(--color-primario);
+  border-bottom-color: currentColor;
+}
+
+/* El titulo de la tabla dejo de ser un span y ahora lleva al detalle. Se le
+   quita el aspecto de enlace para no pintar de azul una columna entera: el
+   subrayado aparece al pasar el cursor, que es cuando importa saber que se
+   puede pulsar. */
+a.tabla__titulo {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.tabla__titulo:hover {
+  color: var(--color-primario);
+  text-decoration: underline;
+}
+
+.detalle__distintivos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.detalle__categoria {
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.detalle__senales {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Los avisos traen su propio margen superior porque normalmente van dentro de
+   una tarjeta. Aqui el espacio lo da el gap de la rejilla. */
+.detalle__senales > * {
+  margin-top: 0;
+}
+
+/* Los datos y la bitacora a la izquierda; las acciones a la derecha. El panel
+   va segundo en el HTML para que el teclado recorra primero el contenido: las
+   acciones son el final del camino, no el principio. */
+.detalle-con-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .detalle-con-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Queda a la vista al desplazarse por una bitacora larga. Sin esto, cambiar el
+   estado de una incidencia con mucha historia obliga a volver arriba. */
+.detalle__panel {
+  position: sticky;
+  top: 16px;
+}
+
+.detalle__descripcion {
+  margin: 16px 0 0;
+  /* pre-wrap respeta los saltos de linea que escribio la persona y sigue
+     ajustando el texto al ancho disponible. */
+  white-space: pre-wrap;
+}
+
+/* En esta pantalla los valores son nombres y fechas, no identificadores
+   tecnicos, asi que no se muestran en monoespaciada como en el resto. */
+.detalle--texto dd {
+  font-family: inherit;
+}
+
+/* --- Acciones de estado --------------------------------------------------- */
+
+.acciones__botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.acciones__confirmacion {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.acciones__confirmar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.acciones .campo__control--area {
+  min-height: 80px;
+}
+
+/* --- Linea de tiempo ------------------------------------------------------ */
+
+.linea-tiempo {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada hito cuelga de una linea vertical continua, que es lo que convierte una
+   lista en un recorrido. El punto se dibuja encima de esa linea. */
+.hito {
+  position: relative;
+  padding: 0 0 20px 20px;
+  border-left: 2px solid var(--color-borde);
+}
+
+/* El ultimo no continua hacia ningun lado: la linea se corta con el. */
+.hito:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+.hito::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-superficie);
+  border: 2px solid var(--color-borde);
+  border-radius: 50%;
+}
+
+/* Una reapertura es el movimiento que castiga el indice de salud, asi que se
+   distingue del resto en lugar de pasar como un cambio mas. */
+.hito--reapertura::before {
+  border-color: #b4540a;
+}
+
+.hito__cambio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.hito__flecha {
+  color: var(--color-texto-suave);
+}
+
+.hito__origen {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.marca--reapertura {
+  color: #8a4008;
+  background: #fff4ec;
+  border: 1px solid #f3d0b4;
+  cursor: default;
+}
+
+.hito__meta {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+}
+
+.hito__comentario {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  background: var(--color-fondo);
+  border-radius: var(--radio);
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+}

@@ -38,13 +38,13 @@ export default function Inicio() {
     <main className="contenedor contenido">
       <h1 className="titulo">Hola, {usuario.nombre.split(' ')[0]}</h1>
       <p className="subtitulo">
-        Sesion iniciada como <strong>{usuario.rol}</strong> ({usuario.correo_electronico})
+        Sesi&oacute;n iniciada como <strong>{usuario.rol}</strong> ({usuario.correo_electronico})
       </p>
 
       {error && <p className="alerta alerta--error">{error.message}</p>}
 
       <section className="tarjeta">
-        <h2>Conexion con el backend</h2>
+        <h2>Conexi&oacute;n con el backend</h2>
         {estadoApi ? (
           <>
             <span className="estado estado--ok">API conectada</span>
@@ -68,7 +68,7 @@ export default function Inicio() {
 
       {resumen && (
         <section className="tarjeta">
-          <h2>Indice de salud (adelanto)</h2>
+          <h2>&Iacute;ndice de salud (adelanto)</h2>
           <p className="indice-grande">
             {resumen.global.indice}
             <span className={`etiqueta-salud etiqueta-salud--${resumen.global.etiqueta.toLowerCase()}`}>
@@ -76,19 +76,19 @@ export default function Inicio() {
             </span>
           </p>
           <p className="ayuda ayuda--neutra">
-            Esta peticion requiere sesion iniciada. Que se vea significa que el token
+            Esta petici&oacute;n requiere sesi&oacute;n iniciada. Que se vea significa que el token
             viaja correctamente en la cabecera <code>Authorization</code>.
           </p>
         </section>
       )}
 
       <section className="tarjeta">
-        <h2>Proximas pantallas</h2>
+        <h2>Pr&oacute;ximas pantallas</h2>
         <ul className="lista-simple">
-          <li>Detalle, transiciones de estado y bitacora</li>
-          <li>Formulario de registro con clasificacion sugerida y aviso de duplicados</li>
-          <li>Dashboard del indice de salud</li>
-          {esAdministrador && <li>Administracion de proyectos y usuarios</li>}
+          <li>Detalle, transiciones de estado y bit&aacute;cora</li>
+          <li>Formulario de registro con clasificaci&oacute;n sugerida y aviso de duplicados</li>
+          <li>Dashboard del &iacute;ndice de salud</li>
+          {esAdministrador && <li>Administraci&oacute;n de proyectos y usuarios</li>}
         </ul>
       </section>
     </main>

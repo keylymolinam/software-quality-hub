@@ -73,3 +73,58 @@ export function crearIncidencia(datos) {
 export function clasificarTexto({ titulo, descripcion }) {
   return api.post('/incidencias/clasificar', { titulo, descripcion });
 }
+
+/**
+ * Detalle de una incidencia.
+ *
+ * Ademas de las columnas, la respuesta trae `transiciones_posibles`: la lista
+ * de estados a los que se puede pasar desde el actual. Viene del backend a
+ * proposito, para que la pantalla de detalle dibuje un boton por transicion
+ * permitida sin tener que conocer la maquina de estados.
+ *
+ * @returns {Promise<object>}
+ */
+export function obtenerIncidencia(id) {
+  return api.get(`/incidencias/${id}`);
+}
+
+/**
+ * Cambia el estado de una incidencia.
+ *
+ * Es la UNICA via para mover el estado; no existe un PUT del campo. La peticion
+ * tambien escribe la bitacora, y por eso el autor no se envia: se toma del
+ * token. Mandarlo permitiria firmar un cambio con el nombre de otra persona.
+ *
+ * @param {number|string} id
+ * @param {object} datos
+ * @param {string} datos.estado       Estado de destino.
+ * @param {string} [datos.comentario] Motivo. Obligatorio en ABIERTA -> CERRADA.
+ *
+ * @returns {Promise<object>} La incidencia ya actualizada, con las
+ *   `transiciones_posibles` que correspondan a su estado nuevo.
+ */
+export function cambiarEstado(id, { estado, comentario }) {
+  const cuerpo = { estado };
+
+  // Un comentario en blanco no se envia en lugar de enviarse vacio: el backend
+  // exige un minimo de 3 caracteres y responderia 400 por un campo que la
+  // persona decidio no llenar. Omitirlo es lo que significa "sin comentario".
+  const motivo = comentario?.trim();
+  if (motivo) {
+    cuerpo.comentario = motivo;
+  }
+
+  return api.post(`/incidencias/${id}/transicion`, cuerpo);
+}
+
+/**
+ * Bitacora de cambios de estado, del mas antiguo al mas reciente.
+ *
+ * El primer registro siempre es la creacion y llega con `estado_anterior` en
+ * null; los demas tienen los dos estados.
+ *
+ * @returns {Promise<{ id_incidencia: number, total: number, movimientos: Array }>}
+ */
+export function obtenerHistorial(id) {
+  return api.get(`/incidencias/${id}/historial`);
+}

@@ -47,10 +47,10 @@ export default function Login() {
     <main className="pantalla-centrada">
       <form className="tarjeta tarjeta--login" onSubmit={alEnviar}>
         <h1 className="titulo">Software Quality Hub</h1>
-        <p className="subtitulo">Sistema de gestion de incidencias de software</p>
+        <p className="subtitulo">Sistema de gesti&oacute;n de incidencias de software</p>
 
         <label className="campo">
-          <span className="campo__etiqueta">Correo electronico</span>
+          <span className="campo__etiqueta">Correo electr&oacute;nico</span>
           <input
             className="campo__control"
             type="email"
@@ -66,7 +66,7 @@ export default function Login() {
         </label>
 
         <label className="campo">
-          <span className="campo__etiqueta">Contrasena</span>
+          <span className="campo__etiqueta">Contrase&ntilde;a</span>
           <input
             className="campo__control"
             type="password"

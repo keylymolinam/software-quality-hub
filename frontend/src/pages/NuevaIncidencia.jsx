@@ -122,13 +122,13 @@ export default function NuevaIncidencia() {
           <dl className="detalle">
             <dt>Proyecto</dt>
             <dd>{creada.proyecto_nombre}</dd>
-            <dt>Categoria</dt>
+            <dt>Categor&iacute;a</dt>
             <dd>{etiquetaDe(CATEGORIAS, creada.categoria)}</dd>
             <dt>Prioridad</dt>
             <dd>{etiquetaDe(PRIORIDADES, creada.prioridad)}</dd>
             <dt>Estado</dt>
             <dd>Abierta</dd>
-            <dt>Clasificacion</dt>
+            <dt>Clasificaci&oacute;n</dt>
             <dd>
               {creada.clasificacion_automatica === 1
                 ? 'Deducida por el motor'
@@ -167,7 +167,7 @@ export default function NuevaIncidencia() {
         <div>
           <h1 className="titulo">Nueva incidencia</h1>
           <p className="subtitulo">
-            Describe el problema. La categoria y la prioridad se deducen del
+            Describe el problema. La categor&iacute;a y la prioridad se deducen del
             texto si no las indicas.
           </p>
         </div>
@@ -185,7 +185,7 @@ export default function NuevaIncidencia() {
       <div className="formulario-con-panel">
         <form className="tarjeta" onSubmit={alEnviar}>
           <Campo
-            etiqueta="Titulo"
+            etiqueta="T&iacute;tulo"
             ayuda={`Entre ${LARGO_TITULO.min} y ${LARGO_TITULO.max} caracteres`}
             error={error?.mensajeDe('titulo')}
           >
@@ -195,15 +195,15 @@ export default function NuevaIncidencia() {
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               maxLength={LARGO_TITULO.max}
-              placeholder="El portal no carga para ningun usuario"
+              placeholder="El portal no carga para ning&uacute;n usuario"
               autoFocus
               required
             />
           </Campo>
 
           <Campo
-            etiqueta="Descripcion"
-            ayuda={`Desde ${LARGO_DESCRIPCION.min} caracteres. Cuenta que ocurre, cuando y a quien afecta.`}
+            etiqueta="Descripci&oacute;n"
+            ayuda={`Desde ${LARGO_DESCRIPCION.min} caracteres. Cuenta qu\u00e9 ocurre, cu\u00e1ndo y a qui\u00e9n afecta.`}
             error={error?.mensajeDe('descripcion')}
           >
             <textarea
@@ -212,7 +212,7 @@ export default function NuevaIncidencia() {
               onChange={(e) => setDescripcion(e.target.value)}
               maxLength={LARGO_DESCRIPCION.max}
               rows={6}
-              placeholder="Al ingresar a la direccion del portal el navegador muestra un error 500. Afecta a todos los clientes desde esta manana."
+              placeholder="Al ingresar a la direcci&oacute;n del portal el navegador muestra un error 500. Afecta a todos los clientes desde esta ma&ntilde;ana."
               required
             />
           </Campo>
@@ -235,7 +235,7 @@ export default function NuevaIncidencia() {
 
           <div className="campos-en-fila">
             <Campo
-              etiqueta="Categoria"
+              etiqueta="Categor&iacute;a"
               ayuda="En blanco, la deduce el motor"
               error={error?.mensajeDe('categoria')}
             >
@@ -244,7 +244,7 @@ export default function NuevaIncidencia() {
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
               >
-                <option value="">Deducir automaticamente</option>
+                <option value="">Deducir autom&aacute;ticamente</option>
                 {CATEGORIAS.map((c) => (
                   <option key={c.valor} value={c.valor}>
                     {c.etiqueta}
@@ -263,7 +263,7 @@ export default function NuevaIncidencia() {
                 value={prioridad}
                 onChange={(e) => setPrioridad(e.target.value)}
               >
-                <option value="">Deducir automaticamente</option>
+                <option value="">Deducir autom&aacute;ticamente</option>
                 {PRIORIDADES.map((p) => (
                   <option key={p.valor} value={p.valor}>
                     {p.etiqueta}
@@ -275,7 +275,7 @@ export default function NuevaIncidencia() {
 
           <Campo
             etiqueta="Asignar a"
-            ayuda="Opcional. Una incidencia recien reportada puede no tener responsable."
+            ayuda="Opcional. Una incidencia reci&eacute;n reportada puede no tener responsable."
             error={error?.mensajeDe('asignado_a')}
           >
             <select
@@ -297,8 +297,8 @@ export default function NuevaIncidencia() {
           </button>
 
           <p className="ayuda ayuda--neutra">
-            Quedara <strong>abierta</strong> y a tu nombre. Quien reporta se toma
-            de la sesion, no del formulario.
+            Quedar&aacute; <strong>abierta</strong> y a tu nombre. Quien reporta se toma
+            de la sesi&oacute;n, no del formulario.
           </p>
         </form>
 
