@@ -188,9 +188,30 @@ de los datos: si se cambian, hay que decir por qué.
 
 ### Pruebas
 
-Solo `backend/tests/smoke.test.js` (`node:test` + `assert/strict`): verifica que el
-esquema y `/api/health` respondan. Levanta la app en el puerto `0` para no chocar con el
-servidor de desarrollo. Las pruebas funcionales están pendientes.
+Las dos suites corren con `node --test` y `assert/strict`. No hay ninguna dependencia de
+pruebas añadida al proyecto, y eso es parte del criterio: el ejecutor viene con Node.
+
+**Backend** — `npm test` desde `backend/`. `tests/smoke.test.js` verifica que el esquema
+cree las cinco entidades y que `/api/health` responda. Levanta la app en el puerto `0`
+para no chocar con el servidor de desarrollo.
+
+**Frontend** — `npm test` desde `frontend/`. `tests/pantallas.test.js` dibuja las
+pantallas con `renderToStaticMarkup` y afirma sobre el HTML resultante.
+`tests/entorno.js` arranca el propio Vite del proyecto, que es lo que permite importar
+`.jsx` desde node, y sustituye el contenido de `usePeticion` y del contexto de sesión por
+los dobles de `tests/dobles/`. La sustitución va por el gancho `load` de un plugin y no
+por `resolve.alias`: un alias obliga a entregarle a Vite una ruta absoluta del sistema, y
+en Windows las barras invertidas no resuelven. **La aplicación no lleva ni una línea
+añadida para poder probarse.**
+
+Lo que estas pruebas cubren son las situaciones que cuesta reproducir a mano y que se
+rompen sin que nadie lo note: una incidencia que no existe, un estado final sin
+transiciones, un sistema sin datos suficientes, el backend apagado. Lo que **no** cubren:
+el aspecto (el CSS no se aplica), la interacción (nadie pulsa un botón) y los efectos del
+hook de peticiones real. Eso pide un navegador, y es otra decisión.
+
+Siguen pendientes las pruebas funcionales del backend, que son las que ejercitarían la
+máquina de estados y los tres diferenciadores contra la base de datos.
 
 ## Entorno
 
