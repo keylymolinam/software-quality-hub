@@ -101,9 +101,26 @@ export const LEXICO_CATEGORIA = {
     ['autorizacion', 3],
     ['inyeccion', 3],
     ['cifrad*', 3],
+
+    // Nombra el incidente por si sola, igual que 'vulnerabilidad'. 'filtracion'
+    // (peso 2) cubre el concepto de forma mas vaga; 'fuga de datos' es como se
+    // escribe de verdad al reportar.
+    ['fuga de datos', 3],
+
+    // Con asterisco para que cubra tambien el plural. Escrito como 'permiso' no
+    // coincidia con "permisos", porque contiene() exige que el termino quede
+    // delimitado por espacios, y el plural es justo el que se usa al reportar:
+    // "un usuario sin permisos", "los permisos estan mal configurados".
+    //
+    // Sube de 2 a 3 porque con 2 no alcanzaba: PUNTAJE_MINIMO de
+    // clasificacion.service.js exige 3 para aceptar una categoria, asi que un
+    // texto cuya unica senal fuera "sin permisos" caia en OTRO. Quien reporta
+    // que alguien puede hacer algo sin permiso esta describiendo un problema de
+    // autorizacion, y eso basta por si solo para la categoria.
+    ['permis*', 3],
+
     ['expone', 2],
     ['filtracion', 2],
-    ['permiso', 2],
     ['datos sensibles', 2],
     ['privacidad', 2],
     ['token', 2],
