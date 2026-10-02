@@ -1137,3 +1137,51 @@ a.tabla__titulo:hover {
   font-size: 0.875rem;
   white-space: pre-wrap;
 }
+
+/* ===========================================================================
+   Indice de salud en el inicio
+   =========================================================================== */
+
+/* Encabezado interno de una tarjeta. Mas discreto que un h2, porque divide una
+   seccion que ya tiene titulo en vez de abrir una nueva. */
+.subtitulo-seccion {
+  margin: 24px 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+}
+
+.salud-proyectos {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Tres columnas: el nombre ocupa lo que queda, el numero se alinea a la
+   derecha y la etiqueta cierra. Asi los indices quedan en una columna recta y
+   se comparan de un vistazo, que es el objetivo de la lista. */
+.salud-proyecto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-borde);
+}
+
+.salud-proyecto__nombre {
+  /* Un nombre largo se recorta en lugar de empujar el numero fuera de la
+     tarjeta. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.salud-proyecto__indice {
+  font-size: 1.1rem;
+  font-weight: 700;
+  /* Cifras de ancho fijo: sin esto un 8 y un 1 desalinean la columna. */
+  font-variant-numeric: tabular-nums;
+}
