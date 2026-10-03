@@ -67,11 +67,11 @@ if (!config.jwtSecret) {
   if (isDevelopment) {
     config.jwtSecret = 'clave-solo-para-desarrollo-no-usar-en-produccion';
     console.warn(
-      '  AVISO: JWT_SECRET no esta definido en .env; se usa una clave de desarrollo.'
+      '  AVISO: JWT_SECRET no est\u00e1 definido en .env; se usa una clave de desarrollo.'
     );
   } else {
     throw new Error(
-      'JWT_SECRET es obligatorio cuando NODE_ENV=production. Definelo en el archivo .env.'
+      'JWT_SECRET es obligatorio cuando NODE_ENV=production. Def\u00ednelo en el archivo .env.'
     );
   }
 }

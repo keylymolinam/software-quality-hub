@@ -19,7 +19,7 @@ export function errorHandler(err, req, res, next) {
   // lo que rompe la consistencia del resto de las respuestas de la API.
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({
-      error: 'El cuerpo de la peticion no es JSON valido.',
+      error: 'El cuerpo de la petici\u00f3n no es JSON v\u00e1lido.',
       detalles: [{ campo: 'body', mensaje: err.message }],
     });
   }

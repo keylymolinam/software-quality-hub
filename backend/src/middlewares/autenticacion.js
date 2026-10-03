@@ -51,7 +51,7 @@ export function requiereAutenticacion(req, res, next) {
   if (!token) {
     return next(
       new ErrorHttp(
-        'Falta el token de sesion. Envia la cabecera: Authorization: Bearer <token>.',
+        'Falta el token de sesi\u00f3n. Env\u00eda la cabecera: Authorization: Bearer <token>.',
         401
       )
     );
@@ -83,13 +83,13 @@ export function requiereAutenticacion(req, res, next) {
 export function requiereRol(...rolesPermitidos) {
   return function comprobarRol(req, res, next) {
     if (!req.usuario) {
-      return next(new ErrorHttp('Esta ruta requiere iniciar sesion.', 401));
+      return next(new ErrorHttp('Esta ruta requiere iniciar sesi\u00f3n.', 401));
     }
 
     if (!rolesPermitidos.includes(req.usuario.rol)) {
       return next(
         new ErrorHttp(
-          `Esta operacion requiere uno de estos roles: ${rolesPermitidos.join(', ')}.`,
+          `Esta operaci\u00f3n requiere uno de estos roles: ${rolesPermitidos.join(', ')}.`,
           403
         )
       );
@@ -114,7 +114,7 @@ export function requiereRol(...rolesPermitidos) {
 export function requiereSerElMismoO(...rolesQueTambienPueden) {
   return function comprobarPropiedad(req, res, next) {
     if (!req.usuario) {
-      return next(new ErrorHttp('Esta ruta requiere iniciar sesion.', 401));
+      return next(new ErrorHttp('Esta ruta requiere iniciar sesi\u00f3n.', 401));
     }
 
     const esElMismo = Number(req.params.id) === req.usuario.id_usuario;
@@ -122,7 +122,7 @@ export function requiereSerElMismoO(...rolesQueTambienPueden) {
 
     if (!esElMismo && !tieneRol) {
       return next(
-        new ErrorHttp('Solo puedes realizar esta operacion sobre tu propia cuenta.', 403)
+        new ErrorHttp('Solo puedes realizar esta operaci\u00f3n sobre tu propia cuenta.', 403)
       );
     }
 

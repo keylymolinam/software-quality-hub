@@ -86,7 +86,7 @@ function validarCorreo(valor, errores) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizado)) {
     errores.push({
       campo: 'correo_electronico',
-      mensaje: 'No parece una direccion de correo valida.',
+      mensaje: 'No parece una direcci\u00f3n de correo v\u00e1lida.',
       recibido: valor,
     });
     return undefined;
@@ -119,7 +119,7 @@ function validarContrasena(valor, campo, errores) {
   if (valor.length > LARGO_CONTRASENA.max) {
     errores.push({
       campo,
-      mensaje: `No puede superar los ${LARGO_CONTRASENA.max} caracteres (limite de bcrypt).`,
+      mensaje: `No puede superar los ${LARGO_CONTRASENA.max} caracteres (l\u00edmite de bcrypt).`,
     });
     return undefined;
   }
@@ -238,7 +238,7 @@ export function crearUsuario(datos = {}) {
   // es que choca con algo que ya existe en el sistema.
   if (Usuario.obtenerPorCorreo(correo)) {
     throw errorConflicto(`Ya existe un usuario registrado con el correo ${correo}.`, [
-      { campo: 'correo_electronico', mensaje: 'Este correo ya esta en uso.' },
+      { campo: 'correo_electronico', mensaje: 'Este correo ya est\u00e1 en uso.' },
     ]);
   }
 
@@ -284,7 +284,7 @@ export function actualizarUsuario(id, cambios = {}, sesion = {}) {
     errores.push({
       campo: 'contrasena',
       mensaje:
-        'La contrasena no se cambia por esta via. Usa PUT /api/usuarios/:id/contrasena, que exige la contrasena actual.',
+        'La contrase\u00f1a no se cambia por esta v\u00eda. Usa PUT /api/usuarios/:id/contrasena, que exige la contrase\u00f1a actual.',
     });
   }
 
@@ -306,7 +306,7 @@ export function actualizarUsuario(id, cambios = {}, sesion = {}) {
       // persona. Reenviar el propio correo sin cambios debe ser inofensivo.
       if (duenoActual && duenoActual.id_usuario !== idUsuario) {
         throw errorConflicto(`Ya existe otro usuario registrado con el correo ${correo}.`, [
-          { campo: 'correo_electronico', mensaje: 'Este correo ya esta en uso.' },
+          { campo: 'correo_electronico', mensaje: 'Este correo ya est\u00e1 en uso.' },
         ]);
       }
 
@@ -350,13 +350,13 @@ export function cambiarContrasena(id, datos = {}) {
   lanzarSiHayErrores(errores);
 
   if (actual === nueva) {
-    throw errorSolicitud('La contrasena nueva debe ser distinta de la actual.');
+    throw errorSolicitud('La contrase\u00f1a nueva debe ser distinta de la actual.');
   }
 
   const registro = Usuario.obtenerParaLogin(usuario.correo_electronico);
 
   if (!bcrypt.compareSync(actual, registro.contrasena_hash)) {
-    throw errorConflicto('La contrasena actual no es correcta.');
+    throw errorConflicto('La contrase\u00f1a actual no es correcta.');
   }
 
   Usuario.actualizar(idUsuario, { contrasena_hash: calcularHash(nueva) });
@@ -397,7 +397,7 @@ export function eliminarUsuario(id) {
         {
           campo: 'id_usuario',
           mensaje:
-            'Eliminarlo destruiria la trazabilidad de esas incidencias. Considera cambiarle el rol o dejar la cuenta inactiva en lugar de borrarla.',
+            'Eliminarlo destruir\u00eda la trazabilidad de esas incidencias. Considera cambiarle el rol o dejar la cuenta inactiva en lugar de borrarla.',
         },
       ]
     );

@@ -193,7 +193,7 @@ export function actualizarProyecto(id, cambios = {}) {
 
   if (Object.keys(aplicar).length === 0 && errores.length === 0) {
     throw errorSolicitud(
-      `No se envio ningun campo modificable. Los campos editables son: ${CAMPOS_EDITABLES.join(', ')}.`
+      `No se envi\u00f3 ning\u00fan campo modificable. Los campos editables son: ${CAMPOS_EDITABLES.join(', ')}.`
     );
   }
 
@@ -241,7 +241,7 @@ export function eliminarProyecto(id) {
         {
           campo: 'id_proyecto',
           mensaje:
-            'Reasigna o elimina primero sus incidencias. Si el proyecto ya termino, considera cambiarlo a estado FINALIZADO en lugar de borrarlo.',
+            'Reasigna o elimina primero sus incidencias. Si el proyecto ya termin\u00f3, considera cambiarlo a estado FINALIZADO en lugar de borrarlo.',
         },
       ]
     );

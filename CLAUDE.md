@@ -44,8 +44,8 @@ El backend corre en `:3000`, el frontend en `:5173`. Ambos necesitan su `.env` c
 desde `.env.example`. Los usuarios de prueba comparten la contraseña `Demo1234`
 (administrador: `carolina.nunez@ejemplo.cl`).
 
-Requiere **Node >= 22.5.0** por el módulo integrado `node:sqlite`. El README menciona 20,
-pero `package.json` fija 22.5 y es el valor correcto. No hay ESLint ni Prettier: el estilo
+Requiere **Node >= 22.5.0** por el módulo integrado `node:sqlite`; lo fija `package.json`
+en `engines` y el README ya lo dice igual. No hay ESLint ni Prettier: el estilo
 se mantiene a mano, imitando el archivo que se está editando.
 
 ## Arquitectura: tres capas, sin atajos
@@ -146,9 +146,11 @@ de los datos: si se cambian, hay que decir por qué.
   src` no debe devolver nada, y en el bundle de `dist/` no debe quedar ninguna
   `&entidad;` sin decodificar.
 
-  **Deuda conocida**: los mensajes de error del backend se muestran en la interfaz y
-  todavía no llevan tildes (`'Correo o contrasena incorrectos.'`). Les corresponde el
-  escape `\u`, por ser literales.
+  La regla vale igual para el backend, cuyos mensajes de error termina mostrando la
+  interfaz: van con escape `\u` porque son literales. Lo que **no** se acentúa ahí son los
+  nombres de campo ni las rutas, aunque aparezcan dentro de una frase: en
+  `'Debes indicar correo_electronico y contrasena.'` el cliente tiene que poder copiar
+  esos nombres tal cual, y en `'Usa PUT /api/usuarios/:id/contrasena'` la ruta es la ruta.
 - **SQL**: tablas en MAYÚSCULAS, columnas en `snake_case`, valores de enumerado en
   MAYÚSCULAS. Fechas como TEXT ISO (`YYYY-MM-DD HH:MM:SS`), booleanos como INTEGER 0/1.
 - **Comentarios**: cada archivo abre con un bloque que explica su responsabilidad y por

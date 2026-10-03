@@ -98,7 +98,7 @@ export function validarId(valor, campo, errores) {
   const numero = Number(valor);
 
   if (!Number.isInteger(numero) || numero <= 0) {
-    errores.push({ campo, mensaje: 'Debe ser un numero entero positivo.', recibido: valor });
+    errores.push({ campo, mensaje: 'Debe ser un n\u00famero entero positivo.', recibido: valor });
     return undefined;
   }
 
@@ -114,7 +114,7 @@ export function validarEntero(valor, campo, { min, max, porDefecto }, errores) {
   if (!Number.isInteger(numero) || numero < min || numero > max) {
     errores.push({
       campo,
-      mensaje: `Debe ser un numero entero entre ${min} y ${max}.`,
+      mensaje: `Debe ser un n\u00famero entero entre ${min} y ${max}.`,
       recibido: valor,
     });
     return porDefecto;
@@ -183,7 +183,7 @@ export function validarReferencia(id, campo, existeEnBase, nombreEntidad, errore
 /** Si se acumulo al menos un problema, lanza un unico 400 con la lista completa. */
 export function lanzarSiHayErrores(errores) {
   if (errores.length > 0) {
-    throw errorSolicitud('Los datos enviados no son validos.', errores);
+    throw errorSolicitud('Los datos enviados no son v\u00e1lidos.', errores);
   }
 }
 
@@ -198,7 +198,7 @@ export function exigirIdValido(id) {
   const numero = Number(id);
 
   if (!Number.isInteger(numero) || numero <= 0) {
-    throw errorSolicitud(`El identificador "${id}" no es valido: debe ser un entero positivo.`);
+    throw errorSolicitud(`El identificador "${id}" no es v\u00e1lido: debe ser un entero positivo.`);
   }
 
   return numero;

@@ -160,10 +160,10 @@ const CAMPOS_EDITABLES = [
 /** Campos que el cliente NO puede tocar, con el motivo que se le informara. */
 const CAMPOS_RESERVADOS = {
   estado:
-    'El estado no se modifica por esta via. Usa la transicion de estado para que quede registrada en el historial.',
-  fecha_resolucion: 'La fecha de resolucion la asigna el sistema al resolver la incidencia.',
-  clasificacion_automatica: 'Lo determina el motor de clasificacion, no el cliente.',
-  reportado_por: 'Quien reporto la incidencia es un dato historico y no se reasigna.',
+    'El estado no se modifica por esta v\u00eda. Usa la transici\u00f3n de estado para que quede registrada en el historial.',
+  fecha_resolucion: 'La fecha de resoluci\u00f3n la asigna el sistema al resolver la incidencia.',
+  clasificacion_automatica: 'Lo determina el motor de clasificaci\u00f3n, no el cliente.',
+  reportado_por: 'Quien report\u00f3 la incidencia es un dato hist\u00f3rico y no se reasigna.',
 };
 
 // ---------------------------------------------------------------------------
@@ -335,7 +335,7 @@ export function crearIncidencia(datos = {}, idUsuarioSesion) {
   if (Object.hasOwn(datos, 'reportado_por')) {
     errores.push({
       campo: 'reportado_por',
-      mensaje: 'No se envia: la incidencia queda a nombre del usuario que inicio sesion.',
+      mensaje: 'No se env\u00eda: la incidencia queda a nombre del usuario que inici\u00f3 sesi\u00f3n.',
     });
   }
 
@@ -527,7 +527,7 @@ export function actualizarIncidencia(id, cambios = {}) {
       if (idDuplicado === idIncidencia) {
         errores.push({
           campo: 'posible_duplicado_de',
-          mensaje: 'Una incidencia no puede ser duplicada de si misma.',
+          mensaje: 'Una incidencia no puede ser duplicada de s\u00ed misma.',
         });
       } else {
         aplicar.posible_duplicado_de = validarReferencia(
@@ -545,7 +545,7 @@ export function actualizarIncidencia(id, cambios = {}) {
   // equivoco en el nombre de los campos. Conviene avisarle.
   if (Object.keys(aplicar).length === 0 && errores.length === 0) {
     throw errorSolicitud(
-      `No se envio ningun campo modificable. Los campos editables son: ${CAMPOS_EDITABLES.join(', ')}.`
+      `No se envi\u00f3 ning\u00fan campo modificable. Los campos editables son: ${CAMPOS_EDITABLES.join(', ')}.`
     );
   }
 
@@ -608,7 +608,7 @@ export function cambiarEstado(id, datos = {}, idUsuarioSesion) {
   if (Object.hasOwn(datos, 'modificado_por')) {
     errores.push({
       campo: 'modificado_por',
-      mensaje: 'No se envia: el cambio queda a nombre del usuario que inicio sesion.',
+      mensaje: 'No se env\u00eda: el cambio queda a nombre del usuario que inici\u00f3 sesi\u00f3n.',
     });
   }
 
@@ -645,7 +645,7 @@ export function cambiarEstado(id, datos = {}, idUsuarioSesion) {
   if (!permitidas.includes(estadoNuevo)) {
     const mensaje =
       permitidas.length === 0
-        ? `La incidencia esta ${actual.estado} y ese es un estado final: no admite mas cambios.`
+        ? `La incidencia est\u00e1 ${actual.estado} y ese es un estado final: no admite m\u00e1s cambios.`
         : `No se puede pasar de ${actual.estado} a ${estadoNuevo}.`;
 
     throw errorConflicto(mensaje, [

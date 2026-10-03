@@ -67,7 +67,9 @@ Toda operación pasa por un *service*, y solo los *models* ejecutan SQL.
 
 ### Requisitos previos
 
-- Node.js 20 o superior (probado en v24.19.0)
+- Node.js **22.5 o superior** (probado en v24.19.0). La versión no es negociable: la base
+  de datos usa el módulo integrado `node:sqlite`, que aparece en 22.5. En Node 20 el
+  backend no arranca.
 - npm 10 o superior
 
 ### Backend

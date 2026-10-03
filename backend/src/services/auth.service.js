@@ -74,7 +74,7 @@ export function iniciarSesion(datos = {}) {
   const coincide = bcrypt.compareSync(contrasena, hashGuardado);
 
   if (!registro || !coincide) {
-    throw errorNoAutenticado('Correo o contrasena incorrectos.');
+    throw errorNoAutenticado('Correo o contrase\u00f1a incorrectos.');
   }
 
   // El hash se descarta aqui y no vuelve a aparecer.
@@ -129,10 +129,10 @@ export function verificarToken(token) {
     // distintas para quien usa la aplicacion: uno significa "vuelve a entrar",
     // el otro "algo esta mal con tu sesion".
     if (error.name === 'TokenExpiredError') {
-      throw errorNoAutenticado('La sesion expiro. Vuelve a iniciar sesion.');
+      throw errorNoAutenticado('La sesi\u00f3n expir\u00f3. Vuelve a iniciar sesi\u00f3n.');
     }
 
-    throw errorNoAutenticado('El token de sesion no es valido.');
+    throw errorNoAutenticado('El token de sesi\u00f3n no es v\u00e1lido.');
   }
 }
 
@@ -149,7 +149,7 @@ export function obtenerSesion(idUsuario) {
   const usuario = Usuario.obtenerPorId(idUsuario);
 
   if (!usuario) {
-    throw errorNoAutenticado('La cuenta asociada a esta sesion ya no existe.');
+    throw errorNoAutenticado('La cuenta asociada a esta sesi\u00f3n ya no existe.');
   }
 
   return usuario;
