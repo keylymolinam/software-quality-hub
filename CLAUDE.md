@@ -94,7 +94,16 @@ Reglas que no se rompen:
 - **Los enumerados están duplicados** entre los `CHECK` de `schema.sql` y las constantes
   del service (`PRIORIDADES`, `ESTADOS`, `CATEGORIAS`, roles). Es deliberado: la base es
   la última defensa, pero un `CHECK` fallido daría un 500 incomprensible. **Agregar un
-  valor obliga a tocar los dos lugares.**
+  valor obliga a tocar cuatro lugares**, y los cuatro repiten a propósito:
+
+  1. el `CHECK` de `schema.sql`,
+  2. la constante del service,
+  3. la lista de `frontend/src/dominio/incidencias.js`, que además le da su texto legible,
+  4. la figura de `docs/diagramas/` que lo muestre.
+
+  La señal de que falta el tercero es visible de inmediato: el valor aparece en la tabla
+  con su nombre técnico. La del cuarto no se ve nunca, así que conviene revisarla al
+  cambiar el esquema o `TRANSICIONES`.
 - **En los archivos de rutas, las rutas fijas van antes que las que llevan `:id`**, y el
   `router.use(requiereAutenticacion)` va arriba de todo para que una ruta nueva no quede
   sin proteger por olvido.

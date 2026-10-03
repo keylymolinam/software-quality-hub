@@ -10,6 +10,10 @@ Motor: SQLite 3
 
 ## 1. Diagrama entidad-relación
 
+> El mismo diagrama en Mermaid, renderizable y exportable a imagen para la
+> memoria, está en [`diagramas/modelo-entidad-relacion.md`](diagramas/modelo-entidad-relacion.md).
+> El de abajo no necesita renderizador; las dos versiones deben coincidir.
+
 ```
                        ┌───────────────────────────────┐
                        │           USUARIO             │

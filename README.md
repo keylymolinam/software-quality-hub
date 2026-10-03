@@ -49,8 +49,16 @@ Ingeniería en Computación e Informática.
 software-quality-hub/
 ├── backend/          API REST (Node.js + Express)
 ├── frontend/         Interfaz de usuario (React + Vite)
-└── docs/             Diagramas y material de documentación
+└── docs/
+    ├── modelo-datos.md   Diccionario de datos y decisiones de diseño
+    └── diagramas/        Figuras en Mermaid: modelo, estados y arquitectura
 ```
+
+Las tres figuras del proyecto están en [`docs/diagramas/`](docs/diagramas/):
+el [modelo entidad-relación](docs/diagramas/modelo-entidad-relacion.md), la
+[máquina de estados](docs/diagramas/maquina-de-estados.md) y la
+[arquitectura en tres capas](docs/diagramas/arquitectura.md). GitHub las
+renderiza al abrir cada archivo.
 
 ### Mapeo a la arquitectura de tres capas
 
