@@ -193,9 +193,24 @@ de los datos: si se cambian, hay que decir por qué.
 Las dos suites corren con `node --test` y `assert/strict`. No hay ninguna dependencia de
 pruebas añadida al proyecto, y eso es parte del criterio: el ejecutor viene con Node.
 
-**Backend** — `npm test` desde `backend/`. `tests/smoke.test.js` verifica que el esquema
-cree las cinco entidades y que `/api/health` responda. Levanta la app en el puerto `0`
-para no chocar con el servidor de desarrollo.
+**Backend** — `npm test` desde `backend/`. Dos archivos:
+
+- `tests/smoke.test.js` verifica que el esquema cree las cinco entidades y que
+  `/api/health` responda. Levanta la app en el puerto `0` para no chocar con el servidor
+  de desarrollo.
+- `tests/funcionales.test.js` ejercita las reglas de negocio contra una base de datos de
+  verdad: la máquina de estados completa (el flujo legal, los saltos prohibidos, el estado
+  final, el motivo obligatorio del atajo y cómo sigue la `fecha_resolucion` al estado), los
+  tres diferenciadores y la invariante de que la identidad sale de la sesión.
+
+  Usa **su propia base** (`data/pruebas-funcionales.sqlite`, ignorada por git): fija
+  `DB_PATH` y `BCRYPT_RONDAS=4` antes de cargar nada y por eso importa los módulos con
+  `await import()` — `db/database.js` abre el archivo al cargarse, y un `import` estático se
+  elevaría por encima de la asignación. Vacía las tablas antes de cada prueba, lo que con
+  la base de desarrollo habría borrado datos en uso.
+
+  Las afirmaciones van sobre el `status` y el `campo` de los detalles, nunca sobre el texto
+  del mensaje: reescribir una frase para que se entienda mejor no debe romper una prueba.
 
 **Frontend** — `npm test` desde `frontend/`. `tests/pantallas.test.js` dibuja las
 pantallas con `renderToStaticMarkup` y afirma sobre el HTML resultante.
@@ -212,8 +227,16 @@ transiciones, un sistema sin datos suficientes, el backend apagado. Lo que **no*
 el aspecto (el CSS no se aplica), la interacción (nadie pulsa un botón) y los efectos del
 hook de peticiones real. Eso pide un navegador, y es otra decisión.
 
-Siguen pendientes las pruebas funcionales del backend, que son las que ejercitarían la
-máquina de estados y los tres diferenciadores contra la base de datos.
+**Una suite verde que nunca se ha visto fallar no dice nada.** Las dos se comprobaron
+rompiendo el código a propósito y verificando que cada rotura hiciera fallar exactamente
+una prueba: permitir `ABIERTA → RESUELTA`, vaciar
+`TRANSICIONES_QUE_EXIGEN_MOTIVO`, descuadrar los pesos del índice, mostrar el índice sin
+datos suficientes y dejar de marcar las reaperturas. Al agregar pruebas, conviene repetir
+el ejercicio: cuesta un minuto y es la única forma de saber que la prueba mira lo que
+dice mirar.
+
+Lo que falta son las pruebas de interacción (pulsar botones, enviar formularios), que
+piden un navegador.
 
 ## Entorno
 

@@ -7,7 +7,8 @@
  *
  * Se ejecutan con:  npm test
  *
- * Las pruebas funcionales completas corresponden a las semanas 10-11.
+ * Las reglas de negocio se prueban aparte, en funcionales.test.js: esta suite
+ * solo cubre que el sistema arranca.
  */
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
