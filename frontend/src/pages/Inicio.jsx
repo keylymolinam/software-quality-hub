@@ -24,27 +24,13 @@
  * el backend esta caido. El error de cada una se muestra donde ocurrio, y se
  * puede reintentar sin recargar la pagina.
  */
+import { Link } from 'react-router-dom';
+
 import { obtenerEstadoApi } from '../api/health.js';
 import { obtenerSalud } from '../api/metricas.js';
+import { claseSalud, etiquetaSalud } from '../dominio/salud.js';
 import { useSesion } from '../context/SesionContext.jsx';
 import { usePeticion } from '../hooks/usePeticion.js';
-
-/**
- * Como se nombran en pantalla las etiquetas del indice.
- *
- * El backend las devuelve como identificadores en mayusculas ('SIN_DATOS'), que
- * no son texto para leer. Vive en este archivo, y no en dominio/, porque hoy
- * esta es la unica pantalla que las muestra; se mueve alli en cuanto haya una
- * segunda, igual que se hizo con el vocabulario de incidencias.
- */
-const ETIQUETAS_SALUD = {
-  SALUDABLE: 'Saludable',
-  ATENCION: 'Atenci\u00f3n',
-  CRITICO: 'Cr\u00edtico',
-  SIN_DATOS: 'Sin datos',
-};
-
-const etiquetaSalud = (valor) => ETIQUETAS_SALUD[valor] ?? valor;
 
 export default function Inicio() {
   const { usuario, esAdministrador } = useSesion();
@@ -86,15 +72,13 @@ export default function Inicio() {
             {salud.datos.global.datos_suficientes ? (
               <p className="indice-grande">
                 {salud.datos.global.indice}
-                <span
-                  className={`etiqueta-salud etiqueta-salud--${salud.datos.global.etiqueta.toLowerCase()}`}
-                >
+                <span className={claseSalud(salud.datos.global.etiqueta)}>
                   {etiquetaSalud(salud.datos.global.etiqueta)}
                 </span>
               </p>
             ) : (
               <p className="indice-grande">
-                <span className="etiqueta-salud etiqueta-salud--sin_datos">
+                <span className={claseSalud('SIN_DATOS')}>
                   {etiquetaSalud('SIN_DATOS')}
                 </span>
               </p>
@@ -128,9 +112,7 @@ export default function Inicio() {
                       <span className="salud-proyecto__indice">
                         {proyecto.datos_suficientes ? proyecto.indice : '-'}
                       </span>
-                      <span
-                        className={`etiqueta-salud etiqueta-salud--${proyecto.etiqueta.toLowerCase()}`}
-                      >
+                      <span className={claseSalud(proyecto.etiqueta)}>
                         {etiquetaSalud(proyecto.etiqueta)}
                       </span>
                     </li>
@@ -138,6 +120,11 @@ export default function Inicio() {
                 </ul>
               </>
             )}
+
+            <p className="ayuda ayuda--neutra">
+              <Link to="/salud">Ver el desglose por componente</Link>, con la evidencia que
+              sostiene cada uno.
+            </p>
           </>
         )}
       </section>

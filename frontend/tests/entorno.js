@@ -13,12 +13,11 @@
  * ---------------------------------------------------------------------------
  * COMO SE INYECTAN LOS DOBLES
  *
- * Un plugin de Vite intercepta los imports de usePeticion y del contexto de
- * sesion, y los redirige a tests/dobles/. Se hace con un plugin y no con
- * resolve.alias porque un alias obliga a escribir la ruta absoluta del doble, y
- * en Windows esa ruta lleva barras invertidas que Vite no acepta; con
- * this.resolve() basta una ruta relativa a la raiz y funciona en cualquier
- * sistema.
+ * Un plugin de Vite sustituye el CONTENIDO de usePeticion y del contexto de
+ * sesion por el de tests/dobles/, interceptando la lectura del modulo. No se usa
+ * resolve.alias ni una redireccion de ruta: las dos obligan a entregarle a Vite
+ * una ruta absoluta del sistema, y en Windows las barras invertidas no
+ * resuelven. Leyendo el archivo con fs ese problema no existe.
  *
  * Lo importante es que el codigo de la aplicacion no sabe que lo estan
  * probando: no se le agrega ni una linea ni un parametro para hacerlo probable.
@@ -84,7 +83,9 @@ async function obtenerServidor() {
       // directorio de trabajo puesto ahi.
       root: process.cwd(),
       logLevel: 'error',
-      server: { middlewareMode: true },
+      // hmr apagado: en pruebas no hay nada que recargar en caliente, y dos
+      // archivos de prueba a la vez se pelearian el puerto del websocket.
+      server: { middlewareMode: true, hmr: false },
       plugins: [pluginDeDobles()],
     });
   }

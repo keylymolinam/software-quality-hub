@@ -13,18 +13,19 @@ el código que la implementa.
 
 Estado actual: la API REST está completa (tres entidades, máquina de estados,
 autenticación por rol y los tres diferenciadores). El frontend ya permite recorrer el
-ciclo de trabajo completo, con cinco pantallas:
+ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Seis pantallas:
 
 | Pantalla | Ruta | Qué resuelve |
 |---|---|---|
 | Login | — (fuera de sesión) | Única pantalla sin sesión; `App.jsx` decide |
-| Inicio | `/` | Comprueba la conexión y adelanta el índice de salud como número |
+| Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
 | Listado | `/incidencias` | Filtros, búsqueda, orden y paginación en la dirección |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
 | Detalle | `/incidencias/:id` | Transiciones de estado y bitácora |
+| Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
 
-Pendiente: el panel del índice de salud con su desglose por componente (hoy la pantalla
-de inicio muestra solo el número global) y la administración de proyectos y usuarios.
+Pendiente: la administración de proyectos y usuarios, y la edición de una incidencia ya
+registrada. Las dos cosas la API ya las permite.
 
 ## Comandos
 
@@ -196,6 +197,20 @@ de los datos: si se cambian, hay que decir por qué.
   parpadear el login ante quien sí tiene sesión válida.
 - **CSS plano** en `styles/index.css`, variables en `:root`, clases en español con
   separación tipo BEM (`tarjeta--login`, `boton--discreto`). Sin librerías de estilos.
+- **Las figuras de datos se dibujan a mano, sin librería de gráficos.** Son barras de
+  magnitud hechas con dos `div` y un `width` en porcentaje (`.barra`, `.barra__relleno`).
+  Cuatro reglas, todas con un motivo que se nota al romperlas:
+  - **Un solo color por figura.** Las barras de una misma figura miden lo mismo, así que
+    el color no tiene nada que distinguir: cada fila se identifica por su nombre. Pintar
+    cada una de un tono, o más oscura según el valor, repetiría en el color lo que el
+    largo ya dice.
+  - **El valor va fuera de la barra**, nunca dentro: con una incidencia la barra mide
+    unos pocos píxeles y el número quedaría recortado.
+  - **Una sola magnitud por figura.** Donde hay dos números (el puntaje de un componente
+    y su peso), la barra mide uno y el otro va escrito al lado. Codificar los dos
+    inventaría una relación que no existe.
+  - **`tabular-nums` solo en columnas de cifras** (una tabla, los puntajes alineados a la
+    derecha). En una cifra grande y suelta deja huecos entre los dígitos.
 
 ### Pruebas
 
@@ -221,8 +236,10 @@ pruebas añadida al proyecto, y eso es parte del criterio: el ejecutor viene con
   Las afirmaciones van sobre el `status` y el `campo` de los detalles, nunca sobre el texto
   del mensaje: reescribir una frase para que se entienda mejor no debe romper una prueba.
 
-**Frontend** — `npm test` desde `frontend/`. `tests/pantallas.test.js` dibuja las
-pantallas con `renderToStaticMarkup` y afirma sobre el HTML resultante.
+**Frontend** — `npm test` desde `frontend/`. `tests/pantallas.test.js` y
+`tests/salud.test.js` dibujan las pantallas con `renderToStaticMarkup` y afirman sobre el
+HTML resultante. Los archivos corren en serie (`--test-concurrency=1`): cada uno levanta
+su propio Vite y dos a la vez se pelean el puerto del websocket.
 `tests/entorno.js` arranca el propio Vite del proyecto, que es lo que permite importar
 `.jsx` desde node, y sustituye el contenido de `usePeticion` y del contexto de sesión por
 los dobles de `tests/dobles/`. La sustitución va por el gancho `load` de un plugin y no

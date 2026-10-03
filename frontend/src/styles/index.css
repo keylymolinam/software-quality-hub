@@ -1185,3 +1185,201 @@ a.tabla__titulo:hover {
   /* Cifras de ancho fijo: sin esto un 8 y un 1 desalinean la columna. */
   font-variant-numeric: tabular-nums;
 }
+
+/* ===========================================================================
+   Desglose del indice de salud
+   Barras de magnitud hechas a mano, sin libreria de graficos.
+   =========================================================================== */
+
+/* --- Barra de magnitud ---------------------------------------------------- */
+
+/* La pista va un tono por sobre el fondo de la tarjeta: tiene que leerse como
+   el recorrido disponible, no competir con el relleno. */
+.barra {
+  height: 8px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  /* El relleno se recorta contra los extremos redondeados de la pista. */
+  overflow: hidden;
+}
+
+.barra--delgada {
+  height: 6px;
+}
+
+/* Un solo color para todas las barras de la pantalla: miden lo mismo y cada
+   una se identifica por su nombre. Pintarlas de tonos distintos, o mas oscuras
+   segun el valor, repetiria en el color lo que el largo ya dice. */
+.barra__relleno {
+  height: 100%;
+  background: var(--color-primario);
+  border-radius: 999px;
+  /* El ancho lo pone el componente en linea, calculado desde el dato. */
+}
+
+/* --- Los tres componentes ------------------------------------------------- */
+
+.componentes {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.componente + .componente {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.componente__cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.componente__nombre {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Los tres puntajes quedan alineados en una columna a la derecha, y ahi las
+   cifras de ancho fijo si ayudan: sin ellas un 9 y un 1 desalinean la coma. */
+.componente__puntaje {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.componente__de {
+  margin-left: 2px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-texto-suave);
+}
+
+.componente__aporte {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+}
+
+.componente__evidencia {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  color: var(--color-texto-suave);
+}
+
+/* --- Distribucion por categoria ------------------------------------------ */
+
+.distribucion {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Nombre, barra y valor en tres columnas. El valor va FUERA de la barra: con
+   una sola incidencia la barra mide unos pocos pixeles y un numero dentro
+   quedaria recortado. */
+.distribucion__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 150px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  /* Alto suficiente para que la fila sea un objetivo comodo al pasar el
+     cursor, no solo los 6px de la barra. */
+  padding: 7px 0;
+}
+
+.distribucion__nombre {
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.distribucion__valor {
+  min-width: 2ch;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@media (max-width: 560px) {
+  .distribucion__fila {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  /* En pantalla angosta la barra pasa a ocupar la fila completa debajo del
+     nombre, en vez de quedar reducida a unos pocos pixeles. */
+  .distribucion__fila .barra {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}
+
+/* --- Fichas de contexto --------------------------------------------------- */
+
+.fichas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  background: var(--color-fondo);
+  border-radius: var(--radio);
+}
+
+.ficha__rotulo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+/* Cifra suelta: sin ancho fijo de digitos, que en una cifra grande dejan los numeros
+   con espacios de mas. */
+.ficha__valor {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.ficha__nota {
+  font-size: 0.75rem;
+  color: var(--color-texto-suave);
+}
+
+/* --- Conteos por estado y prioridad -------------------------------------- */
+
+.conteos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conteo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.conteo__cantidad {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

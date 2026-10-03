@@ -32,6 +32,7 @@ import DetalleIncidencia from './pages/DetalleIncidencia.jsx';
 import Incidencias from './pages/Incidencias.jsx';
 import Inicio from './pages/Inicio.jsx';
 import Login from './pages/Login.jsx';
+import Salud from './pages/Salud.jsx';
 import NuevaIncidencia from './pages/NuevaIncidencia.jsx';
 import { useSesion } from './context/SesionContext.jsx';
 
@@ -73,6 +74,8 @@ export default function App() {
             este orden para que al leer el archivo se vea que "nueva" es una
             pantalla y no un id, que es la confusion que produce un :id suelto. */}
         <Route path="/incidencias/:id" element={<DetalleIncidencia />} />
+
+        <Route path="/salud" element={<Salud />} />
 
         {/* Una direccion que no existe vuelve al inicio en lugar de dejar la
             pantalla en blanco. Se reemplaza la entrada del historial para que el
