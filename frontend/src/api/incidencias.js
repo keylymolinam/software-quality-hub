@@ -128,3 +128,45 @@ export function cambiarEstado(id, { estado, comentario }) {
 export function obtenerHistorial(id) {
   return api.get(`/incidencias/${id}/historial`);
 }
+
+/**
+ * Modifica una incidencia. Actualizacion parcial: solo lo que se envia.
+ *
+ * A diferencia de crearIncidencia(), aqui NO se quitan los campos vacios, y esa
+ * diferencia es deliberada porque el vacio significa cosas opuestas en cada
+ * caso. Al crear, dejar la categoria en blanco es lo que le pide al motor que
+ * la deduzca, asi que el campo no debe viajar. Al modificar, enviar
+ * `asignado_a: null` es la unica forma de quitarle el responsable a una
+ * incidencia: si se omitiera, el backend entenderia "no lo toques".
+ *
+ * El backend distingue las dos situaciones con Object.hasOwn, no mirando el
+ * valor, asi que la diferencia entre omitir y mandar null es real.
+ *
+ * Campos que rechaza con 400, cada uno con su motivo: `estado` (se cambia por
+ * la transicion), `fecha_resolucion` y `clasificacion_automatica` (los pone el
+ * sistema) y `reportado_por` (es un dato historico).
+ *
+ * Un cuerpo sin ningun campo modificable tambien responde 400: casi siempre
+ * significa que quien llama se equivoco en los nombres.
+ *
+ * @param {number|string} id
+ * @param {object} cambios  Solo los campos que cambian.
+ * @returns {Promise<object>} La incidencia ya actualizada.
+ */
+export function actualizarIncidencia(id, cambios) {
+  return api.put(`/incidencias/${id}`, cambios);
+}
+
+/**
+ * Descarta la marca de posible duplicado.
+ *
+ * Es un caso particular de actualizarIncidencia, con nombre propio porque
+ * expresa una decision del dominio: una persona reviso el aviso del detector y
+ * determino que las dos incidencias son problemas distintos.
+ *
+ * El detector avisa; esto es la otra mitad del trato. La incidencia no se
+ * modifica de ninguna otra forma: solo deja de estar marcada.
+ */
+export function descartarDuplicado(id) {
+  return api.put(`/incidencias/${id}`, { posible_duplicado_de: null });
+}

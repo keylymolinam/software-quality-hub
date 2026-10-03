@@ -30,7 +30,12 @@ import EtiquetaEstado from '../components/EtiquetaEstado.jsx';
 import EtiquetaPrioridad from '../components/EtiquetaPrioridad.jsx';
 import LineaTiempo from '../components/LineaTiempo.jsx';
 import PanelTransicion from '../components/PanelTransicion.jsx';
-import { cambiarEstado, obtenerHistorial, obtenerIncidencia } from '../api/incidencias.js';
+import {
+  cambiarEstado,
+  descartarDuplicado,
+  obtenerHistorial,
+  obtenerIncidencia,
+} from '../api/incidencias.js';
 import { CATEGORIAS, etiquetaDe, formatearFechaHora } from '../dominio/incidencias.js';
 import { usePeticion } from '../hooks/usePeticion.js';
 
@@ -43,6 +48,12 @@ export default function DetalleIncidencia() {
 
   const [enviando, setEnviando] = useState(false);
   const [errorTransicion, setErrorTransicion] = useState(null);
+
+  // El descarte del duplicado lleva su propio estado y su propio error: ocurre
+  // en otra parte de la pantalla y mezclarlo con el de la transicion mostraria
+  // el mensaje lejos del boton que lo provoco.
+  const [descartando, setDescartando] = useState(false);
+  const [errorDuplicado, setErrorDuplicado] = useState(null);
 
   const incidencia = usePeticion(() => obtenerIncidencia(id), `incidencia-${id}-${version}`);
 
@@ -76,6 +87,27 @@ export default function DetalleIncidencia() {
     },
     [id]
   );
+
+  /**
+   * Quita la marca de posible duplicado.
+   *
+   * Es la otra mitad del trato del detector: avisa, y una persona decide. Si
+   * las dos incidencias resultan ser problemas distintos, el aviso deja de
+   * tener sentido y desaparece; la incidencia no cambia en nada mas.
+   */
+  const noEsDuplicado = useCallback(async () => {
+    setErrorDuplicado(null);
+    setDescartando(true);
+
+    try {
+      await descartarDuplicado(id);
+      setVersion((n) => n + 1);
+    } catch (fallo) {
+      setErrorDuplicado(fallo);
+    } finally {
+      setDescartando(false);
+    }
+  }, [id]);
 
   if (incidencia.cargando && !incidencia.datos) {
     return (
@@ -131,9 +163,17 @@ export default function DetalleIncidencia() {
           </div>
         </div>
 
-        <Link className="boton boton--discreto boton--auto" to="/incidencias">
-          Volver al listado
-        </Link>
+        <div className="contenido__acciones">
+          <Link
+            className="boton boton--discreto boton--auto"
+            to={`/incidencias/${datos.id_incidencia}/editar`}
+          >
+            Editar
+          </Link>
+          <Link className="boton boton--discreto boton--auto" to="/incidencias">
+            Volver al listado
+          </Link>
+        </div>
       </header>
 
       {/* Lo que aportaron los diferenciadores va arriba, antes de los datos:
@@ -143,15 +183,31 @@ export default function DetalleIncidencia() {
       {(datos.clasificacion_automatica === 1 || datos.posible_duplicado_de) && (
         <div className="detalle__senales">
           {datos.posible_duplicado_de && (
-            <p className="alerta alerta--aviso">
-              <strong>Posible duplicado.</strong> El detector encontr&oacute; un parecido con la
-              incidencia{' '}
-              <Link to={`/incidencias/${datos.posible_duplicado_de}`}>
-                #{datos.posible_duplicado_de}
-              </Link>
-              . Es un aviso, no una certeza: comp&aacute;ralas antes de cerrar esta. Si son la
-              misma falla, cerrarla sin resolver deja el motivo en la bit&aacute;cora.
-            </p>
+            <div className="alerta alerta--aviso">
+              <p className="alerta__texto">
+                <strong>Posible duplicado.</strong> El detector encontr&oacute; un parecido con
+                la incidencia{' '}
+                <Link to={`/incidencias/${datos.posible_duplicado_de}`}>
+                  #{datos.posible_duplicado_de}
+                </Link>
+                . Es un aviso, no una certeza: comp&aacute;ralas antes de cerrar esta. Si son
+                la misma falla, cerrarla sin resolver deja el motivo en la bit&aacute;cora.
+              </p>
+
+              {errorDuplicado && <p className="alerta__texto">{errorDuplicado.message}</p>}
+
+              {/* La decision humana cierra el ciclo del detector: si no son el
+                  mismo problema, el aviso sobra y se quita. La incidencia no
+                  cambia en nada mas. */}
+              <button
+                className="boton boton--discreto boton--auto"
+                type="button"
+                onClick={noEsDuplicado}
+                disabled={descartando}
+              >
+                {descartando ? 'Quitando...' : 'No es duplicado'}
+              </button>
+            </div>
           )}
 
           {datos.clasificacion_automatica === 1 && (

@@ -230,6 +230,12 @@ describe('Pantalla de detalle', () => {
     // Los dos avisos de los diferenciadores, con el enlace a la original.
     assert.match(visible, /Posible duplicado/);
     assert.ok(html.includes('href="/incidencias/1"'));
+
+    // La decision humana cierra el ciclo del detector.
+    assert.match(visible, /No es duplicado/);
+
+    // Y se puede corregir lo que se escribio mal.
+    assert.ok(html.includes('href="/incidencias/2/editar"'));
     assert.match(visible, /dedujo el motor de clasificaci\u00f3n/);
   });
 
@@ -255,6 +261,9 @@ describe('Pantalla de detalle', () => {
 
     assert.match(visible, /estado final/);
     assert.doesNotMatch(visible, /Tomar y empezar/);
+
+    // Sin marca de duplicado no hay nada que descartar.
+    assert.doesNotMatch(visible, /No es duplicado/);
   });
 
   test('una incidencia inexistente lleva al listado, no a reintentar', async () => {
@@ -405,5 +414,100 @@ describe('Pantalla de inicio', () => {
 
     assert.match(visible, /Calculando/);
     assert.match(visible, /Verificando/);
+  });
+});
+
+// --- Edicion de una incidencia ---------------------------------------------
+
+describe('Pantalla de edicion', () => {
+  const REFERENCIAS = respondeCon([
+    { datos: [{ id_proyecto: 1, nombre: 'Portal de Clientes' }] },
+    {
+      datos: [
+        { id_usuario: 2, nombre: 'Luis Fuentes', rol: 'DESARROLLADOR' },
+        { id_usuario: 3, nombre: 'Daniela Rojas', rol: 'TESTER' },
+      ],
+    },
+  ]);
+
+  const escenarioEdicion = (incidencia) => ({
+    ['editar-' + incidencia.id_incidencia]: respondeCon(incidencia),
+    'referencias-edicion': REFERENCIAS,
+  });
+
+  const dibujarEdicion = (componente, incidencia) =>
+    dibujar(componente, {
+      ruta: '/incidencias/' + incidencia.id_incidencia + '/editar',
+      patron: '/incidencias/:id/editar',
+    });
+
+  test('carga el formulario con los valores actuales', async () => {
+    const { default: EditarIncidencia } = await cargar('/src/pages/EditarIncidencia.jsx');
+
+    declararEscenario(escenarioEdicion(INCIDENCIA_DUPLICADA));
+
+    const html = dibujarEdicion(EditarIncidencia, INCIDENCIA_DUPLICADA);
+
+    assert.ok(html.includes('value="' + INCIDENCIA_DUPLICADA.titulo + '"'));
+    assert.match(html, /El portal no carga para los usuarios/);
+
+    // La categoria y la prioridad guardadas vienen seleccionadas.
+    assert.ok(html.includes('selected') || html.includes('value="DISPONIBILIDAD"'));
+  });
+
+  test('no ofrece los campos que el sistema controla', async () => {
+    const { default: EditarIncidencia } = await cargar('/src/pages/EditarIncidencia.jsx');
+
+    declararEscenario(escenarioEdicion(INCIDENCIA_DUPLICADA));
+
+    const html = dibujarEdicion(EditarIncidencia, INCIDENCIA_DUPLICADA);
+    const visible = texto(html);
+
+    // El estado se cambia con una transicion, y la pantalla lo explica en vez
+    // de callarlo.
+    assert.doesNotMatch(visible, /Estado\b.*Abierta/);
+    assert.match(visible, /no se edita aqu\u00ed/);
+    assert.match(visible, /transici\u00f3n/);
+  });
+
+  test('sin cambios el boton de guardar esta deshabilitado', async () => {
+    const { default: EditarIncidencia } = await cargar('/src/pages/EditarIncidencia.jsx');
+
+    declararEscenario(escenarioEdicion(INCIDENCIA_DUPLICADA));
+
+    const html = dibujarEdicion(EditarIncidencia, INCIDENCIA_DUPLICADA);
+
+    // Recien cargado no hay nada que guardar: un PUT vacio lo rechaza el
+    // backend, y conviene decirlo antes de enviarlo.
+    assert.match(html, /<button[^>]*type="submit"[^>]*disabled/);
+  });
+
+  test('una incidencia sin responsable carga el desplegable en sin asignar', async () => {
+    const { default: EditarIncidencia } = await cargar('/src/pages/EditarIncidencia.jsx');
+
+    declararEscenario(escenarioEdicion(INCIDENCIA_DUPLICADA));
+
+    const visible = texto(dibujarEdicion(EditarIncidencia, INCIDENCIA_DUPLICADA));
+
+    assert.match(visible, /Sin asignar/);
+  });
+
+  test('una incidencia que no existe lleva al listado', async () => {
+    const { default: EditarIncidencia } = await cargar('/src/pages/EditarIncidencia.jsx');
+
+    declararEscenario({
+      'editar-999': falla('No existe la incidencia con id 999.', 404),
+      'referencias-edicion': REFERENCIAS,
+    });
+
+    const visible = texto(
+      dibujar(EditarIncidencia, {
+        ruta: '/incidencias/999/editar',
+        patron: '/incidencias/:id/editar',
+      })
+    );
+
+    assert.match(visible, /No existe la incidencia con id 999/);
+    assert.match(visible, /Volver al listado/);
   });
 });

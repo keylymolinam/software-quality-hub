@@ -29,6 +29,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import Cabecera from './components/Cabecera.jsx';
 import DetalleIncidencia from './pages/DetalleIncidencia.jsx';
+import EditarIncidencia from './pages/EditarIncidencia.jsx';
 import Incidencias from './pages/Incidencias.jsx';
 import Inicio from './pages/Inicio.jsx';
 import Login from './pages/Login.jsx';
@@ -74,6 +75,7 @@ export default function App() {
             este orden para que al leer el archivo se vea que "nueva" es una
             pantalla y no un id, que es la confusion que produce un :id suelto. */}
         <Route path="/incidencias/:id" element={<DetalleIncidencia />} />
+        <Route path="/incidencias/:id/editar" element={<EditarIncidencia />} />
 
         <Route path="/salud" element={<Salud />} />
 

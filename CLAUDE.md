@@ -13,7 +13,7 @@ el código que la implementa.
 
 Estado actual: la API REST está completa (tres entidades, máquina de estados,
 autenticación por rol y los tres diferenciadores). El frontend ya permite recorrer el
-ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Seis pantallas:
+ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Siete pantallas:
 
 | Pantalla | Ruta | Qué resuelve |
 |---|---|---|
@@ -21,11 +21,11 @@ ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Seis p
 | Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
 | Listado | `/incidencias` | Filtros, búsqueda, orden y paginación en la dirección |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
-| Detalle | `/incidencias/:id` | Transiciones de estado y bitácora |
+| Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
+| Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
 | Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
 
-Pendiente: la administración de proyectos y usuarios, y la edición de una incidencia ya
-registrada. Las dos cosas la API ya las permite.
+Pendiente: la administración de proyectos y usuarios, que la API ya permite.
 
 ## Comandos
 

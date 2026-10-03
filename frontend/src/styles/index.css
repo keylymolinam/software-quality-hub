@@ -1383,3 +1383,16 @@ a.tabla__titulo:hover {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+/* Parrafo dentro de una alerta que tiene mas de un elemento (texto, error y
+   un boton). El ultimo no lleva margen para no abrir un hueco al cierre. */
+.alerta__texto {
+  margin: 0 0 10px;
+}
+
+/* Los enlaces de la cabecera de una pantalla, cuando hay mas de uno. */
+.contenido__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
