@@ -33,6 +33,7 @@ import EditarIncidencia from './pages/EditarIncidencia.jsx';
 import Incidencias from './pages/Incidencias.jsx';
 import Inicio from './pages/Inicio.jsx';
 import Login from './pages/Login.jsx';
+import Proyectos from './pages/Proyectos.jsx';
 import Salud from './pages/Salud.jsx';
 import NuevaIncidencia from './pages/NuevaIncidencia.jsx';
 import { useSesion } from './context/SesionContext.jsx';
@@ -77,6 +78,7 @@ export default function App() {
         <Route path="/incidencias/:id" element={<DetalleIncidencia />} />
         <Route path="/incidencias/:id/editar" element={<EditarIncidencia />} />
 
+        <Route path="/proyectos" element={<Proyectos />} />
         <Route path="/salud" element={<Salud />} />
 
         {/* Una direccion que no existe vuelve al inicio en lugar de dejar la

@@ -30,6 +30,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import Campo from '../components/Campo.jsx';
 import { actualizarIncidencia, obtenerIncidencia } from '../api/incidencias.js';
 import { listarProyectos } from '../api/proyectos.js';
 import { listarUsuarios } from '../api/usuarios.js';
@@ -289,24 +290,3 @@ export default function EditarIncidencia() {
   );
 }
 
-/**
- * Un campo del formulario: etiqueta, control, ayuda y error.
- *
- * Repite el componente del mismo nombre de NuevaIncidencia.jsx. Se deja
- * duplicado y no se extrae a components/ porque son diez lineas y las dos
- * pantallas pueden evolucionar por separado; si aparece una tercera, conviene
- * sacarlo.
- */
-function Campo({ etiqueta, ayuda, error, children }) {
-  return (
-    <label className={`campo${error ? ' campo--con-error' : ''}`}>
-      <span className="campo__etiqueta">{etiqueta}</span>
-      {children}
-      {error ? (
-        <span className="campo__error">{error}</span>
-      ) : (
-        ayuda && <span className="campo__ayuda">{ayuda}</span>
-      )}
-    </label>
-  );
-}

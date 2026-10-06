@@ -22,6 +22,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import Campo from '../components/Campo.jsx';
 import AvisoDuplicado from '../components/AvisoDuplicado.jsx';
 import SugerenciaClasificacion from '../components/SugerenciaClasificacion.jsx';
 import { crearIncidencia } from '../api/incidencias.js';
@@ -313,25 +314,3 @@ export default function NuevaIncidencia() {
   );
 }
 
-/**
- * Un campo del formulario: etiqueta, control, ayuda y error.
- *
- * Vive aqui porque solo lo usa esta pantalla. Reune las cuatro partes para que
- * el error aparezca siempre en el mismo sitio y con el mismo aspecto, y para no
- * repetir la estructura en seis campos.
- */
-function Campo({ etiqueta, ayuda, error, children }) {
-  return (
-    <label className={`campo${error ? ' campo--con-error' : ''}`}>
-      <span className="campo__etiqueta">{etiqueta}</span>
-      {children}
-      {/* El error del servidor manda sobre la ayuda: si hay algo que corregir,
-          es mas urgente que la indicacion general. */}
-      {error ? (
-        <span className="campo__error">{error}</span>
-      ) : (
-        ayuda && <span className="campo__ayuda">{ayuda}</span>
-      )}
-    </label>
-  );
-}

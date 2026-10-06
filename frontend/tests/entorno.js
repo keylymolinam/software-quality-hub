@@ -40,6 +40,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { createServer } from 'vite';
 
+import { USUARIO_POR_DEFECTO } from './dobles/SesionContext.js';
+
 /** Que modulo de la aplicacion se sustituye por que doble. */
 const DOBLES = [
   ['src/hooks/usePeticion.js', 'dobles/usePeticion.js'],
@@ -114,6 +116,17 @@ export async function cerrarEntorno() {
  */
 export function declararEscenario(escenario) {
   globalThis.__ESCENARIO_DE_PRUEBA = escenario;
+}
+
+/**
+ * Declara quien esta usando la aplicacion en el siguiente render.
+ *
+ * Recibe lo que cambia respecto del usuario por defecto, que es administrador:
+ * declararUsuario({ rol: 'TESTER' }) alcanza para probar que una pantalla deja
+ * de ofrecer las acciones de administracion. Sin argumento vuelve al defecto.
+ */
+export function declararUsuario(parcial = null) {
+  globalThis.__USUARIO_DE_PRUEBA = parcial ? { ...USUARIO_POR_DEFECTO, ...parcial } : null;
 }
 
 /** Respuesta del hook con datos listos. */
