@@ -13,7 +13,8 @@ el código que la implementa.
 
 Estado actual: la API REST está completa (tres entidades, máquina de estados,
 autenticación por rol y los tres diferenciadores). El frontend ya permite recorrer el
-ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Siete pantallas:
+ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Nueve pantallas,
+que ya cubren todo lo que la API ofrece:
 
 | Pantalla | Ruta | Qué resuelve |
 |---|---|---|
@@ -24,8 +25,11 @@ ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Siete 
 | Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
 | Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
+| Proyectos | `/proyectos` | El listado para todos; crear, editar y eliminar para el administrador |
+| Usuarios | `/usuarios` | El equipo, con las cinco reglas de acceso reflejadas en la tabla |
 
-Pendiente: la administración de proyectos y usuarios, que la API ya permite.
+Pendiente: las pruebas de interacción (pulsar botones, enviar formularios), que piden un
+navegador y hoy no están cubiertas por ninguna de las dos suites.
 
 ## Comandos
 
@@ -197,6 +201,11 @@ de los datos: si se cambian, hay que decir por qué.
   parpadear el login ante quien sí tiene sesión válida.
 - **CSS plano** en `styles/index.css`, variables en `:root`, clases en español con
   separación tipo BEM (`tarjeta--login`, `boton--discreto`). Sin librerías de estilos.
+- **La interfaz refleja los permisos; no los hace cumplir.** Esconder un botón no es
+  seguridad: el rol se comprueba en el servidor y ahí es donde importa. Lo que la pantalla
+  aporta es no ofrecer algo que iba a responder 403. Por eso `/proyectos` y `/usuarios`
+  son una sola pantalla por entidad, con las acciones condicionadas al rol, en vez de una
+  sección de administración aparte que repita la misma tabla.
 - **Las figuras de datos se dibujan a mano, sin librería de gráficos.** Son barras de
   magnitud hechas con dos `div` y un `width` en porcentaje (`.barra`, `.barra__relleno`).
   Cuatro reglas, todas con un motivo que se nota al romperlas:
@@ -236,9 +245,11 @@ pruebas añadida al proyecto, y eso es parte del criterio: el ejecutor viene con
   Las afirmaciones van sobre el `status` y el `campo` de los detalles, nunca sobre el texto
   del mensaje: reescribir una frase para que se entienda mejor no debe romper una prueba.
 
-**Frontend** — `npm test` desde `frontend/`. `tests/pantallas.test.js` y
-`tests/salud.test.js` dibujan las pantallas con `renderToStaticMarkup` y afirman sobre el
-HTML resultante. Los archivos corren en serie (`--test-concurrency=1`): cada uno levanta
+**Frontend** — `npm test` desde `frontend/`. Cuatro archivos (`pantallas`, `salud`,
+`proyectos`, `usuarios`) dibujan las pantallas con `renderToStaticMarkup` y afirman sobre
+el HTML resultante. `declararUsuario({ rol: 'TESTER' })` cambia quién está usando la
+aplicación, que es lo que permite comprobar las dos caras de cada permiso: que la acción
+aparezca para quien puede y que no aparezca para quien no. Los archivos corren en serie (`--test-concurrency=1`): cada uno levanta
 su propio Vite y dos a la vez se pelean el puerto del websocket.
 `tests/entorno.js` arranca el propio Vite del proyecto, que es lo que permite importar
 `.jsx` desde node, y sustituye el contenido de `usePeticion` y del contexto de sesión por

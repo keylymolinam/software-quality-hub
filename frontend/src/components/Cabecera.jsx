@@ -22,6 +22,7 @@ const SECCIONES = [
   { ruta: '/incidencias', etiqueta: 'Incidencias' },
   { ruta: '/salud', etiqueta: 'Salud' },
   { ruta: '/proyectos', etiqueta: 'Proyectos' },
+  { ruta: '/usuarios', etiqueta: 'Usuarios' },
 ];
 
 export default function Cabecera() {

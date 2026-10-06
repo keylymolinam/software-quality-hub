@@ -1467,3 +1467,13 @@ a.tabla__titulo:hover {
   font-size: 0.8rem;
   color: var(--color-texto-suave);
 }
+
+/* Marca la fila de quien esta usando la aplicacion. Es la unica fila donde
+   aparece la accion de cambiar la contrasena, asi que conviene ubicarla. */
+.marca--tu {
+  margin-left: 8px;
+  color: var(--color-primario);
+  background: #eef4ff;
+  border: 1px solid #cfe0ff;
+  cursor: default;
+}
