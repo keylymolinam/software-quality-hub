@@ -3,10 +3,16 @@
 Sistema de gestión de incidencias de software desarrollado como proyecto de título de
 Ingeniería en Computación e Informática.
 
-> **Estado:** en construcción. La API REST está completa: las tres entidades
-> principales (incidencias, proyectos y usuarios), la máquina de estados con bitácora
-> de cambios, la autenticación con control de acceso por rol y los tres
-> diferenciadores. Pendiente: la interfaz de usuario.
+> **Estado:** funcional de punta a punta. La **API REST** está completa: las tres
+> entidades principales (incidencias, proyectos y usuarios), la máquina de estados
+> con bitácora de cambios, la autenticación con control de acceso por rol y los tres
+> diferenciadores. El **frontend** recorre el ciclo de trabajo completo en nueve
+> pantallas, y los tres diferenciadores se ven en pantalla. Hay **82 pruebas
+> automatizadas** (33 del backend y 49 del frontend) que corren sin dependencias
+> añadidas, con el ejecutor que viene con Node.
+>
+> Pendiente: las **pruebas de interacción** (pulsar botones, enviar formularios),
+> que piden un navegador y hoy no están cubiertas por ninguna de las dos suites.
 
 ## Diferenciadores
 
@@ -38,27 +44,62 @@ Ingeniería en Computación e Informática.
 
 | Componente | Tecnología |
 |---|---|
-| Frontend | React 19 + Vite |
-| Backend | Node.js + Express |
-| Base de datos | SQLite (módulo integrado `node:sqlite`) |
+| Frontend | React 19 + react-router-dom 7, compilado con Vite 8 |
+| Backend | Node.js ≥ 22.5 + Express 5 |
+| Base de datos | SQLite, con el módulo integrado `node:sqlite` (sin ORM) |
+| Autenticación | JWT (`jsonwebtoken`) + hash bcrypt (`bcryptjs`) |
+| Pruebas | `node --test` y `assert/strict`, sin dependencias añadidas |
 | Arquitectura | Tres capas: presentación, lógica de negocio, persistencia |
+
+Dos ausencias que son decisiones, no omisiones:
+
+- **No hay ORM.** Todo el SQL está escrito a mano y vive solo en
+  `backend/src/models/`. El esquema es el documento del modelo de datos, no un
+  subproducto de unas clases.
+- **El frontend no tiene dependencias más allá de React y el enrutador.** Sin
+  librería de estado, sin cliente HTTP, sin librería de estilos y sin librería de
+  gráficos: las figuras de datos son barras hechas con dos `div` y un `width` en
+  porcentaje.
+
+`node:sqlite` se prefiere a una librería externa porque no requiere compilar
+código nativo: la instalación del proyecto no puede fallar por falta de
+herramientas de compilación en la máquina.
 
 ## Estructura del proyecto
 
 ```
 software-quality-hub/
-├── backend/          API REST (Node.js + Express)
-├── frontend/         Interfaz de usuario (React + Vite)
+├── backend/              API REST (Node.js + Express)
+│   ├── src/
+│   │   ├── routes/       verbo + ruta + permisos
+│   │   ├── controllers/  traducen HTTP a negocio
+│   │   ├── services/     deciden: validan y aplican las reglas
+│   │   ├── models/       el único lugar con SQL
+│   │   ├── db/           conexión, esquema y datos de prueba
+│   │   ├── middlewares/  autenticación por rol y manejo de errores
+│   │   └── utils/        validación, errores, léxico y similitud
+│   └── tests/            smoke.test.js y funcionales.test.js
+├── frontend/             Interfaz de usuario (React + Vite)
+│   ├── src/
+│   │   ├── pages/        una por pantalla
+│   │   ├── components/   piezas reutilizables
+│   │   ├── api/          una función por ruta, sobre client.js
+│   │   ├── context/      la sesión
+│   │   ├── hooks/        peticiones y sugerencia de clasificación
+│   │   ├── dominio/      el texto legible de cada valor
+│   │   └── styles/       CSS plano
+│   └── tests/            cuatro archivos + sus dobles
 └── docs/
     ├── modelo-datos.md   Diccionario de datos y decisiones de diseño
-    └── diagramas/        Figuras en Mermaid: modelo, estados y arquitectura
+    └── diagramas/        Figuras en Mermaid
 ```
 
-Las tres figuras del proyecto están en [`docs/diagramas/`](docs/diagramas/):
+Las cuatro figuras del proyecto están en [`docs/diagramas/`](docs/diagramas/):
 el [modelo entidad-relación](docs/diagramas/modelo-entidad-relacion.md), la
-[máquina de estados](docs/diagramas/maquina-de-estados.md) y la
-[arquitectura en tres capas](docs/diagramas/arquitectura.md). GitHub las
-renderiza al abrir cada archivo.
+[máquina de estados](docs/diagramas/maquina-de-estados.md), la
+[arquitectura en tres capas](docs/diagramas/arquitectura.md) y las
+[pantallas del frontend](docs/diagramas/frontend.md). GitHub las renderiza al
+abrir cada archivo.
 
 ### Mapeo a la arquitectura de tres capas
 
@@ -140,6 +181,7 @@ muestra el indicador **"API conectada"** con los datos del servicio.
 | `npm run dev` | Desarrollo, con recarga automática al guardar |
 | `npm run build` | Compila la versión de producción en `dist/` |
 | `npm run preview` | Previsualiza la versión compilada |
+| `npm test` | Ejecuta las pruebas de las pantallas |
 
 ### Resumen de puertos
 
@@ -150,6 +192,39 @@ muestra el indicador **"API conectada"** con los datos del servicio.
 
 > El backend permite peticiones desde el origen definido en `CORS_ORIGIN`
 > (`backend/.env`). Si cambias el puerto del frontend, actualiza esa variable.
+
+## Pantallas
+
+Nueve pantallas, que cubren todo lo que la API ofrece. El mapa de navegación y el
+reparto en capas están en la figura
+[`docs/diagramas/frontend.md`](docs/diagramas/frontend.md).
+
+| Pantalla | Ruta | Qué resuelve |
+|---|---|---|
+| Login | — (fuera de sesión) | La única sin sesión; `App.jsx` decide cuál mostrar |
+| Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
+| Listado | `/incidencias` | Filtros, búsqueda, orden y paginación, todo en la dirección |
+| Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
+| Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
+| Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
+| Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
+| Proyectos | `/proyectos` | El listado para todos; crear, editar y eliminar para el administrador |
+| Usuarios | `/usuarios` | El equipo, con las cinco reglas de acceso reflejadas en la tabla |
+
+Tres decisiones que se notan al usarla:
+
+- **El estado de una pantalla vive en la dirección, no en memoria.** El listado
+  guarda filtros, orden y página en la cadena de consulta
+  (`?estado=ABIERTA&pagina=2`). Eso da enlaces que se pueden compartir, el botón
+  atrás deshaciendo el último filtro, y recargar sin perder el trabajo.
+- **La interfaz refleja los permisos; no los hace cumplir.** Esconder un botón no
+  es seguridad: el rol se comprueba en el servidor. Lo que la pantalla aporta es no
+  ofrecer algo que iba a responder 403. Por eso `/proyectos` y `/usuarios` son una
+  sola pantalla por entidad con las acciones condicionadas al rol, y no una sección
+  de administración aparte.
+- **La máquina de estados no se duplica en el cliente.** Qué transiciones existen
+  lo dice el backend en `transiciones_posibles`; el frontend solo aporta el texto
+  de los botones.
 
 ## Autenticación
 
@@ -313,6 +388,48 @@ node -e "console.log(require('bcryptjs').hashSync('TuClave', 10))"
 ```
 
 y reemplazar el valor en `backend/src/db/seed.sql`.
+
+## Pruebas
+
+Las dos suites corren con `node --test` y `assert/strict`. **No hay ninguna
+dependencia de pruebas añadida al proyecto**, y eso es parte del criterio: el
+ejecutor viene con Node.
+
+| Suite | Comando | Archivos | Pruebas |
+|---|---|---|---|
+| Backend | `npm test` desde `backend/` | 2 | 33 |
+| Frontend | `npm test` desde `frontend/` | 4 | 49 |
+
+**Backend.** `tests/smoke.test.js` verifica que el esquema cree las cinco
+entidades, que las claves foráneas estén activadas y que `/api/health` responda;
+levanta la app en el puerto `0` para no chocar con el servidor de desarrollo.
+`tests/funcionales.test.js` ejercita las reglas de negocio contra una base de
+datos de verdad: la máquina de estados completa (el flujo legal, los saltos
+prohibidos, el estado final, el motivo obligatorio del atajo y cómo sigue la
+`fecha_resolucion` al estado), los tres diferenciadores y la invariante de que la
+identidad sale de la sesión. Usa **su propia base**
+(`data/pruebas-funcionales.sqlite`, ignorada por git) y vacía las tablas antes de
+cada prueba, lo que con la base de desarrollo habría borrado datos en uso.
+
+**Frontend.** Cuatro archivos dibujan las pantallas con `renderToStaticMarkup` y
+afirman sobre el HTML resultante. Cambiando quién está usando la aplicación se
+comprueban **las dos caras de cada permiso**: que la acción aparezca para quien
+puede y que no aparezca para quien no. La aplicación no lleva ni una línea añadida
+para poder probarse: los dobles se inyectan desde el propio Vite del proyecto.
+
+Lo que estas pruebas cubren son las situaciones que cuesta reproducir a mano y
+que se rompen sin que nadie lo note: una incidencia que no existe, un estado final
+sin transiciones, un sistema sin datos suficientes, el backend apagado.
+
+Lo que **no** cubren: el aspecto (el CSS no se aplica), la interacción (nadie
+pulsa un botón) y los efectos del hook de peticiones real. Eso pide un navegador,
+y es la tarea pendiente del proyecto.
+
+> **Una suite verde que nunca se ha visto fallar no dice nada.** Las dos se
+> comprobaron rompiendo el código a propósito y verificando que cada rotura hiciera
+> fallar exactamente una prueba: permitir `ABIERTA → RESUELTA`, vaciar las
+> transiciones que exigen motivo, descuadrar los pesos del índice, mostrar el
+> índice sin datos suficientes y dejar de marcar las reaperturas.
 
 ### Empezar desde cero
 

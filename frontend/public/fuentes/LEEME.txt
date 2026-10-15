@@ -1,0 +1,36 @@
+Tipografia del proyecto
+=======================
+
+IBM Plex Sans e IBM Plex Mono, subconjunto 'latin'.
+
+Por que los archivos estan en el repositorio y no se piden a un servidor
+externo:
+
+  - En una defensa no se puede depender de que la sala tenga internet.
+  - Una fuente alojada aqui no cambia sin aviso.
+  - No se informa a un tercero quien usa la aplicacion.
+
+Licencia
+--------
+SIL Open Font License 1.1 (ver LICENCIA.txt), que permite redistribuirla
+dentro de un proyecto. Copyright (c) 2017 IBM Corp.
+
+Procedencia exacta, por si hay que regenerarlos
+-----------------------------------------------
+Descargados de Google Fonts, subconjunto latin unicamente:
+
+  ibm-plex-sans-variable-latin.woff2
+    https://fonts.gstatic.com/s/ibmplexsans/v23/
+    zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbABA.woff2
+
+  ibm-plex-mono-400-latin.woff2
+    https://fonts.gstatic.com/s/ibmplexmono/v20/
+    -F63fjptAgt5VM-kVkqdyU8n1iEq129k.woff2
+
+El archivo de Sans es una FUENTE VARIABLE: contiene todo el eje de grosor
+(100 a 700) en un solo archivo. Por eso en index.css se declara con un rango
+y no una vez por peso. Google sirve ese mismo archivo para 400, 600 y 700,
+que es como se comprobo que era variable.
+
+Mono es estatica, un solo peso (400), que es el unico que usa la interfaz
+para los valores tecnicos.

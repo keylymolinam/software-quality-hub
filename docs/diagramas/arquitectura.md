@@ -6,7 +6,7 @@ carpetas, sino lo que cada una **no** puede hacer.
 
 ```mermaid
 flowchart TB
-    navegador["Navegador<br/>React + Vite :5173"]
+    navegador["Navegador — React + Vite :5173<br/>nueve pantallas (ver frontend.md)"]
 
     subgraph api["API REST — Node + Express :3000"]
         direction TB
@@ -46,6 +46,11 @@ respuesta. Añadir `try/catch` en cada controlador solo repetiría ruido.
 Que los services no reciban `req` ni `res` es lo que permite probarlos sin
 levantar un servidor: las 29 pruebas funcionales llaman directamente a
 `crearIncidencia()` y `cambiarEstado()`.
+
+El navegador aparece aquí como una sola caja a propósito: esta figura trata de
+las fronteras del backend. El reparto interno del frontend —sus nueve pantallas y
+las capas por las que pasa un dato hasta dibujarse— tiene su propia figura en
+[`frontend.md`](frontend.md).
 
 ## Dónde se conectan los tres diferenciadores
 

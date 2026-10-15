@@ -7,6 +7,7 @@ Las figuras del proyecto, escritas en [Mermaid](https://mermaid.js.org/).
 | [`modelo-entidad-relacion.md`](modelo-entidad-relacion.md) | Las cinco entidades, sus atributos y sus relaciones | `backend/src/db/schema.sql` |
 | [`maquina-de-estados.md`](maquina-de-estados.md) | El flujo de estados de una incidencia | `TRANSICIONES` en `backend/src/services/incidencia.service.js` |
 | [`arquitectura.md`](arquitectura.md) | El recorrido de una petición por las tres capas, y dónde se conectan los diferenciadores | La estructura de `backend/src/` |
+| [`frontend.md`](frontend.md) | Las nueve pantallas con sus rutas, y por dónde pasa un dato hasta dibujarse | `frontend/src/App.jsx` y la estructura de `frontend/src/` |
 
 ## Por qué Mermaid y no imágenes
 
@@ -32,7 +33,7 @@ Para pegarlas en el documento escrito hace falta una imagen. Dos caminos:
 2. **CLI**, si se prefiere automatizar:
 
    ```bash
-   npx -y @mermaid-js/mermaid-cli -i docs/diagramas/maquina-de-estados.md -o er.svg
+   npx -y @mermaid-js/mermaid-cli -i docs/diagramas/maquina-de-estados.md -o estados.svg
    ```
 
    Genera un archivo por bloque del documento. No se agrega como dependencia del

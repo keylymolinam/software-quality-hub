@@ -261,17 +261,47 @@ una incidencia se marque como duplicada de sí misma.
 
 ### 4.4 Índices
 
-Se definieron índices sobre las columnas empleadas como filtro en las consultas
-frecuentes: `id_proyecto`, `estado`, `categoria`, `asignado_a` y `reportado_por`
-en `INCIDENCIA`; `id_incidencia` en `HISTORIAL_INCIDENCIA`; `id_proyecto` y
-`tipo_metrica` en `METRICA`. Sin índice, el motor debe recorrer la tabla
-completa para resolver cada filtro.
+Se definieron **nueve** índices sobre las columnas empleadas como filtro en las
+consultas frecuentes:
+
+| Tabla | Columnas indexadas | Nº |
+|---|---|---|
+| `INCIDENCIA` | `id_proyecto`, `estado`, `categoria`, `asignado_a`, `reportado_por` | 5 |
+| `HISTORIAL_INCIDENCIA` | `id_incidencia`, `modificado_por` | 2 |
+| `METRICA` | `id_proyecto`, `tipo_metrica` | 2 |
+
+Sin índice, el motor debe recorrer la tabla completa para resolver cada filtro.
+
+Los dos de `HISTORIAL_INCIDENCIA` responden a las dos formas en que se consulta
+la bitácora, y ambas existen en el sistema: por `id_incidencia` para reconstruir
+la traza de una incidencia (`GET /api/incidencias/:id/historial`), y por
+`modificado_por` para comprobar si un usuario registró cambios antes de
+eliminarlo, que es lo que hace cumplir el `ON DELETE RESTRICT`.
+
+No se indexan las columnas de fecha, y es deliberado. Las consultas del índice de
+salud no filtran por un rango de fechas: las **agregan** sobre el conjunto
+completo (`AVG(julianday('now') - julianday(i.fecha_creacion))`), y para eso hay
+que leer todas las filas de todos modos. La serie histórica sí ordena por
+`fecha_calculo`, pero antes acota por `tipo_metrica` e `id_proyecto`, que ya
+están indexados. Un índice que nunca decide nada solo encarece cada escritura.
 
 ---
 
 ## 5. Verificación del modelo
 
-El esquema fue validado ejecutándolo sobre una base SQLite real.
+El esquema fue validado ejecutándolo sobre una base SQLite real. Las veinte
+comprobaciones de abajo se hicieron a mano sobre el esquema, y verifican lo que
+el **motor** garantiza por sí solo: tipos, `CHECK`, `UNIQUE` y políticas de
+borrado.
+
+Las reglas que el motor **no** puede hacer cumplir —el orden de los estados, la
+identidad del autor, los tres diferenciadores— están cubiertas por las pruebas
+automatizadas de `backend/tests/funcionales.test.js`, que corren con
+`npm test` contra una base de datos propia. La distinción importa: una
+restricción de dominio se comprueba una vez porque no puede dejar de ser cierta;
+una regla de negocio vive en código que se edita, y por eso necesita una prueba
+que vuelva a correr sola. Ver la sección «Pruebas» del
+[`README.md`](../README.md).
 
 **Estructura**
 
