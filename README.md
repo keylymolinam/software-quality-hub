@@ -7,12 +7,10 @@ Ingeniería en Computación e Informática.
 > entidades principales (incidencias, proyectos y usuarios), la máquina de estados
 > con bitácora de cambios, la autenticación con control de acceso por rol y los tres
 > diferenciadores. El **frontend** recorre el ciclo de trabajo completo en nueve
-> pantallas, y los tres diferenciadores se ven en pantalla. Hay **82 pruebas
-> automatizadas** (33 del backend y 49 del frontend) que corren sin dependencias
-> añadidas, con el ejecutor que viene con Node.
->
-> Pendiente: las **pruebas de interacción** (pulsar botones, enviar formularios),
-> que piden un navegador y hoy no están cubiertas por ninguna de las dos suites.
+> pantallas, y los tres diferenciadores se ven en pantalla. Hay **92 pruebas
+> automatizadas**: 33 del backend y 49 de las pantallas, que corren con el ejecutor
+> que viene con Node, y 10 de interacción, que recorren el sistema en un navegador
+> real con Playwright.
 
 ## Diferenciadores
 
@@ -48,7 +46,7 @@ Ingeniería en Computación e Informática.
 | Backend | Node.js ≥ 22.5 + Express 5 |
 | Base de datos | SQLite, con el módulo integrado `node:sqlite` (sin ORM) |
 | Autenticación | JWT (`jsonwebtoken`) + hash bcrypt (`bcryptjs`) |
-| Pruebas | `node --test` y `assert/strict`, sin dependencias añadidas |
+| Pruebas | `node --test` y `assert/strict`; Playwright para las de interacción |
 | Arquitectura | Tres capas: presentación, lógica de negocio, persistencia |
 
 Dos ausencias que son decisiones, no omisiones:
@@ -88,7 +86,8 @@ software-quality-hub/
 │   │   ├── hooks/        peticiones y sugerencia de clasificación
 │   │   ├── dominio/      el texto legible de cada valor
 │   │   └── styles/       CSS plano
-│   └── tests/            cuatro archivos + sus dobles
+│   ├── tests/            cuatro archivos + sus dobles
+│   └── e2e/              pruebas de interacción (Playwright)
 └── docs/
     ├── modelo-datos.md   Diccionario de datos y decisiones de diseño
     └── diagramas/        Figuras en Mermaid
@@ -182,6 +181,7 @@ muestra el indicador **"API conectada"** con los datos del servicio.
 | `npm run build` | Compila la versión de producción en `dist/` |
 | `npm run preview` | Previsualiza la versión compilada |
 | `npm test` | Ejecuta las pruebas de las pantallas |
+| `npm run test:e2e` | Ejecuta las pruebas de interacción en un navegador |
 
 ### Resumen de puertos
 
@@ -391,14 +391,48 @@ y reemplazar el valor en `backend/src/db/seed.sql`.
 
 ## Pruebas
 
-Las dos suites corren con `node --test` y `assert/strict`. **No hay ninguna
-dependencia de pruebas añadida al proyecto**, y eso es parte del criterio: el
-ejecutor viene con Node.
+Las dos primeras suites corren con `node --test` y `assert/strict`, sin ninguna
+dependencia de pruebas: el ejecutor viene con Node. La tercera es la excepción, y
+es deliberada: pulsar un botón pide un navegador, y Node no trae uno.
 
 | Suite | Comando | Archivos | Pruebas |
 |---|---|---|---|
 | Backend | `npm test` desde `backend/` | 2 | 33 |
-| Frontend | `npm test` desde `frontend/` | 4 | 49 |
+| Pantallas | `npm test` desde `frontend/` | 4 | 49 |
+| Interacción | `npm run test:e2e` desde `frontend/` | 4 | 10 |
+
+### Cómo ejecutarlas
+
+Las tres necesitan las dependencias instaladas (`npm install` en `backend/` y en
+`frontend/`). La de interacción necesita además el navegador, que se descarga una
+sola vez por máquina:
+
+```bash
+cd frontend
+npx playwright install chromium
+```
+
+Luego, cada suite por separado:
+
+```bash
+# Backend: humo y funcionales
+cd backend
+npm test
+
+# Pantallas, sin navegador
+cd frontend
+npm test
+
+# Interacción, en Chromium
+cd frontend
+npm run test:e2e
+```
+
+La de interacción no pide nada encendido: levanta por su cuenta el backend (en el
+puerto 3100) y el frontend (en el 5174), con su propia base. Se puede ejecutar con
+el entorno de desarrollo abierto, y no toca los datos de la demo. Si una prueba
+falla, deja en `frontend/test-results/` una traza que se abre con
+`npx playwright show-trace <ruta del trace.zip>`.
 
 **Backend.** `tests/smoke.test.js` verifica que el esquema cree las cinco
 entidades, que las claves foráneas estén activadas y que `/api/health` responda;
@@ -422,14 +456,28 @@ que se rompen sin que nadie lo note: una incidencia que no existe, un estado fin
 sin transiciones, un sistema sin datos suficientes, el backend apagado.
 
 Lo que **no** cubren: el aspecto (el CSS no se aplica), la interacción (nadie
-pulsa un botón) y los efectos del hook de peticiones real. Eso pide un navegador,
-y es la tarea pendiente del proyecto.
+pulsa un botón) y los efectos del hook de peticiones real.
 
-> **Una suite verde que nunca se ha visto fallar no dice nada.** Las dos se
+**Interacción.** Eso es lo que cubre la tercera suite. Playwright levanta el
+backend y el frontend de verdad, en puertos propios (3100 y 5174) y con su propia
+base (`data/pruebas-e2e.sqlite`, recargada con el seed al empezar), y recorre el
+sistema en Chromium: entrar y salir, la sugerencia del motor mientras se escribe,
+el aviso de duplicado al registrar, el error del servidor junto al campo, la
+máquina de estados completa con su bitácora, el motivo obligatorio en sus dos
+capas (navegador y servidor), descartar un duplicado y los filtros en la
+dirección con el botón atrás. La primera vez hay que descargar el navegador:
+
+```bash
+npx playwright install chromium
+```
+
+> **Una suite verde que nunca se ha visto fallar no dice nada.** Las tres se
 > comprobaron rompiendo el código a propósito y verificando que cada rotura hiciera
 > fallar exactamente una prueba: permitir `ABIERTA → RESUELTA`, vaciar las
 > transiciones que exigen motivo, descuadrar los pesos del índice, mostrar el
-> índice sin datos suficientes y dejar de marcar las reaperturas.
+> índice sin datos suficientes y dejar de marcar las reaperturas; y en la de
+> interacción, quitar el `required` del motivo, filtrar sin dejar rastro en el
+> historial y descartar la sugerencia del motor.
 
 ### Empezar desde cero
 
@@ -443,4 +491,4 @@ rm backend/data/software_quality_hub.sqlite     # macOS / Linux
 
 ## Autor
 
-Miguel M. — Proyecto de título, Ingeniería en Computación e Informática.
+Keyly Anyely Molina Montoya — Proyecto de título, Ingeniería en Computación e Informática.

@@ -16,7 +16,7 @@
     "express",
     "sqlite"
   ],
-  "author": "Miguel M.",
+  "author": "Keyly Anyely Molina Montoya",
   "license": "MIT",
   "engines": {
     "node": ">=22.5.0"

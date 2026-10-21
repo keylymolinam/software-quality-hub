@@ -28,8 +28,8 @@ que ya cubren todo lo que la API ofrece:
 | Proyectos | `/proyectos` | El listado para todos; crear, editar y eliminar para el administrador |
 | Usuarios | `/usuarios` | El equipo, con las cinco reglas de acceso reflejadas en la tabla |
 
-Pendiente: las pruebas de interacción (pulsar botones, enviar formularios), que piden un
-navegador y hoy no están cubiertas por ninguna de las dos suites.
+Hay tres suites de pruebas: backend, pantallas e interacción. La última recorre el
+sistema en un navegador real (ver "Pruebas").
 
 ## Comandos
 
@@ -38,11 +38,13 @@ navegador y hoy no están cubiertas por ninguna de las dos suites.
 npm run dev        # desarrollo con --watch
 npm start          # sin reinicio automático
 npm run db:seed    # VACÍA las tablas y recarga datos de prueba
-npm test           # node --test (por ahora solo pruebas de humo)
+npm test           # node --test (humo y funcionales)
 
 # Frontend (desde frontend/)
 npm run dev        # Vite en :5173, abre el navegador
 npm run build
+npm test           # pantallas, sin navegador
+npm run test:e2e   # interaccion con Playwright; levanta backend y frontend solo
 ```
 
 El backend corre en `:3000`, el frontend en `:5173`. Ambos necesitan su `.env` copiado
@@ -223,8 +225,9 @@ de los datos: si se cambian, hay que decir por qué.
 
 ### Pruebas
 
-Las dos suites corren con `node --test` y `assert/strict`. No hay ninguna dependencia de
-pruebas añadida al proyecto, y eso es parte del criterio: el ejecutor viene con Node.
+Las suites de backend y de pantallas corren con `node --test` y `assert/strict`, sin
+ninguna dependencia de pruebas: el ejecutor viene con Node, y eso es parte del criterio.
+La de interacción es la única excepción, y está justificada en `playwright.config.js`.
 
 **Backend** — `npm test` desde `backend/`. Dos archivos:
 
@@ -262,18 +265,38 @@ Lo que estas pruebas cubren son las situaciones que cuesta reproducir a mano y q
 rompen sin que nadie lo note: una incidencia que no existe, un estado final sin
 transiciones, un sistema sin datos suficientes, el backend apagado. Lo que **no** cubren:
 el aspecto (el CSS no se aplica), la interacción (nadie pulsa un botón) y los efectos del
-hook de peticiones real. Eso pide un navegador, y es otra decisión.
+hook de peticiones real. Eso lo cubre la tercera suite.
 
-**Una suite verde que nunca se ha visto fallar no dice nada.** Las dos se comprobaron
+**Interacción** — `npm run test:e2e` desde `frontend/`. Playwright con Chromium; la
+primera vez hay que descargarlo con `npx playwright install chromium`. Cuatro archivos en
+`e2e/` (`sesion`, `registro`, `transiciones`, `listado`) y sus utilidades en
+`e2e/apoyo.js`.
+
+- `playwright.config.js` levanta backend y frontend por su cuenta, en **puertos propios
+  (3100 y 5174)** y con **su propia base** (`data/pruebas-e2e.sqlite`), que recarga con el
+  seed antes de empezar. Así corre con el entorno de desarrollo encendido y sin tocar sus
+  datos. `reuseExistingServer` va apagado: si el puerto está ocupado, mejor fallar que
+  escribir en una base ajena.
+- **Cada prueba crea las incidencias que necesita** (`crearPorApi`) en vez de usar las
+  del seed, y con textos distintos entre sí, para que el detector de duplicados no las
+  relacione. La sesión sí se inicia por la pantalla de login, que es parte de lo probado.
+- **Se afirma sobre clases y estados, no sobre los mensajes del backend**, por la misma
+  razón que en las funcionales. Los textos fijos de la interfaz (etiquetas, botones) sí
+  se usan para encontrar elementos, porque es como los encuentra una persona.
+- `getByLabel` sobre un `<select>` incluye el texto de sus opciones: en el listado,
+  "Estado" también calza con "Ordenar por". Los filtros se buscan por su etiqueta exacta.
+- Corren con un solo trabajador y sin reintentos: una prueba que pasa al segundo intento
+  esconde un problema de sincronización.
+
+**Una suite verde que nunca se ha visto fallar no dice nada.** Las tres se comprobaron
 rompiendo el código a propósito y verificando que cada rotura hiciera fallar exactamente
 una prueba: permitir `ABIERTA → RESUELTA`, vaciar
 `TRANSICIONES_QUE_EXIGEN_MOTIVO`, descuadrar los pesos del índice, mostrar el índice sin
-datos suficientes y dejar de marcar las reaperturas. Al agregar pruebas, conviene repetir
-el ejercicio: cuesta un minuto y es la única forma de saber que la prueba mira lo que
-dice mirar.
-
-Lo que falta son las pruebas de interacción (pulsar botones, enviar formularios), que
-piden un navegador.
+datos suficientes y dejar de marcar las reaperturas. La de interacción, quitando el
+`required` del motivo en `PanelTransicion.jsx`, filtrando con `replace: true` en
+`Incidencias.jsx` (el botón atrás deja de deshacer) y descartando la sugerencia en
+`useClasificacionSugerida.js`. Al agregar pruebas, conviene repetir el ejercicio: cuesta
+un minuto y es la única forma de saber que la prueba mira lo que dice mirar.
 
 ## Entorno
 
