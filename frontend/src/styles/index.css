@@ -684,11 +684,15 @@ body {
   border-bottom: 1px solid var(--color-borde);
 }
 
+/* Los encabezados NO son sticky, y no por descuido. El overflow-x de
+   .tabla-contenedor lo convierte en el contenedor de desplazamiento, y un
+   sticky se ancla al contenedor mas cercano, no a la ventana: el `top` se
+   media desde el borde de la tabla, los encabezados quedaban corridos hacia
+   abajo tapando la primera fila y nunca se fijaban al bajar. Para que
+   funcionara habria que dar a la tabla su propia barra vertical (un scroll
+   dentro de otro) o renunciar al desplazamiento horizontal en pantallas
+   angostas; ninguna de las dos compensa unos encabezados a la vista. */
 .tabla thead th {
-  position: sticky;
-  /* Debajo de la cabecera, que tambien es sticky. Sin esto los encabezados de
-     la tabla se esconderian detras de ella al desplazarse. */
-  top: var(--alto-cabecera);
   background: var(--color-sutil);
   font-size: var(--texto-xs);
   font-weight: 700;

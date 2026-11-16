@@ -119,6 +119,20 @@ export const LEXICO_CATEGORIA = {
     // autorizacion, y eso basta por si solo para la categoria.
     ['permis*', 3],
 
+    // Ver lo ajeno es la forma en que una persona describe una falla de
+    // autorizacion sin conocer la palabra: "me muestra pedidos de otro
+    // cliente". Faltaban; se detecto en la evaluacion (caso de desarrollo #3).
+    ['de otro cliente', 3],
+    ['de otros clientes', 3],
+    ['de otro usuario', 3],
+    ['de otros usuarios', 3],
+    ['de otras personas', 3],
+
+    // Una sesion que sigue abierta cuando no deberia es gestion de sesiones.
+    // Sin esto, "la sesion no se cierra" sumaba solo a DISPONIBILIDAD por
+    // 'se cierra', que ahi significa lo contrario (caso de desarrollo #15).
+    ['sesion iniciada', 3],
+
     ['expone', 2],
     ['filtracion', 2],
     ['datos sensibles', 2],
@@ -137,6 +151,14 @@ export const LEXICO_CATEGORIA = {
     ['fuera del area visible', 3],
     ['queda oculto', 3],
     ['usabilidad', 3],
+    // Quien no sabe usar el sistema reporta un problema de usabilidad aunque
+    // no nombre ninguna parte de la pantalla (caso de desarrollo #41).
+    ['como usar', 3],
+    // Un elemento que tapa a otro: "el teclado lo tapa y no se ve lo que uno
+    // escribe" (caso de desarrollo #47). 'no se ve' pesa 1 porque tambien
+    // aparece cuando un dato falta, no solo cuando algo lo cubre.
+    ['tapa', 2],
+    ['no se ve', 1],
     ['interfaz', 2],
     ['resolucion', 2],
     ['resoluciones', 2],
@@ -166,6 +188,17 @@ export const LEXICO_CATEGORIA = {
     ['inconsistente', 3],
     ['no coincide', 3],
     ['no cuadra', 3],
+    // Los plurales, que son como se escribe al reportar ("los totales no
+    // cuadran"). Sin asterisco el termino exige la palabra exacta, el mismo
+    // problema que tuvo 'permis*' (caso de desarrollo #5).
+    ['no coinciden', 3],
+    ['no cuadran', 3],
+    // Datos que desaparecen: "se borraron los comentarios" (caso #19).
+    ['se borr*', 3],
+    // Un valor imposible, como stock negativo (caso #35). Cada uno solo no
+    // alcanza el minimo: 'negativo' tambien describe resultados validos.
+    ['negativ*', 2],
+    ['stock', 1],
     ['migracion', 3],
     ['archivo vacio', 3],
     ['descuadre', 3],
