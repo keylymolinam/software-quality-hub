@@ -117,9 +117,9 @@ describe('Pantalla de usuarios', () => {
     const ajenas = accionesDeLaFila(html, 'Luis Fuentes');
 
     // Cambiar exige la clave vigente: solo su dueno.
-    assert.ok(propias.includes('Contrase\u00f1a'));
+    assert.ok(propias.includes('Cambiar contrase\u00f1a'));
     assert.ok(
-      !ajenas.includes('Contrase\u00f1a'),
+      !ajenas.includes('Cambiar contrase\u00f1a'),
       'un administrador no cambia la clave de otro por la via que pide la actual'
     );
 
@@ -146,7 +146,7 @@ describe('Pantalla de usuarios', () => {
     // Sobre si mismo: editar y la contrasena.
     const propias = accionesDeLaFila(html, 'Luis Fuentes');
     assert.ok(propias.includes('Editar'));
-    assert.ok(propias.includes('Contrase\u00f1a'));
+    assert.ok(propias.includes('Cambiar contrase\u00f1a'));
     assert.ok(!propias.includes('Restablecer clave'));
 
     // Sobre la cuenta ajena: nada, tampoco restablecer.

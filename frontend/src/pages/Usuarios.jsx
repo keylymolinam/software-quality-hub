@@ -460,7 +460,7 @@ export default function Usuarios() {
                                   type="button"
                                   onClick={() => abrir('clave', usuario)}
                                 >
-                                  Contrase&ntilde;a
+                                  Cambiar contrase&ntilde;a
                                 </button>
                               )}
 
