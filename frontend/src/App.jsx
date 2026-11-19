@@ -36,6 +36,7 @@ import Login from './pages/Login.jsx';
 import Proyectos from './pages/Proyectos.jsx';
 import Usuarios from './pages/Usuarios.jsx';
 import Salud from './pages/Salud.jsx';
+import GuiaSalud from './pages/GuiaSalud.jsx';
 import NuevaIncidencia from './pages/NuevaIncidencia.jsx';
 import { useSesion } from './context/SesionContext.jsx';
 
@@ -82,6 +83,7 @@ export default function App() {
         <Route path="/proyectos" element={<Proyectos />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/salud" element={<Salud />} />
+        <Route path="/salud/guia" element={<GuiaSalud />} />
 
         {/* Una direccion que no existe vuelve al inicio en lugar de dejar la
             pantalla en blanco. Se reemplaza la entrada del historial para que el

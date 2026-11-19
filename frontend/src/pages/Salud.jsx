@@ -24,7 +24,7 @@
  * del listado: asi el enlace a "la salud del proyecto 3" se puede compartir y
  * el boton atras deshace el cambio.
  */
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import ComponenteSalud from '../components/ComponenteSalud.jsx';
 import EtiquetaEstado from '../components/EtiquetaEstado.jsx';
@@ -99,6 +99,13 @@ export default function Salud() {
           <h1 className="titulo">&Iacute;ndice de salud</h1>
           <p className="subtitulo">De qu&eacute; se compone y con qu&eacute; evidencia.</p>
         </div>
+
+        {/* La guia explica la regla; esta pantalla, la evidencia de un ambito.
+            El enlace va arriba y a la vista porque quien no entiende el
+            numero lo busca antes de leer nada mas. */}
+        <Link className="boton boton--discreto boton--auto" to="/salud/guia">
+          &iquest;Qu&eacute; es y c&oacute;mo se calcula?
+        </Link>
       </header>
 
       {/* Un solo selector arriba, que alcanza a todas las tarjetas de abajo.

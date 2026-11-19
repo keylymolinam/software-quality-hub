@@ -12,6 +12,8 @@
  */
 import { test, describe, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import { cargando, cargar, cerrarEntorno, declararEscenario, dibujar, falla, respondeCon, texto } from './entorno.js';
 
@@ -234,5 +236,68 @@ describe('Pantalla del desglose del indice', () => {
     declararEscenario({ [CLAVE]: cargando() });
 
     assert.match(texto(await dibujarSalud()), /Calculando/);
+  });
+});
+
+describe('Guia del indice', () => {
+  /**
+   * Los pesos y limites de la guia estan escritos a mano (ver GuiaSalud.jsx).
+   * Esta prueba los lee del backend, que es quien calcula de verdad, y exige
+   * que la guia diga lo mismo: si alguien cambia un peso alla y olvida la
+   * guia, la guia estaria explicando un indice que ya no existe.
+   */
+  function parametrosDelBackend() {
+    const fuente = readFileSync(
+      fileURLToPath(new URL('../../backend/src/services/salud.service.js', import.meta.url)),
+      'utf8'
+    );
+
+    const numero = (patron) => Number(fuente.match(patron)[1]);
+
+    return {
+      antiguedad: Math.round(numero(/antiguedad:\s*([\d.]+)/) * 100),
+      reapertura: Math.round(numero(/reapertura:\s*([\d.]+)/) * 100),
+      reparto: Math.round(numero(/densidad:\s*([\d.]+)/) * 100),
+      limiteDias: numero(/LIMITE_ANTIGUEDAD_DIAS\s*=\s*(\d+)/),
+      limiteReapertura: Math.round(numero(/LIMITE_REAPERTURA\s*=\s*([\d.]+)/) * 100),
+      saludable: numero(/SALUDABLE:\s*(\d+)/),
+      atencion: numero(/ATENCION:\s*(\d+)/),
+    };
+  }
+
+  async function dibujarGuia() {
+    const { default: GuiaSalud } = await cargar('/src/pages/GuiaSalud.jsx');
+    return texto(dibujar(GuiaSalud));
+  }
+
+  test('explica que es, para que sirve, como se lee y como se calcula', async () => {
+    const visible = await dibujarGuia();
+
+    assert.match(visible, /1\. Qu\u00e9 es/);
+    assert.match(visible, /2\. Para qu\u00e9 sirve/);
+    assert.match(visible, /3\. C\u00f3mo se lee/);
+    assert.match(visible, /4\. C\u00f3mo se calcula/);
+    assert.match(visible, /Volver al \u00edndice de salud/);
+  });
+
+  test('los pesos, limites y umbrales coinciden con los del backend', async () => {
+    const visible = await dibujarGuia();
+    const p = parametrosDelBackend();
+
+    assert.match(visible, new RegExp(`Antig\u00fcedad de lo abierto pesa ${p.antiguedad}%`));
+    assert.match(visible, new RegExp(`Tasa de reapertura pesa ${p.reapertura}%`));
+    assert.match(visible, new RegExp(`Reparto por categor\u00eda pesa ${p.reparto}%`));
+    assert.match(visible, new RegExp(`${p.limiteDias} d\u00edas o m\u00e1s da 0`));
+    assert.match(visible, new RegExp(`${p.limiteReapertura}% o m\u00e1s da 0`));
+    assert.match(visible, new RegExp(`${p.saludable} o m\u00e1s`));
+    assert.match(visible, new RegExp(`Menos de ${p.atencion}\.`));
+  });
+
+  test('el ejemplo suma bien: cada puntaje por su peso', async () => {
+    const visible = await dibujarGuia();
+
+    // 50 x 40% + 100 x 35% + 80 x 25% = 20 + 35 + 20 = 75
+    assert.match(visible, /\u00cdndice 75/);
+    assert.match(visible, /75 queda entre 60 y 79/);
   });
 });

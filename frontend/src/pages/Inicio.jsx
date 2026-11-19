@@ -123,7 +123,8 @@ export default function Inicio() {
 
             <p className="ayuda ayuda--neutra">
               <Link to="/salud">Ver el desglose por componente</Link>, con la evidencia que
-              sostiene cada uno.
+              sostiene cada uno, o leer <Link to="/salud/guia">qu&eacute; es y c&oacute;mo se
+              calcula</Link>.
             </p>
           </>
         )}

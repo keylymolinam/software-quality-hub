@@ -1652,6 +1652,97 @@ a.tabla__titulo:hover {
 }
 
 /* ===========================================================================
+   Guia del indice de salud
+   Texto para leer de corrido: lineas cortas, vinetas y aire entre secciones.
+   =========================================================================== */
+
+.guia .tarjeta h2 {
+  margin-bottom: 8px;
+}
+
+.guia p {
+  line-height: 1.6;
+}
+
+.guia__volver {
+  margin: 0 0 12px;
+  font-size: var(--texto-sm);
+}
+
+.guia__lista {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+.guia__lista li + li {
+  margin-top: 6px;
+}
+
+/* Cada nivel con su etiqueta a la izquierda, alineadas en una columna para
+   que se lean como una escala. */
+.guia__niveles {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guia__niveles li {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.guia__niveles li + li {
+  border-top: 1px solid var(--color-borde);
+}
+
+.guia__niveles .etiqueta-salud {
+  justify-self: start;
+}
+
+.guia__componentes {
+  margin: 16px 0 0;
+  padding-left: 20px;
+}
+
+.guia__componentes > li + li {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.guia__componentes h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.guia__peso {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: var(--color-primario-tinte);
+  border-radius: 999px;
+}
+
+.guia__ejemplo {
+  margin: 12px 0;
+}
+
+.guia__ejemplo tfoot th,
+.guia__ejemplo tfoot td {
+  border-top: 2px solid var(--color-borde-fuerte);
+}
+
+.guia__ejemplo tfoot th {
+  text-align: left;
+}
+
+/* ===========================================================================
    Proyectos
    =========================================================================== */
 
