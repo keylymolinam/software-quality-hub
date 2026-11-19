@@ -3,14 +3,15 @@
  *
  * Uso:  npm run db:seed
  *
- * Vacia las tablas y las vuelve a poblar con el contenido de seed.sql.
+ * Recrea las tablas con el esquema actual y las vuelve a poblar con el
+ * contenido de seed.sql.
  * Pensado para desarrollo: NO debe ejecutarse sobre datos reales.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { db, RUTA_BD, cerrarBaseDatos } from './database.js';
+import { db, RUTA_BD, cerrarBaseDatos, recrearEsquema } from './database.js';
 
 const DIRECTORIO_ACTUAL = dirname(fileURLToPath(import.meta.url));
 const RUTA_SEED = resolve(DIRECTORIO_ACTUAL, 'seed.sql');
@@ -20,6 +21,10 @@ console.log('  Cargando datos de prueba...');
 console.log(`  Base de datos: ${RUTA_BD}`);
 
 try {
+  // Recrear y no solo vaciar: asi una base creada con una version anterior
+  // del esquema (por ejemplo, sin el estado VALIDADA) queda al dia. Ver
+  // recrearEsquema() en database.js.
+  recrearEsquema();
   db.exec(readFileSync(RUTA_SEED, 'utf8'));
 
   // Resumen de lo insertado, para confirmar que todo quedo en su lugar.

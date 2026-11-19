@@ -52,11 +52,70 @@ db.exec('PRAGMA journal_mode = WAL;');
 // --- Creacion de las tablas -------------------------------------------------
 // El esquema usa CREATE TABLE IF NOT EXISTS, por lo que ejecutarlo en cada
 // arranque es seguro: crea lo que falta y no toca lo que ya existe.
-db.exec(readFileSync(RUTA_SCHEMA, 'utf8'));
+const TEXTO_SCHEMA = readFileSync(RUTA_SCHEMA, 'utf8');
+db.exec(TEXTO_SCHEMA);
 
 if (esBaseNueva) {
   console.log(`  Base de datos creada en: ${RUTA_BD}`);
 }
+
+/**
+ * Tablas en orden de dependencia: cada una solo apunta a las que estan antes.
+ * Se borran en el orden inverso para no dejar claves foraneas colgando.
+ */
+const TABLAS = ['USUARIO', 'PROYECTO', 'INCIDENCIA', 'HISTORIAL_INCIDENCIA', 'METRICA'];
+
+/**
+ * Borra todas las tablas y las vuelve a crear con el esquema actual.
+ *
+ * La usa el seed. Existe porque CREATE TABLE IF NOT EXISTS no toca una tabla
+ * que ya existe, y SQLite no permite modificar un CHECK con ALTER TABLE: al
+ * agregar un estado (VALIDADA), una base creada antes seguiria rechazandolo.
+ * Vaciar las tablas con DELETE, como se hacia antes, conservaba ese CHECK
+ * viejo. Se descarto una migracion que reconstruya las tablas conservando las
+ * filas: aqui solo hay datos de prueba que el seed regenera, y la migracion
+ * seria mas codigo que proteger que lo que protege.
+ */
+export function recrearEsquema() {
+  for (const tabla of [...TABLAS].reverse()) {
+    db.exec(`DROP TABLE IF EXISTS ${tabla}`);
+  }
+  db.exec(TEXTO_SCHEMA);
+}
+
+/**
+ * Avisa al arrancar si la base se creo con una lista de estados anterior.
+ *
+ * Sin el aviso, el sintoma aparece mucho despues y lejos de la causa: un 500
+ * al intentar validar una incidencia, con un "CHECK constraint failed" que no
+ * dice que hacer. Solo avisa y no detiene el arranque, porque el remedio
+ * (npm run db:seed) tiene que poder abrir esta misma conexion.
+ */
+function avisarSiElEsquemaQuedoAtras() {
+  // Se busca dentro del bloque de INCIDENCIA: PROYECTO tambien tiene una
+  // columna estado con su propio CHECK, y aparece antes en el archivo.
+  const bloqueIncidencia = TEXTO_SCHEMA.match(/CREATE TABLE IF NOT EXISTS INCIDENCIA \(([\s\S]*?)\n\);/)?.[1];
+  const estadosDelSchema = bloqueIncidencia?.match(/CHECK \(estado IN \(([^)]*)\)\)/)?.[1];
+  const { sql } =
+    db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'INCIDENCIA'").get() ?? {};
+
+  if (!estadosDelSchema || !sql) return;
+
+  const faltantes = estadosDelSchema
+    .split(',')
+    .map((valor) => valor.trim())
+    .filter((valor) => !sql.includes(valor));
+
+  if (faltantes.length > 0) {
+    console.warn('');
+    console.warn(`  AVISO: la base ${RUTA_BD}`);
+    console.warn(`  se creo antes de agregar los estados ${faltantes.join(', ')}.`);
+    console.warn('  Ejecuta "npm run db:seed" para recrearla (vacia los datos de prueba).');
+    console.warn('');
+  }
+}
+
+avisarSiElEsquemaQuedoAtras();
 
 /**
  * Fecha y hora actual (UTC) en el mismo formato que usa el esquema:

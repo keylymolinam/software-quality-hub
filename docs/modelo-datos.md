@@ -113,7 +113,7 @@ Motor: SQLite 3
 | titulo | TEXT | NOT NULL | Resumen breve |
 | descripcion | TEXT | NOT NULL | Detalle; es el texto que analizan el motor de clasificación y el detector de duplicados |
 | prioridad | TEXT | NOT NULL, CHECK | ALTA · MEDIA · BAJA |
-| estado | TEXT | NOT NULL, CHECK, por defecto ABIERTA | ABIERTA · EN_PROGRESO · RESUELTA · CERRADA |
+| estado | TEXT | NOT NULL, CHECK, por defecto ABIERTA | ABIERTA · EN_PROGRESO · RESUELTA · VALIDADA · CERRADA |
 | categoria | TEXT | NOT NULL, CHECK | DISPONIBILIDAD · RENDIMIENTO · SEGURIDAD · USABILIDAD_INTERFAZ · DATOS_INTEGRIDAD · OTRO |
 | fecha_creacion | TEXT | NOT NULL, por defecto ahora | Fecha de registro |
 | fecha_resolucion | TEXT | Nulo | Se completa al pasar a RESUELTA |
@@ -150,19 +150,25 @@ Motor: SQLite 3
 ## 3. Flujo de estados de una incidencia
 
 ```
-   ┌───────────┐        ┌──────────────┐        ┌───────────┐        ┌───────────┐
-   │  ABIERTA  │ ─────► │ EN_PROGRESO  │ ─────► │ RESUELTA  │ ─────► │  CERRADA  │
-   └───────────┘        └──────────────┘        └───────────┘        └───────────┘
-         │                     ▲                       │                   ▲
-         │                     │                       │                   │
-         │                     └───────────────────────┘                   │
-         │              la solución no se valida correctamente             │
-         │                          (REAPERTURA)                           │
-         │                                                                 │
-         └─────────────────────────────────────────────────────────────────┘
-                    cierre sin resolución (CIERRE DIRECTO):
-                 duplicada · no se reproduce · no aplica
+  ┌───────────┐     ┌──────────────┐     ┌───────────┐     ┌───────────┐     ┌───────────┐
+  │  ABIERTA  │ ──► │ EN_PROGRESO  │ ──► │ RESUELTA  │ ──► │ VALIDADA  │ ──► │  CERRADA  │
+  │(Pendiente)│     │(En desarrollo│     └───────────┘     └───────────┘     └───────────┘
+  └───────────┘     └──────────────┘           │                              ▲   ▲
+        │              │      ▲                │                              │   │
+        │              │      └────────────────┘                              │   │
+        │              │   QA la prueba y no está resuelta (REAPERTURA)       │   │
+        │              └──────────────────────────────────────────────────────┘   │
+        └─────────────────────────────────────────────────────────────────────────┘
+                     rechazo con motivo obligatorio:
+                duplicada · no es un defecto · no se reproduce
 ```
+
+El flujo sigue el ciclo de vida del defecto, simplificado a cinco estados. En la
+interfaz, `ABIERTA` se muestra como «Pendiente» y `EN_PROGRESO` como «En
+desarrollo». `VALIDADA` es el paso de QA: lo resuelto se prueba antes de
+cerrarse, y por eso `RESUELTA` no puede ir directo a `CERRADA`. La figura con la
+correspondencia completa entre el ciclo de vida y el sistema está en
+`docs/diagramas/maquina-de-estados.md`.
 
 La base de datos restringe **qué** valores son admisibles (mediante `CHECK`),
 pero no **en qué orden** pueden ocurrir. La validación de transiciones se
@@ -172,10 +178,10 @@ cambio de estado deja además su registro en `HISTORIAL_INCIDENCIA`.
 La tabla de transiciones vive en `backend/src/services/incidencia.service.js`
 (constante `TRANSICIONES`) y es la traducción directa de este diagrama.
 
-### Cierre directo desde ABIERTA
+### Rechazo: cierre sin resolución
 
-Una incidencia puede cerrarse sin pasar por `EN_PROGRESO` cuando no hay nada
-que resolver. El caso principal lo produce el propio sistema: cuando el
+Una incidencia puede cerrarse sin resolverse cuando no hay nada que resolver,
+desde `ABIERTA` o desde `EN_PROGRESO` (cuando se descubre al investigar). El caso principal lo produce el propio sistema: cuando el
 detector de duplicados marca una incidencia como repetida
 (`posible_duplicado_de`), obligarla a recorrer `EN_PROGRESO` y `RESUELTA`
 registraría un trabajo que nunca ocurrió y distorsionaría las métricas de
@@ -183,9 +189,10 @@ tiempo de resolución.
 
 En este camino `fecha_resolucion` permanece nula, porque no hubo resolución.
 Esa nulidad es justamente lo que permite excluir estas incidencias del cálculo
-de tiempo medio de resolución. Para preservar la trazabilidad, la transición
-`ABIERTA → CERRADA` es la única que **exige comentario obligatorio**: el motivo
-del cierre es el único dato que quedará registrado en la bitácora.
+de tiempo medio de resolución. Para preservar la trazabilidad, las transiciones
+`ABIERTA → CERRADA` y `EN_PROGRESO → CERRADA` son las únicas que **exigen
+comentario obligatorio**: el motivo del cierre es el único dato que quedará
+registrado en la bitácora.
 
 ### Medición de la reapertura
 
@@ -249,7 +256,7 @@ Todos los campos con un conjunto cerrado de valores están acotados con `CHECK`:
 | USUARIO.rol | ADMINISTRADOR · DESARROLLADOR · TESTER · ANALISTA |
 | PROYECTO.estado | ACTIVO · FINALIZADO · PAUSADO |
 | INCIDENCIA.prioridad | ALTA · MEDIA · BAJA |
-| INCIDENCIA.estado | ABIERTA · EN_PROGRESO · RESUELTA · CERRADA |
+| INCIDENCIA.estado | ABIERTA · EN_PROGRESO · RESUELTA · VALIDADA · CERRADA |
 | INCIDENCIA.categoria | DISPONIBILIDAD · RENDIMIENTO · SEGURIDAD · USABILIDAD_INTERFAZ · DATOS_INTEGRIDAD · OTRO |
 | INCIDENCIA.clasificacion_automatica | 0 · 1 |
 | HISTORIAL_INCIDENCIA.estado_anterior / estado_nuevo | Los cuatro estados de incidencia |

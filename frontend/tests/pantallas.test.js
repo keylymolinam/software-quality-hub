@@ -248,7 +248,7 @@ describe('Panel de transiciones', () => {
       },
     });
 
-    assert.match(texto(html), /Tomar y empezar/);
+    assert.match(texto(html), /Pasar a En desarrollo/);
     assert.match(texto(html), /Cerrar sin resolver/);
   });
 
@@ -262,8 +262,50 @@ describe('Panel de transiciones', () => {
       propiedades: { ...comunes, estado: 'RESUELTA', transicionesPosibles: ['EN_PROGRESO'] },
     });
 
-    assert.match(texto(desdeAbierta), /Tomar y empezar/);
+    assert.match(texto(desdeAbierta), /Pasar a En desarrollo/);
     assert.match(texto(desdeResuelta), /Reabrir/);
+  });
+
+  test('el paso de QA: lo resuelto se valida, y lo validado se cierra', async () => {
+    const { default: PanelTransicion } = await cargar('/src/components/PanelTransicion.jsx');
+
+    const resuelta = texto(
+      dibujar(PanelTransicion, {
+        propiedades: { ...comunes, estado: 'RESUELTA', transicionesPosibles: ['EN_PROGRESO', 'VALIDADA'] },
+      })
+    );
+    const validada = texto(
+      dibujar(PanelTransicion, {
+        propiedades: { ...comunes, estado: 'VALIDADA', transicionesPosibles: ['CERRADA'] },
+      })
+    );
+
+    assert.match(resuelta, /Validar/);
+    assert.match(validada, /Cerrar/);
+    assert.doesNotMatch(validada, /sin resolver/, 'cerrar lo validado no es un rechazo');
+  });
+
+  test('en desarrollo tambien se puede rechazar', async () => {
+    const { default: PanelTransicion } = await cargar('/src/components/PanelTransicion.jsx');
+
+    const visible = texto(
+      dibujar(PanelTransicion, {
+        propiedades: { ...comunes, estado: 'EN_PROGRESO', transicionesPosibles: ['RESUELTA', 'CERRADA'] },
+      })
+    );
+
+    assert.match(visible, /Marcar resuelta/);
+    assert.match(visible, /Cerrar sin resolver/);
+  });
+
+  test('los estados se muestran con los nombres del ciclo de vida del defecto', async () => {
+    const { default: EtiquetaEstado } = await cargar('/src/components/EtiquetaEstado.jsx');
+
+    const nombre = (estado) => texto(dibujar(EtiquetaEstado, { propiedades: { estado } }));
+
+    assert.equal(nombre('ABIERTA'), 'Pendiente');
+    assert.equal(nombre('EN_PROGRESO'), 'En desarrollo');
+    assert.equal(nombre('VALIDADA'), 'Validada');
   });
 
   test('un estado final explica que no admite cambios', async () => {
@@ -332,7 +374,7 @@ describe('Pantalla de detalle', () => {
     const visible = texto(dibujarDetalle(DetalleIncidencia, INCIDENCIA_CERRADA));
 
     assert.match(visible, /estado final/);
-    assert.doesNotMatch(visible, /Tomar y empezar/);
+    assert.doesNotMatch(visible, /Pasar a En desarrollo/);
 
     // Sin marca de duplicado no hay nada que descartar.
     assert.doesNotMatch(visible, /No es duplicado/);

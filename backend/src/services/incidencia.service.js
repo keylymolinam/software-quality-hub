@@ -48,7 +48,7 @@ import {
 // lista. Es el precio de dar buenos mensajes de error.
 
 export const PRIORIDADES = ['ALTA', 'MEDIA', 'BAJA'];
-export const ESTADOS = ['ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'CERRADA'];
+export const ESTADOS = ['ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'VALIDADA', 'CERRADA'];
 export const CATEGORIAS = [
   'DISPONIBILIDAD',
   'RENDIMIENTO',
@@ -64,13 +64,30 @@ const ESTADO_INICIAL = 'ABIERTA';
 /**
  * Maquina de estados: para cada estado, a cuales puede pasar.
  *
- *     ABIERTA --> EN_PROGRESO --> RESUELTA --> CERRADA
- *        |             ^              |            ^
- *        |             +--------------+            |
- *        |    (la solucion no se valida bien)      |
- *        +----------------------------------------+
- *              (cierre sin resolucion: duplicada,
- *               no se reproduce, no aplica)
+ *     ABIERTA --> EN_PROGRESO --> RESUELTA --> VALIDADA --> CERRADA
+ *        |          |    ^           |                         ^  ^
+ *        |          |    +-----------+                         |  |
+ *        |          |   (QA prueba y no esta resuelta)         |  |
+ *        |          +------------------------------------------+  |
+ *        +--------------------------------------------------------+
+ *              (cierre sin resolucion, con motivo: duplicada,
+ *               no es un defecto, no se reproduce)
+ *
+ * El flujo sigue el ciclo de vida del defecto que se usa en aseguramiento de
+ * calidad, simplificado a cinco estados. En pantalla ABIERTA se muestra como
+ * "Pendiente" y EN_PROGRESO como "En desarrollo"; los valores internos no se
+ * cambiaron para no rehacer los datos, el indice de salud ni las pruebas por
+ * un cambio de nombre. Las etapas del ciclo que no son estados:
+ *   - "Asignado" es el campo asignado_a: la incidencia sigue pendiente, pero
+ *     con responsable.
+ *   - "Reabierto" es la transicion RESUELTA -> EN_PROGRESO, que queda en la
+ *     bitacora y es la que cuenta el indice de salud.
+ *   - "Rechazado" es el cierre sin resolucion, con su motivo obligatorio.
+ *   - "Aplazado" no existe: el sistema no gestiona sprints ni versiones.
+ *
+ * VALIDADA es el paso de QA: lo resuelto se prueba antes de cerrarse, y por eso
+ * RESUELTA ya no puede ir directo a CERRADA. Se agrego tras la prueba de
+ * usuarios, donde una analista echo en falta el paso de QA en el flujo.
  *
  * Esta tabla es la traduccion del diagrama del Cap. IV.5. Tenerla como dato, y
  * no repartida en una cadena de if, tiene tres ventajas:
@@ -91,14 +108,20 @@ const ESTADO_INICIAL = 'ABIERTA';
  * ocurrio y ensuciar las metricas de tiempo de resolucion. Como en este
  * camino no hay resolucion real, fecha_resolucion queda en null.
  *
+ * EN_PROGRESO -> CERRADA es el mismo cierre, pero descubierto durante el
+ * trabajo: quien investiga encuentra que no es un defecto o que no se puede
+ * reproducir. Sin esta salida tendria que marcarla RESUELTA, y la bitacora
+ * diria que se arreglo algo que nunca estuvo roto.
+ *
  * CERRADA no tiene salidas: es un estado final. Si el proyecto necesitara
  * reabrir incidencias ya cerradas, se agrega 'EN_PROGRESO' a su lista y el
  * resto del codigo se adapta solo.
  */
 export const TRANSICIONES = {
   ABIERTA: ['EN_PROGRESO', 'CERRADA'],
-  EN_PROGRESO: ['RESUELTA'],
-  RESUELTA: ['EN_PROGRESO', 'CERRADA'],
+  EN_PROGRESO: ['RESUELTA', 'CERRADA'],
+  RESUELTA: ['EN_PROGRESO', 'VALIDADA'],
+  VALIDADA: ['CERRADA'],
   CERRADA: [],
 };
 
@@ -112,7 +135,7 @@ export const TRANSICIONES = {
  *
  * Para volver a hacerlo opcional basta con vaciar este conjunto.
  */
-const TRANSICIONES_QUE_EXIGEN_MOTIVO = new Set(['ABIERTA->CERRADA']);
+const TRANSICIONES_QUE_EXIGEN_MOTIVO = new Set(['ABIERTA->CERRADA', 'EN_PROGRESO->CERRADA']);
 
 const LARGO_COMENTARIO = { min: 3, max: 1000 };
 
@@ -693,8 +716,9 @@ export function cambiarEstado(id, datos = {}, idUsuarioSesion) {
   } else if (actual.estado === 'RESUELTA' && estadoNuevo === 'EN_PROGRESO') {
     // Reapertura: la solucion no se valido, asi que la incidencia vuelve a
     // estar sin resolver y la fecha anterior deja de ser cierta.
-    // Al pasar de RESUELTA a CERRADA, en cambio, la fecha se conserva: ahi es
-    // cuando el dato queda definitivo para las metricas de tiempo de resolucion.
+    // Al pasar a VALIDADA y luego a CERRADA, en cambio, la fecha se conserva:
+    // la resolucion ocurrio cuando se resolvio, y validarla no la mueve. El
+    // tiempo de resolucion mide el trabajo de desarrollo, no la espera de QA.
     cambios.fecha_resolucion = null;
   }
 

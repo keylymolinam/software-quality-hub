@@ -98,6 +98,11 @@
   --color-abierta: #9a3412;
   --color-abierta-tinte: #fff1e6;
 
+  /* Validada: verde azulado, para separarla de Resuelta (verde) sin cambiar
+     de familia. Las dos son buenas noticias; validada es un paso mas firme. */
+  --color-validada: #0f6b63;
+  --color-validada-tinte: #e3f5f2;
+
   --color-reapertura: #8a4008;
   --color-reapertura-tinte: #fff4ec;
   --color-reapertura-borde: #f3d0b4;
@@ -774,6 +779,11 @@ body {
 .etiqueta-estado--resuelta {
   color: var(--color-ok);
   background: var(--color-ok-tinte);
+}
+
+.etiqueta-estado--validada {
+  color: var(--color-validada);
+  background: var(--color-validada-tinte);
 }
 
 .etiqueta-estado--cerrada {

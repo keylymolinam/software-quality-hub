@@ -58,7 +58,7 @@ test('un enlace con filtros abre el listado ya filtrado', async ({ page }) => {
   const etiquetas = page.locator('tbody .etiqueta-estado');
   await expect(etiquetas.first()).toBeVisible();
   for (const texto of await etiquetas.allTextContents()) {
-    expect(texto).toBe('En progreso');
+    expect(texto).toBe('En desarrollo');
   }
 });
 

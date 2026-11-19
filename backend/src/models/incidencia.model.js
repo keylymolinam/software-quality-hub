@@ -68,7 +68,7 @@ const CAMPOS_ACTUALIZABLES = [
  * la gravedad ni con el avance del flujo:
  *
  *   alfabetico:  ALTA, BAJA, MEDIA        <- BAJA quedaria sobre MEDIA
- *   alfabetico:  ABIERTA, CERRADA, EN_PROGRESO, RESUELTA
+ *   alfabetico:  ABIERTA, CERRADA, EN_PROGRESO, RESUELTA, VALIDADA
  *
  * El CASE traduce cada valor al numero que si refleja el orden del dominio, de
  * modo que "ordenar por prioridad" ponga primero lo urgente. Como el listado
@@ -92,7 +92,8 @@ const ORDENES_PERMITIDOS = {
              WHEN 'ABIERTA'     THEN 1
              WHEN 'EN_PROGRESO' THEN 2
              WHEN 'RESUELTA'    THEN 3
-             ELSE 4
+             WHEN 'VALIDADA'    THEN 4
+             ELSE 5
            END`,
 };
 
@@ -388,9 +389,9 @@ export function eliminar(id) {
  *   No cerradas. Una incidencia CERRADA ya termino su ciclo; si el problema
  *   volvio a ocurrir, corresponde una incidencia nueva y no una marca de
  *   duplicado sobre algo que ya se dio por concluido. Se incluyen en cambio
- *   ABIERTA, EN_PROGRESO y RESUELTA: reportar de nuevo algo que otra persona
- *   ya esta arreglando, o que se resolvio pero aun no se cierra, es justamente
- *   el caso que este detector debe atrapar.
+ *   ABIERTA, EN_PROGRESO, RESUELTA y VALIDADA: reportar de nuevo algo que otra
+ *   persona ya esta arreglando, o que se resolvio pero aun no se cierra, es
+ *   justamente el caso que este detector debe atrapar.
  *
  * Solo se traen las tres columnas necesarias para el calculo: el detector
  * compara textos, no necesita el resto de la fila.

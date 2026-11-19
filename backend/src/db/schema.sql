@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS INCIDENCIA (
         CHECK (prioridad IN ('ALTA', 'MEDIA', 'BAJA')),
 
     estado                      TEXT    NOT NULL DEFAULT 'ABIERTA'
-        CHECK (estado IN ('ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'CERRADA')),
+        CHECK (estado IN ('ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'VALIDADA', 'CERRADA')),
 
     categoria                   TEXT    NOT NULL
         CHECK (categoria IN (
@@ -150,11 +150,11 @@ CREATE TABLE IF NOT EXISTS HISTORIAL_INCIDENCIA (
     -- NULL solo en el primer registro (creacion de la incidencia).
     estado_anterior  TEXT
         CHECK (estado_anterior IS NULL OR estado_anterior IN
-            ('ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'CERRADA')),
+            ('ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'VALIDADA', 'CERRADA')),
 
     estado_nuevo     TEXT    NOT NULL
         CHECK (estado_nuevo IN
-            ('ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'CERRADA')),
+            ('ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'VALIDADA', 'CERRADA')),
 
     fecha_cambio     TEXT    NOT NULL DEFAULT (datetime('now')),
     comentario       TEXT,

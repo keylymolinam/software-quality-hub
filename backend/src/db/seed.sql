@@ -8,23 +8,19 @@
 --   * Un par de incidencias de texto similar -> detector de duplicados
 --   * Antiguedades dispares y una reapertura -> indice de salud
 --
+-- El historial sigue el ciclo de vida del defecto: lo resuelto pasa por
+-- VALIDADA (QA lo prueba) antes de cerrarse. La incidencia 4 queda RESUELTA,
+-- esperando validacion, y la 11 VALIDADA, esperando el cierre: asi la
+-- demostracion tiene un caso en cada paso del final del flujo.
+--
 -- Las fechas se generan de forma relativa (datetime('now', '-N days')) para
 -- que el conjunto siga siendo representativo sin importar cuando se ejecute.
 -- =============================================================================
 
 PRAGMA foreign_keys = ON;
 
--- Limpieza previa: permite volver a sembrar sin duplicar datos.
--- El orden importa: primero las tablas que dependen de otras.
-DELETE FROM HISTORIAL_INCIDENCIA;
-DELETE FROM METRICA;
-DELETE FROM INCIDENCIA;
-DELETE FROM PROYECTO;
-DELETE FROM USUARIO;
-
--- Reinicia los contadores autoincrementales para que los IDs partan en 1.
-DELETE FROM sqlite_sequence
- WHERE name IN ('USUARIO', 'PROYECTO', 'INCIDENCIA', 'HISTORIAL_INCIDENCIA', 'METRICA');
+-- Las tablas llegan recien creadas y vacias: seed.js llama a recrearEsquema()
+-- antes de ejecutar este archivo, y por eso los IDs parten en 1.
 
 
 -- =============================================================================
@@ -203,6 +199,7 @@ VALUES
      datetime('now', '-15 days'), NULL, 0, NULL, 2, 3, NULL);
 
 -- ID 11 | Solicitud que no corresponde a un defecto: categoria OTRO.
+--         Validada por QA y a la espera de que Marketing apruebe el cierre.
 INSERT INTO INCIDENCIA
     (titulo, descripcion, prioridad, estado, categoria, fecha_creacion,
      fecha_resolucion, clasificacion_automatica, posible_duplicado_de,
@@ -210,7 +207,7 @@ INSERT INTO INCIDENCIA
 VALUES
     ('Solicitud de cambio de color en el logotipo',
      'Marketing solicita actualizar el color del logotipo de la aplicacion segun el nuevo manual de marca.',
-     'BAJA', 'CERRADA', 'OTRO',
+     'BAJA', 'VALIDADA', 'OTRO',
      datetime('now', '-70 days'), datetime('now', '-64 days'), 1, NULL, 2, 4, 5);
 
 -- --- Proyecto 3: Migracion Sistema Legado (finalizado) -----------------------
@@ -251,12 +248,13 @@ INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, c
     ('ABIERTA',     'EN_PROGRESO', datetime('now', '-19 days'), 'Prioridad maxima. Se asigna de inmediato.',        4, 1),
     ('EN_PROGRESO', 'RESUELTA',    datetime('now', '-5 days'),  'Se agrego verificacion de sesion en el panel.',    4, 2);
 
--- Incidencia 5: ciclo completo hasta CERRADA.
+-- Incidencia 5: ciclo completo hasta CERRADA, pasando por la validacion de QA.
 INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
     (NULL,          'ABIERTA',     datetime('now', '-95 days'), 'Reportada por el equipo de pruebas.',      5, 3),
     ('ABIERTA',     'EN_PROGRESO', datetime('now', '-93 days'), 'Se asigna a Desarrollador 2.',                5, 1),
     ('EN_PROGRESO', 'RESUELTA',    datetime('now', '-88 days'), 'Se ajusto el diseno adaptable.',           5, 5),
-    ('RESUELTA',    'CERRADA',     datetime('now', '-86 days'), 'Verificado en pruebas. Se cierra.',        5, 3);
+    ('RESUELTA',    'VALIDADA',    datetime('now', '-87 days'), 'Verificado en pruebas por QA.',            5, 3),
+    ('VALIDADA',    'CERRADA',     datetime('now', '-86 days'), 'Se cierra.',                               5, 3);
 
 -- Incidencia 6
 INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
@@ -287,14 +285,15 @@ INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, c
     (NULL,          'ABIERTA',     datetime('now', '-70 days'), 'Solicitud recibida desde Marketing.', 11, 4),
     ('ABIERTA',     'EN_PROGRESO', datetime('now', '-68 days'), 'Se agenda para la siguiente version.', 11, 1),
     ('EN_PROGRESO', 'RESUELTA',    datetime('now', '-64 days'), 'Logotipo actualizado.',                11, 5),
-    ('RESUELTA',    'CERRADA',     datetime('now', '-63 days'), 'Aprobado por Marketing.',              11, 4);
+    ('RESUELTA',    'VALIDADA',    datetime('now', '-63 days'), 'QA confirma el color en todas las pantallas.', 11, 3);
 
 -- Incidencia 12
 INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
     (NULL,          'ABIERTA',     datetime('now', '-130 days'), 'Detectada en la validacion post-migracion.', 12, 4),
     ('ABIERTA',     'EN_PROGRESO', datetime('now', '-128 days'), 'Se asigna al equipo de migracion.',          12, 1),
     ('EN_PROGRESO', 'RESUELTA',    datetime('now', '-110 days'), 'Se reproceso la carga del periodo faltante.', 12, 2),
-    ('RESUELTA',    'CERRADA',     datetime('now', '-108 days'), 'Conciliacion de registros conforme.',        12, 3);
+    ('RESUELTA',    'VALIDADA',    datetime('now', '-109 days'), 'Conciliacion de registros conforme.',        12, 3),
+    ('VALIDADA',    'CERRADA',     datetime('now', '-108 days'), 'Se cierra tras la validacion.',              12, 3);
 
 
 -- =============================================================================

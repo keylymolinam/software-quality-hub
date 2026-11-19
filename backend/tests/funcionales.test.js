@@ -31,6 +31,13 @@
  */
 process.env.DB_PATH = './data/pruebas-funcionales.sqlite';
 
+// Se parte de una base nueva en cada corrida. Vaciar las tablas no basta: un
+// CHECK creado con una version anterior del esquema sobrevive al DELETE, y al
+// agregar un estado las pruebas fallarian por la base y no por el codigo.
+for (const sufijo of ['', '-wal', '-shm']) {
+  rmSync(`${process.env.DB_PATH}${sufijo}`, { force: true });
+}
+
 // Cuatro rondas en vez de diez: el costo de bcrypt es deliberado en produccion
 // (ver config/env.js), pero aqui solo haria lentas las pruebas sin comprobar
 // nada distinto.
@@ -38,6 +45,7 @@ process.env.BCRYPT_RONDAS = '4';
 
 import { test, describe, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { rmSync } from 'node:fs';
 
 const { db } = await import('../src/db/database.js');
 const Incidencias = await import('../src/services/incidencia.service.js');
@@ -143,6 +151,11 @@ describe('Maquina de estados', () => {
     assert.equal(transicionar(incidencia.id_incidencia, ['EN_PROGRESO']).estado, 'EN_PROGRESO');
     assert.equal(transicionar(incidencia.id_incidencia, ['RESUELTA']).estado, 'RESUELTA');
 
+    // QA la prueba y la valida; solo entonces se puede cerrar.
+    const validada = transicionar(incidencia.id_incidencia, ['VALIDADA']);
+    assert.equal(validada.estado, 'VALIDADA');
+    assert.deepEqual(validada.transiciones_posibles, ['CERRADA']);
+
     const cerrada = transicionar(incidencia.id_incidencia, ['CERRADA']);
     assert.equal(cerrada.estado, 'CERRADA');
     assert.deepEqual(cerrada.transiciones_posibles, []);
@@ -158,10 +171,18 @@ describe('Maquina de estados', () => {
       'estado'
     );
 
-    // Cerrar sin pasar por RESUELTA cuando ya se empezo a trabajar.
-    transicionar(abierta.id_incidencia, ['EN_PROGRESO']);
+    // Saltarse a QA: lo resuelto no se cierra sin validar.
+    transicionar(abierta.id_incidencia, ['EN_PROGRESO', 'RESUELTA']);
     falla(
       () => Incidencias.cambiarEstado(abierta.id_incidencia, { estado: 'CERRADA' }, autora.id_usuario),
+      409,
+      'estado'
+    );
+
+    // Y lo validado ya no vuelve a desarrollo: QA dijo que funciona.
+    transicionar(abierta.id_incidencia, ['VALIDADA']);
+    falla(
+      () => Incidencias.cambiarEstado(abierta.id_incidencia, { estado: 'EN_PROGRESO' }, autora.id_usuario),
       409,
       'estado'
     );
@@ -169,9 +190,9 @@ describe('Maquina de estados', () => {
 
   test('CERRADA es final: no admite ningun cambio mas', () => {
     const incidencia = crear();
-    transicionar(incidencia.id_incidencia, ['EN_PROGRESO', 'RESUELTA', 'CERRADA']);
+    transicionar(incidencia.id_incidencia, ['EN_PROGRESO', 'RESUELTA', 'VALIDADA', 'CERRADA']);
 
-    for (const estado of ['ABIERTA', 'EN_PROGRESO', 'RESUELTA']) {
+    for (const estado of ['ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'VALIDADA']) {
       falla(
         () => Incidencias.cambiarEstado(incidencia.id_incidencia, { estado }, autora.id_usuario),
         409,
@@ -213,6 +234,26 @@ describe('Maquina de estados', () => {
     assert.equal(cerrada.fecha_resolucion, null);
   });
 
+  test('rechazar durante el desarrollo tambien exige motivo', () => {
+    const incidencia = crear();
+    transicionar(incidencia.id_incidencia, ['EN_PROGRESO']);
+
+    falla(
+      () => Incidencias.cambiarEstado(incidencia.id_incidencia, { estado: 'CERRADA' }, autora.id_usuario),
+      400,
+      'comentario'
+    );
+
+    const cerrada = Incidencias.cambiarEstado(
+      incidencia.id_incidencia,
+      { estado: 'CERRADA', comentario: 'No se reproduce.' },
+      autora.id_usuario
+    );
+
+    assert.equal(cerrada.estado, 'CERRADA');
+    assert.equal(cerrada.fecha_resolucion, null);
+  });
+
   test('la fecha de resolucion sigue al estado y no se escribe a mano', () => {
     const incidencia = crear();
 
@@ -226,10 +267,10 @@ describe('Maquina de estados', () => {
     const reabierta = transicionar(incidencia.id_incidencia, ['EN_PROGRESO']);
     assert.equal(reabierta.fecha_resolucion, null);
 
-    // Al cerrar desde RESUELTA, en cambio, se conserva: ahi el dato queda
-    // definitivo para las metricas.
+    // Al validar y cerrar, en cambio, se conserva: la resolucion ocurrio al
+    // resolver, y la espera de QA no la mueve.
     const otraVezResuelta = transicionar(incidencia.id_incidencia, ['RESUELTA']);
-    const cerrada = transicionar(incidencia.id_incidencia, ['CERRADA']);
+    const cerrada = transicionar(incidencia.id_incidencia, ['VALIDADA', 'CERRADA']);
     assert.equal(cerrada.fecha_resolucion, otraVezResuelta.fecha_resolucion);
   });
 

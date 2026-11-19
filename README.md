@@ -156,7 +156,7 @@ Respuesta esperada:
 |---|---|
 | `npm run dev` | Desarrollo, con reinicio automático al guardar |
 | `npm start` | Ejecución normal, sin reinicio automático |
-| `npm run db:seed` | Vacía la base y recarga los datos de prueba |
+| `npm run db:seed` | Recrea las tablas con el esquema actual y recarga los datos de prueba |
 | `npm test` | Ejecuta las pruebas automatizadas |
 
 ### Frontend
@@ -396,7 +396,7 @@ cd backend
 npm run db:seed
 ```
 
-El comando vacía las tablas y las repuebla. Es seguro ejecutarlo las veces que
+El comando recrea las tablas con el esquema actual y las repuebla. Es seguro ejecutarlo las veces que
 se necesite durante el desarrollo.
 
 Los cinco usuarios de prueba quedan con la contraseña **`Demo1234`**, guardada

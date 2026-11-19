@@ -21,8 +21,14 @@
  */
 import { db } from '../db/database.js';
 
-/** Estados que representan trabajo pendiente. CERRADA queda fuera. */
-const ESTADOS_ABIERTOS = "('ABIERTA', 'EN_PROGRESO', 'RESUELTA')";
+/**
+ * Estados que representan trabajo pendiente. CERRADA queda fuera.
+ *
+ * VALIDADA cuenta como abierta: QA ya la probo, pero mientras nadie la cierre
+ * sigue en la lista de pendientes del equipo, y sacarla haria que el indice
+ * mejorara por dejar incidencias validadas sin cerrar.
+ */
+const ESTADOS_ABIERTOS = "('ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'VALIDADA')";
 
 // ---------------------------------------------------------------------------
 // Componente 1: antiguedad de las incidencias abiertas (deuda tecnica)

@@ -38,7 +38,7 @@ sistema en un navegador real (ver "Pruebas").
 # Backend (desde backend/)
 npm run dev        # desarrollo con --watch
 npm start          # sin reinicio automático
-npm run db:seed    # VACÍA las tablas y recarga datos de prueba
+npm run db:seed    # RECREA las tablas (borra todo) y recarga datos de prueba
 npm test           # node --test (humo y funcionales)
 
 # Frontend (desde frontend/)
@@ -120,10 +120,23 @@ Reglas que no se rompen:
 ### La máquina de estados
 
 Vive como **dato** en `services/incidencia.service.js` (`TRANSICIONES`), no repartida en
-una cadena de `if`. Cambiar el flujo es editar esa tabla. `CERRADA` es final;
-`ABIERTA → CERRADA` es el atajo para cierres sin trabajo (duplicada, no se reproduce) y
-exige comentario (`TRANSICIONES_QUE_EXIGEN_MOTIVO`). La única vía para cambiar el estado
-es `POST /api/incidencias/:id/transicion`, nunca un `PUT` del campo.
+una cadena de `if`. Cambiar el flujo es editar esa tabla. Sigue el ciclo de vida del
+defecto: `ABIERTA → EN_PROGRESO → RESUELTA → VALIDADA → CERRADA`, con la reapertura
+`RESUELTA → EN_PROGRESO`. `VALIDADA` es el paso de QA: lo resuelto no se cierra sin
+validar. `CERRADA` es final. Los rechazos (`ABIERTA → CERRADA` y `EN_PROGRESO → CERRADA`:
+duplicada, no es un defecto, no se reproduce) exigen comentario
+(`TRANSICIONES_QUE_EXIGEN_MOTIVO`). La única vía para cambiar el estado es
+`POST /api/incidencias/:id/transicion`, nunca un `PUT` del campo.
+
+En pantalla `ABIERTA` se llama «Pendiente» y `EN_PROGRESO` «En desarrollo»: solo cambia
+la etiqueta de `dominio/incidencias.js`, no el valor. Renombrar el valor obligaría a
+rehacer datos, el índice de salud (que cuenta la reapertura por su nombre) y las
+pruebas.
+
+Agregar un estado cambia el `CHECK` del esquema, y una base ya creada lo conserva:
+`CREATE TABLE IF NOT EXISTS` no la toca y SQLite no modifica un `CHECK` con `ALTER`. Por
+eso `npm run db:seed` **recrea** las tablas (no solo las vacía), las funcionales borran
+su base al empezar, y el backend avisa al arrancar si la base quedó atrás.
 
 ### Los tres diferenciadores
 
@@ -302,7 +315,7 @@ un minuto y es la única forma de saber que la prueba mira lo que dice mirar.
 
 ## Entorno
 
-Windows con PowerShell. `npm run db:seed` **vacía las tablas**: no ejecutarlo si hay datos
+Windows con PowerShell. `npm run db:seed` **borra y recrea las tablas**: no ejecutarlo si hay datos
 que importen. SQLite corre en modo WAL, así que junto al `.sqlite` aparecen `-shm` y
 `-wal`; ninguno de los tres va al repositorio.
 

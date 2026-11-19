@@ -33,11 +33,17 @@
  * incidencia piensa en "las que estan recien abiertas" o "las ya cerradas",
  * y encontrar las opciones en el mismo orden en que ocurren ahorra leerlas
  * todas.
+ *
+ * Los nombres siguen el ciclo de vida del defecto: ABIERTA se muestra como
+ * 'Pendiente' y EN_PROGRESO como 'En desarrollo'. Solo cambia el texto; el valor
+ * interno es el mismo, y por eso este es el unico lugar que hubo que tocar para
+ * renombrarlos en todas las pantallas.
  */
 export const ESTADOS = [
-  { valor: 'ABIERTA', etiqueta: 'Abierta' },
-  { valor: 'EN_PROGRESO', etiqueta: 'En progreso' },
+  { valor: 'ABIERTA', etiqueta: 'Pendiente' },
+  { valor: 'EN_PROGRESO', etiqueta: 'En desarrollo' },
   { valor: 'RESUELTA', etiqueta: 'Resuelta' },
+  { valor: 'VALIDADA', etiqueta: 'Validada' },
   { valor: 'CERRADA', etiqueta: 'Cerrada' },
 ];
 
@@ -97,11 +103,16 @@ export const ORDENES = [
  * Nunca se guarda algo que el backend no haya aceptado.
  */
 export const ACCIONES_TRANSICION = {
-  'ABIERTA->EN_PROGRESO': { etiqueta: 'Tomar y empezar', exigeMotivo: false },
+  // 'Pasar a En desarrollo' nombra el estado de llegada. Antes decia 'Tomar y
+  // empezar', y en la prueba de usuarios dos participantes no lo relacionaron
+  // con el estado al que llevaba.
+  'ABIERTA->EN_PROGRESO': { etiqueta: 'Pasar a En desarrollo', exigeMotivo: false },
   'ABIERTA->CERRADA': { etiqueta: 'Cerrar sin resolver', exigeMotivo: true },
   'EN_PROGRESO->RESUELTA': { etiqueta: 'Marcar resuelta', exigeMotivo: false },
+  'EN_PROGRESO->CERRADA': { etiqueta: 'Cerrar sin resolver', exigeMotivo: true },
   'RESUELTA->EN_PROGRESO': { etiqueta: 'Reabrir', exigeMotivo: false },
-  'RESUELTA->CERRADA': { etiqueta: 'Cerrar', exigeMotivo: false },
+  'RESUELTA->VALIDADA': { etiqueta: 'Validar', exigeMotivo: false },
+  'VALIDADA->CERRADA': { etiqueta: 'Cerrar', exigeMotivo: false },
 };
 
 /**
