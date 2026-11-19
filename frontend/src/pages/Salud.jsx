@@ -143,11 +143,6 @@ export default function Salud() {
                 {ambito.indice}
                 <span className={claseSalud(ambito.etiqueta)}>{etiquetaSalud(ambito.etiqueta)}</span>
               </p>
-              <p className="ayuda ayuda--neutra">
-                Los pesos de los tres componentes son una convenci&oacute;n declarada del
-                proyecto, no un resultado derivado de los datos. Cambiarlos cambia el
-                n&uacute;mero, y por eso van escritos junto a cada uno.
-              </p>
             </>
           ) : (
             <>
@@ -155,9 +150,7 @@ export default function Salud() {
                 <span className={claseSalud('SIN_DATOS')}>{etiquetaSalud('SIN_DATOS')}</span>
               </p>
               <p className="ayuda ayuda--neutra">
-                No hay incidencias registradas en este &aacute;mbito, as&iacute; que no hay
-                nada que medir. Los tres componentes dar&iacute;an 100 por ausencia de datos
-                y eso no es salud: es falta de informaci&oacute;n.
+                Todav&iacute;a no hay incidencias en este &aacute;mbito: no hay nada que medir.
               </p>
             </>
           )}
@@ -174,12 +167,10 @@ export default function Salud() {
                   puntaje={componentes.antiguedad.puntaje}
                   peso={componentes.antiguedad.peso}
                 >
-                  {componentes.antiguedad.incidencias_abiertas} incidencias siguen abiertas,
-                  con {componentes.antiguedad.antiguedad_promedio_dias} d&iacute;as de
-                  antig&uuml;edad promedio y {componentes.antiguedad.antiguedad_maxima_dias} la
-                  m&aacute;s vieja. A los {componentes.antiguedad.limite_dias} d&iacute;as de
-                  promedio este componente vale 0: un trimestre sin cerrarse deja de ser un
-                  pendiente y pasa a ser parte del paisaje.
+                  {componentes.antiguedad.incidencias_abiertas} abiertas &middot;{' '}
+                  {componentes.antiguedad.antiguedad_promedio_dias} d&iacute;as en promedio
+                  &middot; la m&aacute;s antigua: {componentes.antiguedad.antiguedad_maxima_dias}{' '}
+                  d&iacute;as
                 </ComponenteSalud>
 
                 <ComponenteSalud
@@ -188,11 +179,8 @@ export default function Salud() {
                   peso={componentes.reapertura.peso}
                 >
                   {componentes.reapertura.incidencias_reabiertas} de{' '}
-                  {componentes.reapertura.incidencias_totales} incidencias volvieron a
-                  abrirse despu&eacute;s de darse por resueltas, o sea{' '}
-                  {porcentaje(componentes.reapertura.tasa)}. El componente vale 0 a partir de{' '}
-                  {porcentaje(componentes.reapertura.limite)}: a ese nivel el problema ya no
-                  son las incidencias sino el proceso de validaci&oacute;n.
+                  {componentes.reapertura.incidencias_totales} reabiertas (
+                  {porcentaje(componentes.reapertura.tasa)})
                 </ComponenteSalud>
 
                 <ComponenteSalud
@@ -200,10 +188,8 @@ export default function Salud() {
                   puntaje={componentes.densidad.puntaje}
                   peso={componentes.densidad.peso}
                 >
-                  La carga se reparte en {componentes.densidad.categorias_con_carga} de las{' '}
-                  {componentes.densidad.de_un_total_de} categor&iacute;as. Mientras m&aacute;s
-                  concentrada est&eacute; en una sola, m&aacute;s baja el puntaje: significa
-                  que el problema es sist&eacute;mico y no disperso.
+                  Carga en {componentes.densidad.categorias_con_carga} de{' '}
+                  {componentes.densidad.de_un_total_de} categor&iacute;as
                 </ComponenteSalud>
               </ul>
             </section>
@@ -226,11 +212,11 @@ export default function Salud() {
 
               {componentes.densidad.categorias_con_carga <
                 componentes.densidad.de_un_total_de && (
-                <p className="ayuda ayuda--neutra">
-                  Las categor&iacute;as sin incidencias no aparecen. Son{' '}
+                <p className="componente__evidencia">
+                  Sin incidencias:{' '}
                   {componentes.densidad.de_un_total_de -
                     componentes.densidad.categorias_con_carga}{' '}
-                  de {componentes.densidad.de_un_total_de}.
+                  de {componentes.densidad.de_un_total_de} categor&iacute;as.
                 </p>
               )}
             </section>

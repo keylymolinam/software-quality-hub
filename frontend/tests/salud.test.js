@@ -128,13 +128,13 @@ describe('Pantalla del desglose del indice', () => {
     const visible = texto(await dibujarSalud());
 
     // 63.7 x 0.40 = 25.5 de 40 puntos posibles.
-    assert.match(visible, /aporta 25\.5 de 40 puntos/);
+    assert.match(visible, /aporta 25\.5 de 40/);
 
     // 72.2 x 0.35 = 25.3 de 35.
-    assert.match(visible, /aporta 25\.3 de 35 puntos/);
+    assert.match(visible, /aporta 25\.3 de 35/);
 
     // 91.9 x 0.25 = 23.0 de 25.
-    assert.match(visible, /aporta 23\.0 de 25 puntos/);
+    assert.match(visible, /aporta 23\.0 de 25/);
   });
 
   test('la barra de cada componente mide su puntaje, no su peso', async () => {
@@ -154,13 +154,26 @@ describe('Pantalla del desglose del indice', () => {
 
     const visible = texto(await dibujarSalud());
 
-    assert.match(visible, /9 incidencias siguen abiertas/);
-    assert.match(visible, /32\.7 d\u00edas de antig\u00fcedad promedio/);
-    assert.match(visible, /1 de 12 incidencias volvieron a abrirse/);
+    assert.match(visible, /9 abiertas/);
+    assert.match(visible, /32\.7 d\u00edas en promedio/);
 
-    // La tasa se muestra como porcentaje, y el limite tambien.
-    assert.match(visible, /8%/);
-    assert.match(visible, /30%/);
+    // La tasa se muestra como porcentaje.
+    assert.match(visible, /1 de 12 reabiertas \(8%\)/);
+  });
+
+  test('las explicaciones viven en la guia, no en la pantalla', async () => {
+    declararEscenario({ [CLAVE]: RESPUESTA });
+
+    const html = await dibujarSalud();
+    const visible = texto(html);
+
+    // La pantalla muestra datos y enlaza a la guia para el porque.
+    assert.ok(html.includes('href="/salud/guia"'));
+    assert.doesNotMatch(visible, /convenci\u00f3n declarada/);
+    assert.doesNotMatch(visible, /parte del paisaje/);
+
+    // Sin globos del navegador sobre las barras.
+    assert.doesNotMatch(html, /class="barra"[^>]*title=/);
   });
 
   test('el reparto por categoria usa los nombres legibles y su cuenta', async () => {
@@ -174,7 +187,7 @@ describe('Pantalla del desglose del indice', () => {
     assert.match(visible, /Datos e integridad/);
 
     // Dice cuantas categorias quedaron sin carga, en vez de dibujarlas en cero.
-    assert.match(visible, /Son 1 de 6/);
+    assert.match(visible, /Sin incidencias: 1 de 6 categor\u00edas/);
   });
 
   test('las fichas de contexto muestran las cifras que permiten interpretar el indice', async () => {

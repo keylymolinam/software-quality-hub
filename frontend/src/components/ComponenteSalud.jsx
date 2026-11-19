@@ -27,6 +27,16 @@
  *
  * La cifra va FUERA del extremo de la barra, no dentro: un puntaje bajo deja una
  * barra de pocos pixeles, y un numero dentro quedaria recortado.
+ *
+ * ---------------------------------------------------------------------------
+ * POR QUE LA EVIDENCIA ES UNA SOLA LINEA DE DATOS
+ *
+ * Antes cada componente cerraba con un parrafo que explicaba su regla (por que
+ * noventa dias, por que treinta por ciento). La autora encontro que la pantalla
+ * se leia como un documento y no como una herramienta. Las explicaciones se
+ * movieron a la guia (/salud/guia) y aqui queda solo lo que cambia con los
+ * datos: la evidencia de este ambito. Tambien se quito el title de la barra: el
+ * globo del navegador no se puede estilizar y no aparece en pantallas tactiles.
  */
 export default function ComponenteSalud({ nombre, puntaje, peso, children }) {
   const aporte = puntaje * peso;
@@ -48,14 +58,13 @@ export default function ComponenteSalud({ nombre, puntaje, peso, children }) {
         className="barra"
         role="img"
         aria-label={`${nombre}: ${puntaje.toFixed(1)} de 100`}
-        title={`Aporta ${aporte.toFixed(1)} de los ${maximo.toFixed(0)} puntos que este componente puede sumar al indice.`}
       >
         <div className="barra__relleno" style={{ width: `${Math.max(0, Math.min(100, puntaje))}%` }} />
       </div>
 
       <p className="componente__aporte">
         Pesa {Math.round(peso * 100)}% &middot; aporta <strong>{aporte.toFixed(1)}</strong> de{' '}
-        {maximo.toFixed(0)} puntos
+        {maximo.toFixed(0)}
       </p>
 
       <p className="componente__evidencia">{children}</p>
