@@ -106,3 +106,20 @@ test('desde un posible duplicado se llega al listado con todos los marcados', as
     .click();
   await expect(page).toHaveURL(new RegExp(`/incidencias/${repetida.id_incidencia}$`));
 });
+
+test('una tarjeta del resumen filtra por su estado, y pulsarla otra vez lo quita', async ({ page }) => {
+  await entrar(page);
+  await page.goto('/incidencias');
+
+  const pendiente = page.locator('.resumen-estado--abierta');
+
+  await pendiente.click();
+  await expect(page).toHaveURL(/estado=ABIERTA/);
+  await expect(pendiente).toHaveAttribute('aria-pressed', 'true');
+  // Es el mismo filtro que el de la barra: los dos dicen lo mismo.
+  await expect(filtro(page, 'Estado')).toHaveValue('ABIERTA');
+
+  await pendiente.click();
+  await expect(page).not.toHaveURL(/estado=/);
+  await expect(pendiente).toHaveAttribute('aria-pressed', 'false');
+});

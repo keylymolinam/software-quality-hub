@@ -29,6 +29,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 
 import FiltrosIncidencias from '../components/FiltrosIncidencias.jsx';
 import Paginacion from '../components/Paginacion.jsx';
+import ResumenEstados from '../components/ResumenEstados.jsx';
 import TablaIncidencias from '../components/TablaIncidencias.jsx';
 import { listarIncidencias } from '../api/incidencias.js';
 import { listarProyectos } from '../api/proyectos.js';
@@ -163,6 +164,16 @@ export default function Incidencias() {
           Nueva incidencia
         </Link>
       </header>
+
+      {/* El resumen aparece con la primera respuesta y despues se mantiene,
+          igual que la tabla, mientras llega la siguiente. */}
+      {resultado.datos?.resumen_estados && (
+        <ResumenEstados
+          resumen={resultado.datos.resumen_estados}
+          estadoActivo={filtros.estado}
+          onElegir={(estado) => cambiarFiltro('estado', estado)}
+        />
+      )}
 
       <FiltrosIncidencias
         valores={filtros}

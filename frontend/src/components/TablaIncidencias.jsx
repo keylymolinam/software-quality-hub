@@ -10,12 +10,29 @@
  * del proyecto: si la clasificacion la puso el motor y si hay un posible
  * duplicado. Son la razon de ser del sistema, asi que se ven en el listado y no
  * escondidas en el detalle.
+ *
+ * Para que no se lea como una planilla plana, cada fila agrupa y distingue:
+ *   - Proyecto y categoria van en una linea chica bajo el titulo, en vez de dos
+ *     columnas propias. Describen la incidencia, no se comparan entre filas, y
+ *     asi el titulo gana ancho.
+ *   - La prioridad alta y la media llevan una franja de color en el borde
+ *     izquierdo, que se ve al recorrer la tabla sin leer la columna. La columna
+ *     sigue ahi, con el nombre escrito, para quien no distingue el color.
+ *   - Quien la tiene asignada aparece con un circulo de iniciales, como en el
+ *     menu lateral.
+ *   - La fecha dice cuanto hace ("hace 3 dias") y debajo la fecha exacta.
  */
 import { Link } from 'react-router-dom';
 
 import EtiquetaEstado from './EtiquetaEstado.jsx';
 import EtiquetaPrioridad from './EtiquetaPrioridad.jsx';
-import { CATEGORIAS, etiquetaDe, formatearFecha } from '../dominio/incidencias.js';
+import {
+  CATEGORIAS,
+  etiquetaDe,
+  formatearFecha,
+  haceCuanto,
+  inicialesDe,
+} from '../dominio/incidencias.js';
 
 export default function TablaIncidencias({ incidencias, hayFiltros }) {
   if (incidencias.length === 0) {
@@ -39,10 +56,8 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
           <tr>
             <th scope="col" className="tabla__num">#</th>
             <th scope="col">T&iacute;tulo</th>
-            <th scope="col">Proyecto</th>
             <th scope="col">Estado</th>
             <th scope="col">Prioridad</th>
-            <th scope="col">Categor&iacute;a</th>
             <th scope="col">Asignada a</th>
             <th scope="col">Creada</th>
           </tr>
@@ -50,7 +65,10 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
 
         <tbody>
           {incidencias.map((incidencia) => (
-            <tr key={incidencia.id_incidencia}>
+            <tr
+              key={incidencia.id_incidencia}
+              className={`tabla__fila tabla__fila--${String(incidencia.prioridad).toLowerCase()}`}
+            >
               <td className="tabla__num">{incidencia.id_incidencia}</td>
 
               <td>
@@ -61,6 +79,11 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
                 <Link className="tabla__titulo" to={`/incidencias/${incidencia.id_incidencia}`}>
                   {incidencia.titulo}
                 </Link>
+
+                <span className="tabla__meta">
+                  {incidencia.proyecto_nombre} &middot;{' '}
+                  {etiquetaDe(CATEGORIAS, incidencia.categoria)}
+                </span>
 
                 {/* Los avisos van bajo el titulo y no en columnas propias: son
                     la excepcion y no el caso habitual, y dos columnas casi
@@ -103,19 +126,31 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
                 )}
               </td>
 
-              <td>{incidencia.proyecto_nombre}</td>
               <td><EtiquetaEstado estado={incidencia.estado} /></td>
               <td><EtiquetaPrioridad prioridad={incidencia.prioridad} /></td>
-              <td className="tabla__categoria">{etiquetaDe(CATEGORIAS, incidencia.categoria)}</td>
 
               {/* asignado_a puede ser NULL: una incidencia sin asignar debe
                   verse como tal, no como una celda en blanco que parece un
                   error de carga. */}
               <td>
-                {incidencia.asignado_a_nombre ?? <span className="sin-dato">Sin asignar</span>}
+                {incidencia.asignado_a_nombre ? (
+                  <span className="persona">
+                    <span className="persona__avatar" aria-hidden="true">
+                      {inicialesDe(incidencia.asignado_a_nombre)}
+                    </span>
+                    {incidencia.asignado_a_nombre}
+                  </span>
+                ) : (
+                  <span className="sin-dato">Sin asignar</span>
+                )}
               </td>
 
-              <td className="tabla__fecha">{formatearFecha(incidencia.fecha_creacion)}</td>
+              <td className="tabla__fecha">
+                {haceCuanto(incidencia.fecha_creacion)}
+                <span className="tabla__fecha-exacta">
+                  {formatearFecha(incidencia.fecha_creacion)}
+                </span>
+              </td>
             </tr>
           ))}
         </tbody>

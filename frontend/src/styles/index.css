@@ -912,11 +912,139 @@ body {
   margin-top: 6px;
 }
 
-.tabla__categoria,
 .tabla__fecha {
   color: var(--color-texto-suave);
   white-space: nowrap;
 }
+
+/* Proyecto y categoria, bajo el titulo: describen la fila, no se comparan. */
+.tabla__meta {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-suave);
+}
+
+.tabla__fecha-exacta {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-tenue);
+}
+
+/* Franja de prioridad. Va como sombra interior de la primera celda y no como
+   borde de la fila: con border-collapse el borde izquierdo de un <tr> no se
+   dibuja en todos los navegadores, y uno en la celda correria el contenido. */
+.tabla__fila--alta > td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-error);
+}
+
+.tabla__fila--media > td:first-child {
+  box-shadow: inset 3px 0 0 #e0a43a;
+}
+
+/* Persona con su circulo de iniciales. Un solo color para todos: el circulo
+   ayuda a reconocer a alguien al pasar la vista, y el nombre esta escrito al
+   lado; un color por persona seria una leyenda mas que aprender. */
+.persona {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.persona__avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--color-primario-fuerte);
+  background: var(--color-primario-tinte);
+  border: 1px solid var(--color-primario-borde);
+  border-radius: 50%;
+}
+
+/* --- Resumen por estado -------------------------------------------------- */
+
+/* Cinco tarjetas sobre el listado. auto-fit las acomoda en una fila en
+   pantalla ancha y las parte en dos o tres en una angosta, sin media query. */
+.resumen-estados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: var(--espacio-3);
+  margin-bottom: var(--espacio-5);
+}
+
+.resumen-estado {
+  --punto: var(--color-texto-suave);
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  font: inherit;
+  text-align: left;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-1);
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.resumen-estado:hover {
+  border-color: var(--color-borde-fuerte);
+  transform: translateY(-1px);
+}
+
+.resumen-estado:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}
+
+.resumen-estado--activo {
+  background: var(--color-primario-tinte);
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 1px var(--color-primario);
+}
+
+.resumen-estado__nombre {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--texto-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+}
+
+/* El mismo punto de color que la etiqueta de estado de la tabla: une la
+   tarjeta con sus filas sin necesidad de leyenda. */
+.resumen-estado__nombre::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--punto);
+}
+
+.resumen-estado__total {
+  font-size: var(--texto-xl);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.resumen-estado--abierta { --punto: var(--color-abierta); }
+.resumen-estado--en_progreso { --punto: var(--color-primario); }
+.resumen-estado--resuelta { --punto: var(--color-ok); }
+.resumen-estado--validada { --punto: var(--color-validada); }
+.resumen-estado--cerrada { --punto: var(--color-texto-tenue); }
 
 .sin-dato {
   color: var(--color-texto-suave);

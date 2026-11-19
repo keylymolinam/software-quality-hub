@@ -189,6 +189,51 @@ export function formatearFecha(texto) {
 }
 
 /**
+ * Cuanto hace de una fecha, en palabras: "hoy", "ayer", "hace 3 dias".
+ *
+ * En el listado importa mas la edad de una incidencia que su fecha exacta: "hace
+ * 3 semanas" dice de inmediato que lleva mucho esperando, y "04-11-2026" obliga
+ * a hacer la resta. La fecha exacta sigue a la vista debajo, en letra chica,
+ * porque no hay globo de ayuda que la muestre.
+ *
+ * Se cuentan dias del calendario local y no bloques de 24 horas: algo creado
+ * anoche a las 23:00 es "ayer" a la manana siguiente, aunque no hayan pasado 24
+ * horas. `ahora` se recibe para que las pruebas no dependan del reloj.
+ */
+export function haceCuanto(texto, ahora = new Date()) {
+  const fecha = interpretar(texto);
+
+  if (!fecha) return texto || '-';
+
+  const inicioDelDia = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  // Math.round y no floor: un cambio de horario deja un dia de 23 o 25 horas.
+  const dias = Math.round((inicioDelDia(ahora) - inicioDelDia(fecha)) / 86400000);
+
+  const plural = (n, uno, varios) => `hace ${n} ${n === 1 ? uno : varios}`;
+
+  if (dias <= 0) return 'hoy';
+  if (dias === 1) return 'ayer';
+  if (dias < 7) return plural(dias, 'd\u00eda', 'd\u00edas');
+  if (dias < 30) return plural(Math.floor(dias / 7), 'semana', 'semanas');
+  if (dias < 365) return plural(Math.floor(dias / 30), 'mes', 'meses');
+  return plural(Math.floor(dias / 365), 'a\u00f1o', 'a\u00f1os');
+}
+
+/**
+ * Las iniciales de un nombre (hasta dos), para el circulo que identifica a una
+ * persona en el menu y en el listado.
+ */
+export function inicialesDe(nombre) {
+  return String(nombre ?? '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => parte[0].toUpperCase())
+    .join('');
+}
+
+/**
  * Formatea una fecha con su hora, para el detalle y la linea de tiempo.
  *
  * Aqui la hora si es informacion: dos cambios de estado del mismo dia solo se

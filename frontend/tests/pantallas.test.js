@@ -515,6 +515,93 @@ describe('Parejas de duplicados', () => {
   });
 });
 
+describe('Listado con resumen por estado', () => {
+  const RESUMEN = { ABIERTA: 12, EN_PROGRESO: 7, RESUELTA: 4, VALIDADA: 2, CERRADA: 31 };
+
+  // La clave con que la pantalla pide el listado sin filtros: JSON de los
+  // valores por defecto de la direccion.
+  const CLAVE_LISTADO = JSON.stringify({
+    busqueda: '',
+    estado: '',
+    prioridad: '',
+    categoria: '',
+    id_proyecto: '',
+    asignado_a: '',
+    posible_duplicado: '',
+    ordenarPor: 'fecha_creacion',
+    direccion: 'DESC',
+    pagina: '1',
+  });
+
+  test('las tarjetas muestran los cinco estados con su cuenta', async () => {
+    const { default: ResumenEstados } = await cargar('/src/components/ResumenEstados.jsx');
+
+    const html = dibujar(ResumenEstados, {
+      propiedades: { resumen: RESUMEN, estadoActivo: 'EN_PROGRESO', onElegir: () => {} },
+    });
+    const visible = texto(html);
+
+    assert.match(visible, /Pendiente\s*12/);
+    assert.match(visible, /En desarrollo\s*7/);
+    assert.match(visible, /Cerrada\s*31/);
+
+    // Solo la del filtro puesto queda marcada como activa.
+    assert.equal(html.match(/aria-pressed="true"/g).length, 1);
+    assert.match(html, /resumen-estado--en_progreso resumen-estado--activo/);
+  });
+
+  test('la pantalla dibuja las tarjetas con lo que cuenta el backend', async () => {
+    const { default: Incidencias } = await cargar('/src/pages/Incidencias.jsx');
+
+    declararEscenario({
+      [CLAVE_LISTADO]: respondeCon({
+        datos: [INCIDENCIA_CERRADA],
+        paginacion: { total: 1, pagina: 1, limite: 50, paginas: 1 },
+        resumen_estados: RESUMEN,
+      }),
+      'referencias-de-filtro': respondeCon([{ datos: [] }, { datos: [] }]),
+    });
+
+    const visible = texto(dibujar(Incidencias, { ruta: '/incidencias' }));
+
+    // 31 cerradas aunque la tabla traiga una sola fila: la cuenta es del
+    // backend, no de la pagina recibida.
+    assert.match(visible, /Cerrada\s*31/);
+  });
+
+  test('cada fila lleva franja de prioridad, iniciales y proyecto bajo el titulo', async () => {
+    const { default: TablaIncidencias } = await cargar('/src/components/TablaIncidencias.jsx');
+
+    const html = dibujar(TablaIncidencias, {
+      propiedades: { incidencias: [INCIDENCIA_DUPLICADA, INCIDENCIA_CERRADA], hayFiltros: false },
+    });
+    const visible = texto(html);
+
+    assert.match(html, /class="tabla__fila tabla__fila--alta"/);
+    assert.match(html, /class="persona__avatar"[^>]*>JS</, 'Javiera Soto deberia verse como JS');
+    assert.match(visible, /Portal de Clientes \u00b7 Disponibilidad/);
+
+    // La fecha exacta sigue a la vista, bajo la relativa.
+    assert.match(visible, /24-09-2026/);
+  });
+
+  test('la fecha relativa cuenta dias del calendario', async () => {
+    const { haceCuanto } = await cargar('/src/dominio/incidencias.js');
+    const ahora = new Date(2026, 10, 19, 10, 0);
+
+    // Las fechas del backend van en UTC; se arman desde la hora local para que
+    // la prueba no dependa de la zona del equipo.
+    const utc = (...partes) => new Date(...partes).toISOString().slice(0, 19).replace('T', ' ');
+
+    assert.equal(haceCuanto(utc(2026, 10, 19, 8, 0), ahora), 'hoy');
+    assert.equal(haceCuanto(utc(2026, 10, 18, 23, 0), ahora), 'ayer');
+    assert.equal(haceCuanto(utc(2026, 10, 16, 12, 0), ahora), 'hace 3 d\u00edas');
+    assert.equal(haceCuanto(utc(2026, 10, 5, 12, 0), ahora), 'hace 2 semanas');
+    assert.equal(haceCuanto(utc(2026, 7, 1, 12, 0), ahora), 'hace 3 meses');
+    assert.equal(haceCuanto(utc(2024, 9, 1, 12, 0), ahora), 'hace 2 a\u00f1os');
+  });
+});
+
 describe('Pantalla de inicio', () => {
   const ESTADO_API = respondeCon({
     servicio: 'Software Quality Hub API',

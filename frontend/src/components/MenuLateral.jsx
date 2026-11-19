@@ -19,6 +19,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 import { useSesion } from '../context/SesionContext.jsx';
+import { inicialesDe } from '../dominio/incidencias.js';
 
 /** Trazos de cada icono, en una cuadricula de 24 x 24. */
 const TRAZOS = {
@@ -83,16 +84,6 @@ const SECCIONES = [
   { ruta: '/usuarios', etiqueta: 'Usuarios', icono: 'usuarios' },
 ];
 
-/** Las iniciales del nombre, para el circulo del usuario. */
-function iniciales(nombre) {
-  return nombre
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((parte) => parte[0].toUpperCase())
-    .join('');
-}
-
 export default function MenuLateral() {
   const { usuario, cerrarSesion } = useSesion();
   const { pathname } = useLocation();
@@ -147,7 +138,7 @@ export default function MenuLateral() {
 
         <div className="lateral__sesion">
           <span className="lateral__avatar" aria-hidden="true">
-            {iniciales(usuario.nombre)}
+            {inicialesDe(usuario.nombre)}
           </span>
           <span className="lateral__usuario">
             <span className="lateral__nombre">{usuario.nombre}</span>

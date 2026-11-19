@@ -499,6 +499,30 @@ describe('Listado para el tablero', () => {
     assert.equal(paginacion.total, 1);
   });
 
+  test('el resumen cuenta cada estado con los demas filtros, sin el de estado', () => {
+    crear();
+    const enDesarrollo = crear({
+      titulo: 'Otra falla distinta para el resumen',
+      descripcion: 'Un texto que no se parece en nada al de la primera incidencia.',
+    });
+    transicionar(enDesarrollo.id_incidencia, ['EN_PROGRESO']);
+
+    // Filtrado por estado, las tarjetas siguen contando los cinco.
+    const { resumen_estados } = Incidencias.listarIncidencias({ estado: 'ABIERTA' });
+    assert.deepEqual(resumen_estados, {
+      ABIERTA: 1,
+      EN_PROGRESO: 1,
+      RESUELTA: 0,
+      VALIDADA: 0,
+      CERRADA: 0,
+    });
+
+    // Los demas filtros si cuentan: otro proyecto no tiene ninguna.
+    const otro = Incidencias.listarIncidencias({ id_proyecto: String(proyecto.id_proyecto + 1000) });
+    assert.equal(otro.resumen_estados.ABIERTA, 0);
+    assert.equal(otro.resumen_estados.EN_PROGRESO, 0);
+  });
+
   test('el plazo de cierre tiene que ser un entero positivo', () => {
     falla(() => Incidencias.listarIncidencias({ cerrada_hace_dias: '0' }), 400, 'cerrada_hace_dias');
     falla(() => Incidencias.listarIncidencias({ cerrada_hace_dias: 'mes' }), 400, 'cerrada_hace_dias');

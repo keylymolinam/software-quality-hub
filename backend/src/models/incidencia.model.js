@@ -284,6 +284,39 @@ export function contar(filtros = {}) {
 }
 
 /**
+ * Cuenta cuantas incidencias hay en cada estado, con los demas filtros puestos.
+ *
+ * Alimenta las tarjetas de resumen sobre el listado. El filtro de estado se
+ * ignora a proposito: las tarjetas responden "cuantas hay en cada estado", y
+ * con ese filtro puesto las otras cuatro marcarian cero, como si no hubiera
+ * ninguna. Los demas filtros si cuentan: quien eligio un proyecto quiere el
+ * resumen de ese proyecto, no el del sistema entero.
+ *
+ * Es una sola consulta con GROUP BY y no una por estado: cinco consultas
+ * darian lo mismo con cinco veces el trabajo.
+ *
+ * @returns {Object<string, number>} Solo los estados que tienen alguna
+ *   incidencia; el service completa los que faltan con cero.
+ */
+export function contarPorEstado(filtros = {}) {
+  const { clausula, valores } = construirWhere({ ...filtros, estado: undefined });
+
+  const sql = `
+    SELECT i.estado AS estado, COUNT(*) AS total
+      FROM INCIDENCIA i
+      INNER JOIN PROYECTO p  ON p.id_proyecto = i.id_proyecto
+      INNER JOIN USUARIO  ur ON ur.id_usuario = i.reportado_por
+      LEFT  JOIN USUARIO  ua ON ua.id_usuario = i.asignado_a
+      ${clausula}
+     GROUP BY i.estado
+  `;
+
+  return Object.fromEntries(
+    db.prepare(sql).all(...valores).map((fila) => [fila.estado, fila.total])
+  );
+}
+
+/**
  * Busca una incidencia por su identificador.
  * @returns {object|undefined} La fila, o undefined si no existe.
  */

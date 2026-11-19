@@ -201,7 +201,11 @@ const CAMPOS_RESERVADOS = {
  * la lista completa, pensaria que no hay incidencias cerradas. Es preferible
  * decirle que el valor esta mal escrito.
  *
- * @returns {{ datos: object[], paginacion: object }}
+ * Ademas devuelve `resumen_estados`: cuantas hay en cada estado con los demas
+ * filtros puestos (ver contarPorEstado en el model). Viaja en la misma
+ * respuesta para que las tarjetas y la tabla no puedan contar cosas distintas.
+ *
+ * @returns {{ datos: object[], paginacion: object, resumen_estados: object }}
  */
 export function listarIncidencias(consulta = {}) {
   const errores = [];
@@ -287,6 +291,13 @@ export function listarIncidencias(consulta = {}) {
   }));
   const total = Incidencia.contar(filtros);
 
+  // Los cinco estados siempre, con cero los que no tienen ninguna: una tarjeta
+  // que desaparece cuando su estado se vacia hace saltar a las demas de lugar.
+  const porEstado = Incidencia.contarPorEstado(filtros);
+  const resumen_estados = Object.fromEntries(
+    ESTADOS.map((estado) => [estado, porEstado[estado] ?? 0])
+  );
+
   return {
     datos,
     paginacion: {
@@ -295,6 +306,7 @@ export function listarIncidencias(consulta = {}) {
       limite,
       paginas: Math.max(1, Math.ceil(total / limite)),
     },
+    resumen_estados,
   };
 }
 
