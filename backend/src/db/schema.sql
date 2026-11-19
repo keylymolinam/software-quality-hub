@@ -196,3 +196,39 @@ CREATE TABLE IF NOT EXISTS METRICA (
 
 CREATE INDEX IF NOT EXISTS idx_metrica_proyecto ON METRICA (id_proyecto);
 CREATE INDEX IF NOT EXISTS idx_metrica_tipo     ON METRICA (tipo_metrica);
+
+
+-- =============================================================================
+-- PESO_SALUD
+-- Cuanto pesa cada componente en el indice de salud. Los pesos valen para
+-- todo el sistema, no por proyecto: el inicio ordena los proyectos de peor a
+-- mejor, y esa comparacion solo es justa si todos se miden con la misma regla.
+--
+-- Cada cambio agrega una fila y nunca se edita una anterior: los pesos
+-- vigentes son los de la fila mas reciente, y las demas son la historia. Asi
+-- se puede saber si un indice subio porque el proyecto mejoro o porque alguien
+-- cambio la regla. Sin filas, rigen los pesos iniciales de salud.service.js.
+--
+-- Se guardan como porcentajes enteros y no como decimales: 40 + 35 + 25 suma
+-- exactamente 100, mientras que 0.1 + 0.2 no suma 0.3 en coma flotante, y el
+-- CHECK de la suma fallaria con pesos correctos.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS PESO_SALUD (
+    id_peso         INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    antiguedad      INTEGER NOT NULL CHECK (antiguedad BETWEEN 0 AND 100),
+    reapertura      INTEGER NOT NULL CHECK (reapertura BETWEEN 0 AND 100),
+    densidad        INTEGER NOT NULL CHECK (densidad BETWEEN 0 AND 100),
+
+    -- Por que se cambio. Obligatorio: los pesos son una decision declarada, y
+    -- una decision sin su razon no se puede defender ni revisar despues.
+    motivo          TEXT    NOT NULL,
+
+    fecha_cambio    TEXT    NOT NULL DEFAULT (datetime('now')),
+    modificado_por  INTEGER NOT NULL,
+
+    FOREIGN KEY (modificado_por) REFERENCES USUARIO (id_usuario)
+        ON DELETE RESTRICT,
+
+    CHECK (antiguedad + reapertura + densidad = 100)
+);

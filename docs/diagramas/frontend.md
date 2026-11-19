@@ -26,6 +26,7 @@ flowchart TB
         tablero["Tablero<br/>/tablero"]
         salud["Salud<br/>/salud"]
         guia["Guía de salud<br/>/salud/guia"]
+        pesos["Pesos del índice<br/>/salud/pesos"]
         proyectos["Proyectos<br/>/proyectos"]
         usuarios["Usuarios<br/>/usuarios"]
 
@@ -42,6 +43,8 @@ flowchart TB
 
         home -->|"ver el desglose"| salud
         salud -->|"¿qué es y cómo se calcula?"| guia
+        salud -->|"pesos del índice"| pesos
+        guia -->|"cambiar los pesos"| pesos
         tablero -->|"el título de una tarjeta"| detalle
 
         listado -->|"registrar"| nueva

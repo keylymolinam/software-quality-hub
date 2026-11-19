@@ -10,12 +10,22 @@
  * cada componente (puntaje por peso) tiene que ser el que corresponde, porque
  * es el numero que explica el indice y se calcula en la interfaz.
  */
-import { test, describe, after } from 'node:test';
+import { test, describe, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { cargando, cargar, cerrarEntorno, declararEscenario, dibujar, falla, respondeCon, texto } from './entorno.js';
+import {
+  cargando,
+  cargar,
+  cerrarEntorno,
+  declararEscenario,
+  declararUsuario,
+  dibujar,
+  falla,
+  respondeCon,
+  texto,
+} from './entorno.js';
 
 const CLAVE = 'salud-desglose';
 
@@ -253,11 +263,20 @@ describe('Pantalla del desglose del indice', () => {
 });
 
 describe('Guia del indice', () => {
+  /** Lo que devuelve GET /api/metricas/pesos, con los pesos indicados. */
+  const pesosVigentes = (antiguedad, reapertura, densidad) =>
+    respondeCon({
+      vigentes: { antiguedad, reapertura, densidad, motivo: null, fecha_cambio: null, modificado_por: null },
+      iniciales: { antiguedad: 40, reapertura: 35, densidad: 25 },
+      historial: [],
+    });
+
   /**
-   * Los pesos y limites de la guia estan escritos a mano (ver GuiaSalud.jsx).
+   * Los limites y umbrales de la guia estan escritos a mano (ver GuiaSalud.jsx).
    * Esta prueba los lee del backend, que es quien calcula de verdad, y exige
-   * que la guia diga lo mismo: si alguien cambia un peso alla y olvida la
-   * guia, la guia estaria explicando un indice que ya no existe.
+   * que la guia diga lo mismo: si alguien cambia un limite alla y olvida la
+   * guia, la guia estaria explicando un indice que ya no existe. Los pesos ya
+   * no se comparan asi: la guia los pide al servidor.
    */
   function parametrosDelBackend() {
     const fuente = readFileSync(
@@ -268,9 +287,6 @@ describe('Guia del indice', () => {
     const numero = (patron) => Number(fuente.match(patron)[1]);
 
     return {
-      antiguedad: Math.round(numero(/antiguedad:\s*([\d.]+)/) * 100),
-      reapertura: Math.round(numero(/reapertura:\s*([\d.]+)/) * 100),
-      reparto: Math.round(numero(/densidad:\s*([\d.]+)/) * 100),
       limiteDias: numero(/LIMITE_ANTIGUEDAD_DIAS\s*=\s*(\d+)/),
       limiteReapertura: Math.round(numero(/LIMITE_REAPERTURA\s*=\s*([\d.]+)/) * 100),
       saludable: numero(/SALUDABLE:\s*(\d+)/),
@@ -278,7 +294,8 @@ describe('Guia del indice', () => {
     };
   }
 
-  async function dibujarGuia() {
+  async function dibujarGuia(pesos = pesosVigentes(40, 35, 25)) {
+    declararEscenario({ 'guia-pesos': pesos });
     const { default: GuiaSalud } = await cargar('/src/pages/GuiaSalud.jsx');
     return texto(dibujar(GuiaSalud));
   }
@@ -293,13 +310,19 @@ describe('Guia del indice', () => {
     assert.match(visible, /Volver al \u00edndice de salud/);
   });
 
-  test('los pesos, limites y umbrales coinciden con los del backend', async () => {
+  test('muestra los pesos que entrega el servidor', async () => {
+    const visible = await dibujarGuia(pesosVigentes(20, 50, 30));
+
+    assert.match(visible, /Antig\u00fcedad de lo abierto pesa 20%/);
+    assert.match(visible, /Tasa de reapertura pesa 50%/);
+    assert.match(visible, /Reparto por categor\u00eda pesa 30%/);
+    assert.match(visible, /Pesos del \u00edndice/, 'deberia enlazar a la pantalla de pesos');
+  });
+
+  test('los limites y umbrales coinciden con los del backend', async () => {
     const visible = await dibujarGuia();
     const p = parametrosDelBackend();
 
-    assert.match(visible, new RegExp(`Antig\u00fcedad de lo abierto pesa ${p.antiguedad}%`));
-    assert.match(visible, new RegExp(`Tasa de reapertura pesa ${p.reapertura}%`));
-    assert.match(visible, new RegExp(`Reparto por categor\u00eda pesa ${p.reparto}%`));
     assert.match(visible, new RegExp(`${p.limiteDias} d\u00edas o m\u00e1s da 0`));
     assert.match(visible, new RegExp(`${p.limiteReapertura}% o m\u00e1s da 0`));
     assert.match(visible, new RegExp(`${p.saludable} o m\u00e1s`));
@@ -312,5 +335,104 @@ describe('Guia del indice', () => {
     // 50 x 40% + 100 x 35% + 80 x 25% = 20 + 35 + 20 = 75
     assert.match(visible, /\u00cdndice 75/);
     assert.match(visible, /75 queda entre 60 y 79/);
+  });
+
+  test('con otros pesos el ejemplo se rehace, y tambien su etiqueta', async () => {
+    const visible = await dibujarGuia(pesosVigentes(20, 50, 30));
+
+    // 50 x 20% + 100 x 50% + 80 x 30% = 10 + 50 + 24 = 84: ya es Saludable.
+    assert.match(visible, /\u00cdndice 84/);
+    assert.match(visible, /84 llega a 80 o m\u00e1s, as\u00ed que este proyecto estar\u00eda en Saludable/);
+  });
+
+  test('si no puede pedir los pesos lo dice y ofrece reintentar', async () => {
+    const visible = await dibujarGuia(falla('Error 500 al leer los pesos.', 500));
+
+    assert.match(visible, /al leer los pesos/);
+    assert.match(visible, /Reintentar/);
+  });
+});
+
+describe('Pesos del indice', () => {
+  const CLAVE_PESOS = 'pesos-salud-0';
+
+  const CAMBIO = {
+    id_peso: 1,
+    antiguedad: 30,
+    reapertura: 50,
+    densidad: 20,
+    motivo: 'El equipo acordo priorizar las reaperturas.',
+    fecha_cambio: '2026-11-19 15:30:00',
+    modificado_por: 1,
+    modificado_por_nombre: 'Superusuario',
+  };
+
+  const CAMBIADOS = respondeCon({
+    vigentes: {
+      antiguedad: 30,
+      reapertura: 50,
+      densidad: 20,
+      motivo: CAMBIO.motivo,
+      fecha_cambio: CAMBIO.fecha_cambio,
+      modificado_por: { id_usuario: 1, nombre: 'Superusuario' },
+    },
+    iniciales: { antiguedad: 40, reapertura: 35, densidad: 25 },
+    historial: [CAMBIO],
+  });
+
+  const INICIALES = respondeCon({
+    vigentes: { antiguedad: 40, reapertura: 35, densidad: 25, motivo: null, fecha_cambio: null, modificado_por: null },
+    iniciales: { antiguedad: 40, reapertura: 35, densidad: 25 },
+    historial: [],
+  });
+
+  async function dibujarPesos(respuesta) {
+    declararEscenario({ [CLAVE_PESOS]: respuesta });
+    const { default: PesosSalud } = await cargar('/src/pages/PesosSalud.jsx');
+    return texto(dibujar(PesosSalud, { ruta: '/salud/pesos' }));
+  }
+
+  beforeEach(() => declararUsuario());
+  after(() => declararUsuario());
+
+  test('muestra los pesos vigentes, quien los fijo y la historia', async () => {
+    const visible = await dibujarPesos(CAMBIADOS);
+
+    assert.match(visible, /Antig\u00fcedad de lo abierto 30%/);
+    assert.match(visible, /Tasa de reapertura 50%/);
+    assert.match(visible, /Reparto por categor\u00eda 20%/);
+    assert.match(visible, /Fijados el .* por Superusuario./);
+    assert.match(visible, /El equipo acordo priorizar las reaperturas/);
+  });
+
+  test('sin cambios dice que rigen los iniciales', async () => {
+    const visible = await dibujarPesos(INICIALES);
+
+    assert.match(visible, /pesos iniciales del sistema/);
+    assert.match(visible, /Todav\u00eda no hay cambios/);
+  });
+
+  test('el administrador ve el boton para cambiarlos', async () => {
+    const visible = await dibujarPesos(CAMBIADOS);
+
+    assert.match(visible, /Cambiar pesos/);
+    assert.doesNotMatch(visible, /Solo el administrador/);
+  });
+
+  test('quien no es administrador los ve, pero no puede cambiarlos', async () => {
+    declararUsuario({ rol: 'TESTER' });
+
+    const visible = await dibujarPesos(CAMBIADOS);
+
+    assert.doesNotMatch(visible, /Cambiar pesos/);
+    assert.match(visible, /Solo el administrador puede cambiarlos/);
+    assert.match(visible, /Tasa de reapertura 50%/);
+  });
+
+  test('si no puede pedirlos lo dice y ofrece reintentar', async () => {
+    const visible = await dibujarPesos(falla('Error 500 al leer los pesos.', 500));
+
+    assert.match(visible, /al leer los pesos/);
+    assert.match(visible, /Reintentar/);
   });
 });

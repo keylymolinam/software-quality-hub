@@ -10,6 +10,7 @@ erDiagram
     USUARIO ||--o{ HISTORIAL_INCIDENCIA : "registra el cambio"
     PROYECTO ||--o{ INCIDENCIA : "agrupa"
     PROYECTO |o--o{ METRICA : "se mide"
+    USUARIO ||--o{ PESO_SALUD : "cambia los pesos"
     INCIDENCIA ||--o{ HISTORIAL_INCIDENCIA : "deja constancia en"
     INCIDENCIA |o--o{ INCIDENCIA : "posible duplicado de"
 
@@ -63,6 +64,16 @@ erDiagram
         TEXT fecha_calculo
         INTEGER id_proyecto FK "nula = métrica global"
     }
+
+    PESO_SALUD {
+        INTEGER id_peso PK
+        INTEGER antiguedad "en %, los tres suman 100"
+        INTEGER reapertura
+        INTEGER densidad
+        TEXT motivo "obligatorio"
+        TEXT fecha_cambio
+        INTEGER modificado_por FK
+    }
 ```
 
 ## Lo que el diagrama no puede mostrar
@@ -80,6 +91,7 @@ trazabilidad:
 | `HISTORIAL_INCIDENCIA.id_incidencia` | `CASCADE` | La bitácora no tiene vida propia: sin su incidencia no significa nada |
 | `HISTORIAL_INCIDENCIA.modificado_por` | `RESTRICT` | Un cambio sin responsable rompe la trazabilidad, que es la base del índice de salud |
 | `METRICA.id_proyecto` | `CASCADE` | Una métrica es un valor calculado; se recalcula, no se conserva |
+| `PESO_SALUD.modificado_por` | `RESTRICT` | Un cambio de pesos sin responsable no se puede explicar, y mueve el índice de todos los proyectos |
 
 Dos restricciones más que tampoco se ven en la figura:
 

@@ -61,7 +61,7 @@ const { clasificar } = await import('../src/services/clasificacion.service.js');
 
 /** Vacia las tablas. El orden respeta las claves foraneas. */
 function limpiar() {
-  for (const tabla of ['HISTORIAL_INCIDENCIA', 'METRICA', 'INCIDENCIA', 'PROYECTO', 'USUARIO']) {
+  for (const tabla of ['PESO_SALUD', 'HISTORIAL_INCIDENCIA', 'METRICA', 'INCIDENCIA', 'PROYECTO', 'USUARIO']) {
     db.exec(`DELETE FROM ${tabla}`);
   }
 }
@@ -679,6 +679,129 @@ describe('Indice de salud', () => {
     if (indiceSinDatos !== -1) {
       const restantes = general.proyectos.slice(indiceSinDatos);
       assert.ok(restantes.every((p) => !p.datos_suficientes));
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pesos del indice, editables por el administrador
+// ---------------------------------------------------------------------------
+
+describe('Pesos del indice de salud', () => {
+  const pesos = (antiguedad, reapertura, densidad, motivo = 'Ajuste acordado con el equipo.') => ({
+    antiguedad,
+    reapertura,
+    densidad,
+    motivo,
+  });
+
+  test('sin cambios rigen los pesos iniciales, sin autor', () => {
+    const { vigentes, historial } = Salud.obtenerPesos();
+
+    assert.equal(vigentes.antiguedad, Salud.PESOS_INICIALES.antiguedad);
+    assert.equal(vigentes.reapertura, Salud.PESOS_INICIALES.reapertura);
+    assert.equal(vigentes.densidad, Salud.PESOS_INICIALES.densidad);
+    assert.equal(vigentes.modificado_por, null);
+    assert.equal(historial.length, 0);
+  });
+
+  test('cambiar los pesos cambia el indice, con los mismos datos', () => {
+    // Una incidencia vieja de un dia no baja nada; lo que se mueve es la
+    // reapertura: una de dos reabierta deja ese componente en 0.
+    const a = crear();
+    const b = crear({ categoria: 'SEGURIDAD' });
+    transicionar(a.id_incidencia, ['EN_PROGRESO', 'RESUELTA', 'EN_PROGRESO']);
+    transicionar(b.id_incidencia, ['EN_PROGRESO', 'RESUELTA']);
+
+    const antes = Salud.calcularSalud(proyecto.id_proyecto);
+
+    // Mas peso a la reapertura, que es el componente que esta mal.
+    Salud.cambiarPesos(pesos(20, 60, 20), autora.id_usuario);
+
+    const despues = Salud.calcularSalud(proyecto.id_proyecto);
+
+    assert.equal(despues.componentes.reapertura.peso, 0.6);
+    assert.equal(
+      despues.componentes.reapertura.puntaje,
+      antes.componentes.reapertura.puntaje,
+      'los puntajes no dependen de los pesos'
+    );
+    assert.ok(despues.indice < antes.indice, 'el indice deberia bajar');
+  });
+
+  test('todos los proyectos se miden con los mismos pesos', () => {
+    crear();
+    crear({ id_proyecto: otroProyecto.id_proyecto });
+    Salud.cambiarPesos(pesos(50, 30, 20), autora.id_usuario);
+
+    const { global, proyectos } = Salud.calcularSaludGeneral();
+
+    for (const ambito of [global, ...proyectos]) {
+      assert.equal(ambito.componentes.antiguedad.peso, 0.5);
+      assert.equal(ambito.componentes.reapertura.peso, 0.3);
+      assert.equal(ambito.componentes.densidad.peso, 0.2);
+    }
+  });
+
+  test('los pesos deben sumar 100', () => {
+    falla(() => Salud.cambiarPesos(pesos(50, 50, 10), autora.id_usuario), 400, 'pesos');
+    assert.equal(Salud.obtenerPesos().historial.length, 0, 'no deberia guardarse nada');
+  });
+
+  test('cada peso es un entero de 0 a 100', () => {
+    falla(() => Salud.cambiarPesos(pesos(-10, 60, 50), autora.id_usuario), 400, 'antiguedad');
+    falla(() => Salud.cambiarPesos(pesos(40.5, 34.5, 25), autora.id_usuario), 400, 'antiguedad');
+    falla(() => Salud.cambiarPesos({ motivo: 'Sin pesos' }, autora.id_usuario), 400, 'densidad');
+  });
+
+  test('el cambio exige un motivo', () => {
+    falla(() => Salud.cambiarPesos(pesos(40, 35, 25, ''), autora.id_usuario), 400, 'motivo');
+  });
+
+  test('cada cambio queda en la historia, con quien y por que', () => {
+    Salud.cambiarPesos(pesos(50, 30, 20, 'Primera prueba de pesos.'), autora.id_usuario);
+    Salud.cambiarPesos(pesos(30, 50, 20, 'Segunda prueba de pesos.'), revisor.id_usuario);
+
+    const { vigentes, historial } = Salud.obtenerPesos();
+
+    assert.equal(vigentes.antiguedad, 30);
+    assert.equal(vigentes.modificado_por.id_usuario, revisor.id_usuario);
+    assert.equal(historial.length, 2);
+    // El mas reciente primero, y el anterior intacto.
+    assert.equal(historial[0].motivo, 'Segunda prueba de pesos.');
+    assert.equal(historial[1].antiguedad, 50);
+    assert.equal(historial[1].modificado_por, autora.id_usuario);
+  });
+
+  test('quien cambio los pesos no se puede eliminar: la historia perderia su autor', () => {
+    Salud.cambiarPesos(pesos(50, 30, 20), revisor.id_usuario);
+
+    // 409 y no un 500 por la clave foranea: el servidor esta bien, lo que
+    // impide el borrado es la trazabilidad.
+    falla(() => Usuarios.eliminarUsuario(revisor.id_usuario), 409);
+    assert.equal(Salud.obtenerPesos().vigentes.modificado_por.id_usuario, revisor.id_usuario);
+  });
+
+  // El rol se exige en la ruta, asi que esta prueba va por HTTP.
+  test('quien no es administrador recibe 403 al cambiarlos', async () => {
+    const { default: app } = await import('../src/app.js');
+    const servidor = app.listen(0);
+    await new Promise((resolve) => servidor.once('listening', resolve));
+
+    try {
+      const respuesta = await fetch(`http://localhost:${servidor.address().port}/api/metricas/pesos`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${Auth.emitirToken(revisor)}`,
+        },
+        body: JSON.stringify(pesos(10, 10, 80)),
+      });
+
+      assert.equal(respuesta.status, 403);
+      assert.equal(Salud.obtenerPesos().historial.length, 0);
+    } finally {
+      servidor.close();
     }
   });
 });

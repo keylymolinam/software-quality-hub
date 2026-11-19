@@ -28,7 +28,7 @@ try {
   db.exec(readFileSync(RUTA_SEED, 'utf8'));
 
   // Resumen de lo insertado, para confirmar que todo quedo en su lugar.
-  const tablas = ['USUARIO', 'PROYECTO', 'INCIDENCIA', 'HISTORIAL_INCIDENCIA', 'METRICA'];
+  const tablas = ['USUARIO', 'PROYECTO', 'INCIDENCIA', 'HISTORIAL_INCIDENCIA', 'METRICA', 'PESO_SALUD'];
   console.log('');
   for (const tabla of tablas) {
     const { total } = db.prepare(`SELECT COUNT(*) AS total FROM ${tabla}`).get();

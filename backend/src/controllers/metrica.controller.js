@@ -40,3 +40,19 @@ export function snapshot(req, res) {
 export function historico(req, res) {
   res.json(servicioSalud.obtenerHistorico(req.query));
 }
+
+/** GET /api/metricas/pesos — pesos vigentes del indice y su historia. */
+export function pesos(req, res) {
+  res.json(servicioSalud.obtenerPesos());
+}
+
+/**
+ * PUT /api/metricas/pesos
+ *
+ * Fija pesos nuevos para todo el sistema. Quien los cambia sale del token,
+ * como en la bitacora de incidencias: el registro de cambios es justamente lo
+ * que permite explicar un indice que se movio sin que cambiaran los datos.
+ */
+export function cambiarPesos(req, res) {
+  res.json(servicioSalud.cambiarPesos(req.body, req.usuario.id_usuario));
+}

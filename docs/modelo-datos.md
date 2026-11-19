@@ -145,6 +145,26 @@ Motor: SQLite 3
 | fecha_calculo | TEXT | NOT NULL, por defecto ahora | Momento del cálculo |
 | id_proyecto | INTEGER | FK → PROYECTO, nulo | Proyecto asociado; nulo = métrica global |
 
+### PESO_SALUD
+
+Cuánto pesa cada componente en el índice de salud, para todo el sistema. Solo crece:
+los pesos vigentes son los de la fila más reciente y las anteriores son su historia.
+Sin filas rigen los pesos iniciales del código (40 / 35 / 25).
+
+| Campo | Tipo | Restricciones | Descripción |
+|---|---|---|---|
+| id_peso | INTEGER | PK, autoincremental | Identificador único |
+| antiguedad | INTEGER | NOT NULL, 0 a 100 | Peso de la antigüedad de lo abierto, en % |
+| reapertura | INTEGER | NOT NULL, 0 a 100 | Peso de la tasa de reapertura, en % |
+| densidad | INTEGER | NOT NULL, 0 a 100 | Peso del reparto por categoría, en % |
+| motivo | TEXT | NOT NULL | Por qué se cambiaron |
+| fecha_cambio | TEXT | NOT NULL, por defecto ahora | Momento del cambio |
+| modificado_por | INTEGER | FK → USUARIO, NOT NULL | Administrador que los cambió |
+
+Un `CHECK` exige que los tres sumen 100. Se guardan como enteros y no como
+decimales porque en coma flotante 0.1 + 0.2 no suma 0.3, y el `CHECK` fallaría con
+pesos correctos.
+
 ---
 
 ## 3. Flujo de estados de una incidencia
@@ -246,6 +266,7 @@ Las políticas de borrado se eligieron según el significado de cada relación:
 | HISTORIAL → INCIDENCIA | `ON DELETE CASCADE` | El historial carece de sentido sin su incidencia |
 | HISTORIAL → USUARIO (modificado_por) | `ON DELETE RESTRICT` | Preserva la trazabilidad: no se puede eliminar a un usuario que registró cambios |
 | METRICA → PROYECTO | `ON DELETE CASCADE` | Las métricas de un proyecto eliminado dejan de ser válidas |
+| PESO_SALUD → USUARIO (modificado_por) | `ON DELETE RESTRICT` | Quien cambió los pesos no se elimina: la historia de pesos quedaría sin responsable |
 
 ### 4.3 Restricciones de dominio
 
@@ -259,7 +280,8 @@ Todos los campos con un conjunto cerrado de valores están acotados con `CHECK`:
 | INCIDENCIA.estado | ABIERTA · EN_PROGRESO · RESUELTA · VALIDADA · CERRADA |
 | INCIDENCIA.categoria | DISPONIBILIDAD · RENDIMIENTO · SEGURIDAD · USABILIDAD_INTERFAZ · DATOS_INTEGRIDAD · OTRO |
 | INCIDENCIA.clasificacion_automatica | 0 · 1 |
-| HISTORIAL_INCIDENCIA.estado_anterior / estado_nuevo | Los cuatro estados de incidencia |
+| HISTORIAL_INCIDENCIA.estado_anterior / estado_nuevo | Los cinco estados de incidencia |
+| PESO_SALUD.antiguedad / reapertura / densidad | Enteros de 0 a 100 que suman 100 |
 
 Esto garantiza a nivel de motor que el sistema no pueda almacenar valores fuera
 del dominio definido, incluso ante un error de programación en las capas

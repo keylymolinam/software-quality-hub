@@ -152,6 +152,8 @@ export function existe(id) {
  * distintas al eliminar (ver schema.sql):
  *   reportado_por  -> RESTRICT: impide el borrado.
  *   modificado_por -> RESTRICT: impide el borrado.
+ *   PESO_SALUD     -> RESTRICT: quien cambio los pesos del indice tampoco se
+ *                     borra, o la historia de pesos quedaria sin responsable.
  *   asignado_a     -> SET NULL: no impide nada, la incidencia queda sin asignar.
  */
 export function contarDependencias(id) {
@@ -163,11 +165,15 @@ export function contarDependencias(id) {
     .prepare('SELECT COUNT(*) AS total FROM HISTORIAL_INCIDENCIA WHERE modificado_por = ?')
     .get(id).total;
 
+  const cambiosPesos = db
+    .prepare('SELECT COUNT(*) AS total FROM PESO_SALUD WHERE modificado_por = ?')
+    .get(id).total;
+
   const asignadas = db
     .prepare('SELECT COUNT(*) AS total FROM INCIDENCIA WHERE asignado_a = ?')
     .get(id).total;
 
-  return { reportadas, cambiosHistorial, asignadas };
+  return { reportadas, cambiosHistorial, cambiosPesos, asignadas };
 }
 
 // ---------------------------------------------------------------------------

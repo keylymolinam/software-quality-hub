@@ -40,3 +40,17 @@ export function etiquetaSalud(valor) {
 export function claseSalud(valor) {
   return `etiqueta-salud etiqueta-salud--${String(valor).toLowerCase()}`;
 }
+
+/**
+ * Los tres componentes del indice, con el nombre que se les da en pantalla.
+ *
+ * `clave` es la del backend. La de la concentracion se llama `densidad` alla
+ * porque asi la nombra la memoria, pero en pantalla se lee "Reparto por
+ * categoria", que es lo que mide. Lo usan la pantalla de pesos y la guia, para
+ * que las dos llamen igual a lo mismo.
+ */
+export const COMPONENTES_SALUD = [
+  { clave: 'antiguedad', nombre: 'Antig\u00fcedad de lo abierto' },
+  { clave: 'reapertura', nombre: 'Tasa de reapertura' },
+  { clave: 'densidad', nombre: 'Reparto por categor\u00eda' },
+];

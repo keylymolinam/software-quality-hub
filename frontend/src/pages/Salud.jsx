@@ -103,9 +103,14 @@ export default function Salud() {
         {/* La guia explica la regla; esta pantalla, la evidencia de un ambito.
             El enlace va arriba y a la vista porque quien no entiende el
             numero lo busca antes de leer nada mas. */}
-        <Link className="boton boton--discreto boton--auto" to="/salud/guia">
-          &iquest;Qu&eacute; es y c&oacute;mo se calcula?
-        </Link>
+        <div className="contenido__acciones">
+          <Link className="boton boton--discreto boton--auto" to="/salud/guia">
+            &iquest;Qu&eacute; es y c&oacute;mo se calcula?
+          </Link>
+          <Link className="boton boton--discreto boton--auto" to="/salud/pesos">
+            Pesos del &iacute;ndice
+          </Link>
+        </div>
       </header>
 
       {/* Un solo selector arriba, que alcanza a todas las tarjetas de abajo.

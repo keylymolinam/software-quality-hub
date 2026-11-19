@@ -34,3 +34,24 @@ export function obtenerSalud() {
 export function obtenerSaludProyecto(idProyecto) {
   return api.get(`/metricas/salud/${idProyecto}`);
 }
+
+/**
+ * Pesos del indice de salud: los vigentes, los iniciales y la historia.
+ *
+ * @returns {Promise<{ vigentes: object, iniciales: object, historial: object[] }>}
+ *   Los pesos van en porcentaje entero (40, no 0.4). `vigentes.modificado_por`
+ *   es null mientras rijan los iniciales.
+ */
+export function obtenerPesos() {
+  return api.get('/metricas/pesos');
+}
+
+/**
+ * Fija pesos nuevos para todo el sistema. Solo ADMINISTRADOR.
+ *
+ * @param {{ antiguedad: number, reapertura: number, densidad: number, motivo: string }} datos
+ *   Enteros que sumen 100, y el motivo del cambio.
+ */
+export function cambiarPesos(datos) {
+  return api.put('/metricas/pesos', datos);
+}

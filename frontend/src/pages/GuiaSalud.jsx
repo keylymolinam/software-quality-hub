@@ -12,42 +12,96 @@
  * estilizar y en pantallas tactiles no aparece. Una pagina se lee entera,
  * sirve tambien como material para la defensa y se puede enlazar.
  *
- * LOS NUMEROS DE ESTA PAGINA ESTAN ESCRITOS A MANO
+ * LOS PESOS SE PIDEN; LOS LIMITES ESTAN ESCRITOS A MANO
  *
- * Pesos, limites y umbrales salen de backend/src/services/salud.service.js
- * (PESOS, LIMITE_ANTIGUEDAD_DIAS, LIMITE_REAPERTURA y UMBRALES). Se copian aqui
- * en vez de pedirlos al servidor porque los umbrales no viajan en la API y una
- * guia que espera una peticion para explicar una regla fija es mas fragil que
- * util. El costo es que si se cambian alla hay que cambiarlos aqui; por eso
- * estan juntos en un solo objeto y no repartidos por el texto.
+ * Los pesos los puede cambiar el administrador (pantalla /salud/pesos), asi
+ * que se piden al servidor: una guia con pesos copiados explicaria un indice
+ * que ya no existe al primer cambio.
+ *
+ * Limites y umbrales siguen fijos en backend/src/services/salud.service.js
+ * (LIMITE_ANTIGUEDAD_DIAS, LIMITE_REAPERTURA y UMBRALES) y se copian aqui,
+ * porque no viajan en la API. Si se cambian alla hay que cambiarlos aqui; una
+ * prueba de pantallas compara las dos copias.
  */
 import { Link } from 'react-router-dom';
 
+import { obtenerPesos } from '../api/metricas.js';
 import { claseSalud, etiquetaSalud } from '../dominio/salud.js';
+import { usePeticion } from '../hooks/usePeticion.js';
 
-/** Copia de los parametros de salud.service.js. Cambiar los dos a la vez. */
+/** Copia de los limites y umbrales de salud.service.js. Cambiar los dos a la vez. */
 const PARAMETROS = {
-  pesos: { antiguedad: 40, reapertura: 35, reparto: 25 },
   limiteDias: 90,
   limiteReapertura: 30,
   umbrales: { saludable: 80, atencion: 60 },
 };
 
-/**
- * Un ejemplo completo, con numeros redondos para poder seguirlo de memoria.
- * El aporte de cada componente se calcula aqui y no se escribe a mano, para
- * que el ejemplo no pueda quedar con una suma mal hecha.
- */
-const EJEMPLO = [
-  { nombre: 'Antig\u00fcedad de lo abierto', puntaje: 50, peso: PARAMETROS.pesos.antiguedad },
-  { nombre: 'Tasa de reapertura', puntaje: 100, peso: PARAMETROS.pesos.reapertura },
-  { nombre: 'Reparto por categor\u00eda', puntaje: 80, peso: PARAMETROS.pesos.reparto },
-].map((fila) => ({ ...fila, aporte: (fila.puntaje * fila.peso) / 100 }));
+/** Redondea a un decimal, igual que el backend. */
+const redondear = (n) => Math.round(n * 10) / 10;
 
-const INDICE_EJEMPLO = EJEMPLO.reduce((suma, fila) => suma + fila.aporte, 0);
+/**
+ * Un ejemplo completo, con puntajes redondos para poder seguirlo de memoria.
+ * Los pesos son los vigentes, y el aporte de cada componente se calcula aqui y
+ * no se escribe a mano: si el administrador cambia los pesos, el ejemplo se
+ * rehace solo y no puede quedar con una suma mal hecha.
+ */
+function armarEjemplo(pesos) {
+  const filas = [
+    { nombre: 'Antig\u00fcedad de lo abierto', puntaje: 50, peso: pesos.antiguedad },
+    { nombre: 'Tasa de reapertura', puntaje: 100, peso: pesos.reapertura },
+    { nombre: 'Reparto por categor\u00eda', puntaje: 80, peso: pesos.reparto },
+  ].map((fila) => ({ ...fila, aporte: redondear((fila.puntaje * fila.peso) / 100) }));
+
+  return { filas, indice: redondear(filas.reduce((suma, fila) => suma + fila.aporte, 0)) };
+}
+
+/** La etiqueta que le toca a un indice, con la misma regla que el backend. */
+function etiquetaDelIndice(indice, umbrales) {
+  if (indice >= umbrales.saludable) return 'SALUDABLE';
+  if (indice >= umbrales.atencion) return 'ATENCION';
+  return 'CRITICO';
+}
 
 export default function GuiaSalud() {
-  const { pesos, limiteDias, limiteReapertura, umbrales } = PARAMETROS;
+  const { limiteDias, limiteReapertura, umbrales } = PARAMETROS;
+
+  const peticion = usePeticion(() => obtenerPesos(), 'guia-pesos');
+
+  if (peticion.error) {
+    return (
+      <main className="contenedor contenido guia">
+        <h1 className="titulo">&iquest;Qu&eacute; es el &iacute;ndice de salud?</h1>
+        <p className="alerta alerta--error">
+          {peticion.error.message}{' '}
+          <button className="enlace-boton" type="button" onClick={peticion.reintentar}>
+            Reintentar
+          </button>
+        </p>
+      </main>
+    );
+  }
+
+  if (!peticion.datos) {
+    return (
+      <main className="contenedor contenido guia">
+        <h1 className="titulo">&iquest;Qu&eacute; es el &iacute;ndice de salud?</h1>
+        <p className="estado estado--cargando">Cargando...</p>
+      </main>
+    );
+  }
+
+  const { vigentes } = peticion.datos;
+  const pesos = {
+    antiguedad: vigentes.antiguedad,
+    reapertura: vigentes.reapertura,
+    reparto: vigentes.densidad,
+  };
+  const ejemplo = armarEjemplo(pesos);
+  const etiquetaEjemplo = etiquetaDelIndice(ejemplo.indice, umbrales);
+
+  let rangoEjemplo = `queda entre ${umbrales.atencion} y ${umbrales.saludable - 1}`;
+  if (etiquetaEjemplo === 'SALUDABLE') rangoEjemplo = `llega a ${umbrales.saludable} o m\u00e1s`;
+  if (etiquetaEjemplo === 'CRITICO') rangoEjemplo = `queda bajo ${umbrales.atencion}`;
 
   return (
     <main className="contenedor contenido guia">
@@ -213,7 +267,7 @@ export default function GuiaSalud() {
             </tr>
           </thead>
           <tbody>
-            {EJEMPLO.map((fila) => (
+            {ejemplo.filas.map((fila) => (
               <tr key={fila.nombre}>
                 <td>{fila.nombre}</td>
                 <td className="tabla__num">{fila.puntaje}</td>
@@ -228,17 +282,17 @@ export default function GuiaSalud() {
                 &Iacute;ndice
               </th>
               <td className="tabla__num">
-                <strong>{INDICE_EJEMPLO}</strong>
+                <strong>{ejemplo.indice}</strong>
               </td>
             </tr>
           </tfoot>
         </table>
 
         <p>
-          {INDICE_EJEMPLO} queda entre {umbrales.atencion} y {umbrales.saludable - 1}, as&iacute;
-          que este proyecto estar&iacute;a en{' '}
-          <span className={claseSalud('ATENCION')}>{etiquetaSalud('ATENCION')}</span>. Lo que lo
-          baja es la antig&uuml;edad: ah&iacute; conviene actuar primero.
+          {ejemplo.indice} {rangoEjemplo}, as&iacute; que este proyecto estar&iacute;a en{' '}
+          <span className={claseSalud(etiquetaEjemplo)}>{etiquetaSalud(etiquetaEjemplo)}</span>.
+          Lo que m&aacute;s lo baja es la antig&uuml;edad, con el puntaje m&aacute;s bajo:
+          ah&iacute; conviene actuar primero.
         </p>
       </section>
 
@@ -276,7 +330,15 @@ export default function GuiaSalud() {
             Lo que s&iacute; sale de los datos es cada medici&oacute;n, y por eso la pantalla
             de salud muestra la evidencia de cada una.
           </li>
-          <li>Si un equipo prefiere otros pesos, se pueden ajustar sin cambiar nada m&aacute;s.</li>
+          <li>
+            Los pesos son <strong>los mismos para todos los proyectos</strong>, para que se
+            puedan comparar entre s&iacute;.
+          </li>
+          <li>
+            El administrador puede cambiarlos en{' '}
+            <Link to="/salud/pesos">Pesos del &iacute;ndice</Link>. Cada cambio queda registrado
+            con qui&eacute;n lo hizo, cu&aacute;ndo y por qu&eacute;.
+          </li>
         </ul>
       </section>
 

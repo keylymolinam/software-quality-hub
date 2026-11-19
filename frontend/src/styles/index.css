@@ -2383,6 +2383,56 @@ a.tabla__titulo:hover {
 }
 
 /* ===========================================================================
+   Pesos del indice
+   =========================================================================== */
+
+.pesos__vigentes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pesos__vigentes li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.pesos__vigentes li + li {
+  border-top: 1px solid var(--color-borde);
+}
+
+/* Una columna de cifras alineadas a la derecha: aqui si van tabular-nums. */
+.pesos__valor {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pesos__origen {
+  margin: 12px 0 0;
+  font-size: 0.875rem;
+  color: var(--color-texto-suave);
+}
+
+/* La suma en vivo: verde cuando cuadra, roja mientras falte o sobre. Va con
+   texto ademas del color ("faltan 5"), para que se entienda sin distinguirlo. */
+.pesos__suma {
+  margin: 0 0 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pesos__suma--ok {
+  color: var(--color-ok);
+}
+
+.pesos__suma--mal {
+  color: var(--color-error);
+}
+
+/* ===========================================================================
    Proyectos
    =========================================================================== */
 

@@ -13,7 +13,7 @@ el código que la implementa.
 
 Estado actual: la API REST está completa (tres entidades, máquina de estados,
 autenticación por rol y los tres diferenciadores). El frontend ya permite recorrer el
-ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Once pantallas,
+ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Doce pantallas,
 que ya cubren todo lo que la API ofrece:
 
 | Pantalla | Ruta | Qué resuelve |
@@ -27,6 +27,7 @@ que ya cubren todo lo que la API ofrece:
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
 | Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
 | Guía de salud | `/salud/guia` | Qué es el índice, para qué sirve y cómo se calcula, con un ejemplo |
+| Pesos del índice | `/salud/pesos` | Los pesos vigentes y su historia; el administrador los cambia |
 | Proyectos | `/proyectos` | El listado para todos; crear, editar y eliminar para el administrador |
 | Usuarios | `/usuarios` | El equipo, con las seis reglas de acceso reflejadas en la tabla |
 
@@ -145,7 +146,7 @@ su base al empezar, y el backend avisa al arrancar si la base quedó atrás.
 |---|---|
 | Clasificación automática | `utils/lexico.js` (datos) + `services/clasificacion.service.js` (decisión) |
 | Detección de duplicados | `UMBRAL_DUPLICADO` en `.env` + `services/duplicados.service.js` |
-| Índice de salud | pesos y límites en `services/salud.service.js` |
+| Índice de salud | límites en `services/salud.service.js`; pesos en la tabla `PESO_SALUD` |
 
 Los tres comparten un criterio que hay que preservar al modificarlos: **nunca
 sobreescriben una decisión humana, nunca bloquean, y siempre devuelven la evidencia que
@@ -154,6 +155,16 @@ y adjunta los términos que la motivaron; el detector de duplicados avisa sin im
 registro; el índice entrega el desglose por componente y reporta `SIN_DATOS` en vez de
 fingir salud. Los pesos y umbrales son convenciones declaradas, no resultados derivados
 de los datos: si se cambian, hay que decir por qué.
+
+Los **pesos** del índice los cambia el administrador desde `/salud/pesos`
+(`PUT /api/metricas/pesos`). Son **uno solo para todo el sistema**, no por proyecto:
+el inicio ordena los proyectos de peor a mejor, y eso solo es justo si todos se miden
+con la misma regla. Se guardan en `PESO_SALUD`, una tabla que solo crece: cada cambio
+agrega una fila con quién, cuándo y por qué (el motivo es obligatorio), y los vigentes
+son los de la última. Sin filas rigen `PESOS_INICIALES` (40 / 35 / 25). Como el índice se
+calcula en el momento, un cambio de pesos mueve todos los índices a la vez: la historia
+es lo que permite distinguir una mejora real de un cambio de regla. Los **límites y
+umbrales** siguen fijos en el código, y la guía los copia a mano (una prueba compara).
 
 ## Convenciones de código
 
@@ -284,8 +295,8 @@ el aspecto (el CSS no se aplica), la interacción (nadie pulsa un botón) y los 
 hook de peticiones real. Eso lo cubre la tercera suite.
 
 **Interacción** — `npm run test:e2e` desde `frontend/`. Playwright con Chromium; la
-primera vez hay que descargarlo con `npx playwright install chromium`. Cinco archivos en
-`e2e/` (`sesion`, `registro`, `transiciones`, `listado`, `tablero`) y sus utilidades en
+primera vez hay que descargarlo con `npx playwright install chromium`. Seis archivos en
+`e2e/` (`sesion`, `registro`, `transiciones`, `listado`, `tablero`, `pesos`) y sus utilidades en
 `e2e/apoyo.js`.
 
 - `playwright.config.js` levanta backend y frontend por su cuenta, en **puertos propios

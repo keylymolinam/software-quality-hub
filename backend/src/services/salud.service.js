@@ -23,17 +23,25 @@
  *
  * Lo que si es objetivo es todo lo demas: cada componente se mide con una
  * consulta verificable, y el indice descompone su resultado en las partes que
- * lo formaron. Quien no comparta los pesos puede cambiarlos aqui y recalcular,
- * sin tocar nada mas.
+ * lo formaron. Quien no comparta los pesos puede cambiarlos y recalcular, sin
+ * tocar nada mas: el administrador los edita desde la interfaz (ver "Pesos
+ * editables", mas abajo), y cada cambio queda registrado con su motivo.
  *
  * Esa distincion conviene declararla en la memoria: el aporte del trabajo es
  * la medicion y su trazabilidad, no la pretension de haber encontrado la
  * ponderacion correcta.
  */
 import * as Metrica from '../models/metrica.model.js';
+import * as PesoSalud from '../models/pesoSalud.model.js';
 import * as Proyecto from '../models/proyecto.model.js';
 import { errorNoEncontrado, errorSolicitud } from '../utils/errores.js';
-import { exigirIdValido } from '../utils/validacion.js';
+import {
+  exigirIdValido,
+  lanzarSiHayErrores,
+  validarEntero,
+  validarTexto,
+  vino,
+} from '../utils/validacion.js';
 
 // ---------------------------------------------------------------------------
 // Parametros
@@ -56,12 +64,24 @@ const LIMITE_ANTIGUEDAD_DIAS = 90;
  */
 const LIMITE_REAPERTURA = 0.30;
 
-/** Cuanto pesa cada componente en el indice. Deben sumar 1. */
-const PESOS = {
-  antiguedad: 0.40,
-  reapertura: 0.35,
-  densidad: 0.25,
-};
+/**
+ * Cuanto pesa cada componente en el indice, en porcentaje. Suman 100.
+ *
+ * Son los pesos INICIALES: rigen mientras nadie los haya cambiado. Los
+ * vigentes se leen de la tabla PESO_SALUD (ver pesosVigentes()).
+ *
+ * La antiguedad pesa mas porque es la deuda que crece sola si nadie hace nada;
+ * la reapertura le sigue porque delata soluciones que no se validaron; la
+ * concentracion pesa menos porque describe donde mirar mas que cuanto falta.
+ */
+export const PESOS_INICIALES = Object.freeze({
+  antiguedad: 40,
+  reapertura: 35,
+  densidad: 25,
+});
+
+/** Los tres componentes que se ponderan, en el orden en que se muestran. */
+const COMPONENTES = ['antiguedad', 'reapertura', 'densidad'];
 
 /**
  * Umbrales de la etiqueta legible que acompana al numero.
@@ -160,10 +180,23 @@ function etiquetar(indice) {
  * Calcula el indice de salud de un proyecto, o del sistema completo.
  *
  * @param {number|null} idProyecto null = todo el sistema.
+ * @param {object} [porcentajes] Los pesos en porcentaje. Por defecto, los
+ *        vigentes. calcularSaludGeneral() los lee una vez y los pasa a cada
+ *        proyecto, para que todos se midan con el mismo juego aunque alguien
+ *        los cambie a mitad del calculo.
  * @returns {object} El indice, su etiqueta, los tres componentes con el
  *                   detalle que los produjo, y datos de contexto.
  */
-export function calcularSalud(idProyecto = null) {
+export function calcularSalud(idProyecto = null, porcentajes = pesosVigentes()) {
+  // La API entrega los pesos como fraccion (0.4), igual que antes de que se
+  // pudieran editar: la interfaz ya los muestra asi y no hay por que cambiar
+  // el contrato.
+  const PESOS = {
+    antiguedad: porcentajes.antiguedad / 100,
+    reapertura: porcentajes.reapertura / 100,
+    densidad: porcentajes.densidad / 100,
+  };
+
   const antiguedad = Metrica.antiguedadAbiertas(idProyecto);
   const reapertura = Metrica.tasaReapertura(idProyecto);
   const densidad = Metrica.densidadPorCategoria(idProyecto);
@@ -246,13 +279,14 @@ export function calcularSalud(idProyecto = null) {
  */
 export function calcularSaludGeneral() {
   const proyectos = Proyecto.listar({ limite: 100 });
+  const pesos = pesosVigentes();
 
   const porProyecto = proyectos
     .map((p) => ({
       id_proyecto: p.id_proyecto,
       nombre: p.nombre,
       estado_proyecto: p.estado,
-      ...calcularSalud(p.id_proyecto),
+      ...calcularSalud(p.id_proyecto, pesos),
     }))
     // Peor primero. Los proyectos sin datos van al final: no son urgentes,
     // simplemente no hay nada que decir sobre ellos.
@@ -262,9 +296,103 @@ export function calcularSaludGeneral() {
     });
 
   return {
-    global: calcularSalud(null),
+    global: calcularSalud(null, pesos),
     proyectos: porProyecto,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Pesos editables
+// ---------------------------------------------------------------------------
+//
+// Los pesos valen para todo el sistema, no por proyecto. Se decidio asi porque
+// el inicio ordena los proyectos de peor a mejor: con pesos distintos en cada
+// uno, un 80 y un 70 dejarian de ser comparables, y el orden no diria nada.
+//
+// Solo el ADMINISTRADOR los cambia (lo exige la ruta), y cada cambio exige un
+// motivo y queda en PESO_SALUD con quien y cuando. El indice se calcula en el
+// momento, asi que un cambio de pesos mueve TODOS los indices de una vez:
+// sin ese registro, un indice que sube de 75 a 84 no permitiria distinguir una
+// mejora real de un cambio de regla.
+
+/** Los pesos que rigen ahora, en porcentaje. */
+export function pesosVigentes() {
+  const fila = PesoSalud.vigente();
+  if (!fila) return { ...PESOS_INICIALES };
+
+  return { antiguedad: fila.antiguedad, reapertura: fila.reapertura, densidad: fila.densidad };
+}
+
+/**
+ * Los pesos vigentes, quien los fijo, y la historia de cambios.
+ *
+ * `vigentes.modificado_por` es null mientras rijan los iniciales: nadie los
+ * eligio desde la interfaz, vienen escritos en este archivo.
+ */
+export function obtenerPesos() {
+  const fila = PesoSalud.vigente();
+
+  return {
+    vigentes: fila
+      ? {
+          antiguedad: fila.antiguedad,
+          reapertura: fila.reapertura,
+          densidad: fila.densidad,
+          motivo: fila.motivo,
+          fecha_cambio: fila.fecha_cambio,
+          modificado_por: { id_usuario: fila.modificado_por, nombre: fila.modificado_por_nombre },
+        }
+      : { ...PESOS_INICIALES, motivo: null, fecha_cambio: null, modificado_por: null },
+    iniciales: PESOS_INICIALES,
+    historial: PesoSalud.historial(),
+  };
+}
+
+/**
+ * Fija pesos nuevos para todo el sistema.
+ *
+ * Cada peso es un entero de 0 a 100 y los tres suman 100. Se admite el 0: es
+ * una decision legitima no ponderar un componente, y el desglose lo sigue
+ * mostrando con su evidencia. Lo que no se admite es una suma distinta de 100,
+ * porque el indice dejaria de estar en la escala de 0 a 100 y las etiquetas
+ * (Saludable desde 80) perderian sentido.
+ *
+ * @param {object} datos      { antiguedad, reapertura, densidad, motivo }
+ * @param {number} idUsuario  Quien hace el cambio. Sale del token, nunca del cuerpo.
+ * @returns {object} Lo mismo que obtenerPesos(), ya con el cambio.
+ */
+export function cambiarPesos(datos = {}, idUsuario) {
+  const errores = [];
+  const pesos = {};
+
+  for (const componente of COMPONENTES) {
+    if (!vino(datos[componente])) {
+      errores.push({ campo: componente, mensaje: 'Es obligatorio.' });
+      continue;
+    }
+    pesos[componente] = validarEntero(datos[componente], componente, { min: 0, max: 100 }, errores);
+  }
+
+  const motivo = validarTexto(datos.motivo ?? '', 'motivo', { min: 5, max: 500 }, errores);
+
+  // La suma se revisa solo si los tres pesos son validos: con uno mal escrito
+  // la suma tambien saldria mal, y se informaria dos veces el mismo problema.
+  if (COMPONENTES.every((c) => Number.isInteger(pesos[c]))) {
+    const suma = pesos.antiguedad + pesos.reapertura + pesos.densidad;
+    if (suma !== 100) {
+      errores.push({
+        campo: 'pesos',
+        mensaje: `Los tres pesos deben sumar 100; ahora suman ${suma}.`,
+        recibido: suma,
+      });
+    }
+  }
+
+  lanzarSiHayErrores(errores);
+
+  PesoSalud.registrar({ ...pesos, motivo, modificado_por: idUsuario });
+
+  return obtenerPesos();
 }
 
 /**

@@ -195,7 +195,7 @@ muestra el indicador **"API conectada"** con los datos del servicio.
 
 ## Pantallas
 
-Once pantallas, que cubren todo lo que la API ofrece. El mapa de navegación y el
+Doce pantallas, que cubren todo lo que la API ofrece. El mapa de navegación y el
 reparto en capas están en la figura
 [`docs/diagramas/frontend.md`](docs/diagramas/frontend.md).
 
@@ -210,6 +210,7 @@ reparto en capas están en la figura
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
 | Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
 | Guía de salud | `/salud/guia` | Qué es el índice, para qué sirve y cómo se calcula, con un ejemplo |
+| Pesos del índice | `/salud/pesos` | Los pesos vigentes y su historia; el administrador los cambia |
 | Proyectos | `/proyectos` | El listado para todos; crear, editar y eliminar para el administrador |
 | Usuarios | `/usuarios` | El equipo, con las seis reglas de acceso reflejadas en la tabla |
 
@@ -348,6 +349,8 @@ Filtros del listado: `estado`, `prioridad`, `categoria`, `id_proyecto`,
 | `GET` | `/api/metricas/salud/:id` | Índice de un proyecto, con su desglose |
 | `GET` | `/api/metricas/historico` | Evolución de una métrica en el tiempo |
 | `POST` | `/api/metricas/snapshot` | Guarda la medición actual en `METRICA` (`ADMINISTRADOR`) |
+| `GET` | `/api/metricas/pesos` | Pesos vigentes del índice, los iniciales y la historia de cambios |
+| `PUT` | `/api/metricas/pesos` | Fija pesos nuevos para todo el sistema, con motivo (`ADMINISTRADOR`) |
 
 `/api/metricas/historico` acepta `tipo_metrica` (`INDICE_SALUD`, `TASA_REAPERTURA`,
 `ANTIGUEDAD_MEDIA_DIAS`, `CONCENTRACION_CATEGORIA`) e `id_proyecto` (un id, o
@@ -357,6 +360,11 @@ de una sola cosa.
 El `snapshot` guarda los cuatro valores y no solo el índice, porque un índice que
 baja no dice **por qué** bajó. Con los componentes guardados se puede reconstruir
 después si la causa fue la antigüedad acumulada o las reaperturas.
+
+Los pesos se envían como porcentajes enteros (`{ "antiguedad": 40, "reapertura": 35,
+"densidad": 25, "motivo": "..." }`) que deben sumar 100. Valen para todos los proyectos,
+para que sus índices sigan siendo comparables, y cada cambio queda en `PESO_SALUD` con
+quién lo hizo y por qué.
 
 ### Códigos de respuesta
 
@@ -389,7 +397,7 @@ proyecto.
 | `backend/src/db/seed.js` | Script de carga de datos de prueba |
 | `docs/modelo-datos.md` | Diagrama entidad-relación y diccionario de datos |
 
-**Entidades:** USUARIO, PROYECTO, INCIDENCIA, HISTORIAL_INCIDENCIA, METRICA.
+**Entidades:** USUARIO, PROYECTO, INCIDENCIA, HISTORIAL_INCIDENCIA, METRICA, PESO_SALUD.
 
 ### Recargar los datos de prueba
 
