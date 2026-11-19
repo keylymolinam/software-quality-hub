@@ -33,7 +33,7 @@ import { useSesion } from '../context/SesionContext.jsx';
 import { usePeticion } from '../hooks/usePeticion.js';
 
 export default function Inicio() {
-  const { usuario, esAdministrador } = useSesion();
+  const { usuario } = useSesion();
 
   // Las claves son constantes: ninguna de las dos peticiones depende de nada
   // que pueda cambiar mientras la pantalla esta abierta.
@@ -164,15 +164,6 @@ export default function Inicio() {
             </dl>
           </>
         )}
-      </section>
-
-      <section className="tarjeta">
-        <h2>Pendiente</h2>
-        <ul className="lista-simple">
-          <li>Desglose del &iacute;ndice por componente, con la evidencia de cada uno</li>
-          <li>Edici&oacute;n de una incidencia ya registrada</li>
-          {esAdministrador && <li>Administraci&oacute;n de proyectos y usuarios</li>}
-        </ul>
       </section>
     </main>
   );
