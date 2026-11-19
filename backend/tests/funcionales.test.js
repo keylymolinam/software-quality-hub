@@ -373,18 +373,34 @@ describe('Deteccion de duplicados', () => {
     assert.equal(tercera.posible_duplicado_de, primera.id_incidencia);
   });
 
-  test('el listado se puede filtrar por las que marco el detector', () => {
-    crear(ORIGINAL);
+  test('el filtro de duplicados trae la pareja completa, no solo la marcada', () => {
+    const original = crear(ORIGINAL);
     const repetida = crear(PARECIDA);
     crear(DISTINTA);
 
     const { datos, paginacion } = Incidencias.listarIncidencias({ posible_duplicado: '1' });
 
     assert.deepEqual(
-      datos.map((i) => i.id_incidencia),
+      datos.map((i) => i.id_incidencia).sort((a, b) => a - b),
+      [original.id_incidencia, repetida.id_incidencia]
+    );
+    assert.equal(paginacion.total, 2, 'el total tiene que contar con el mismo filtro');
+  });
+
+  test('la original sabe cuales se le parecen, y lo olvida al descartar', () => {
+    const original = crear(ORIGINAL);
+    const repetida = crear(PARECIDA);
+
+    assert.deepEqual(
+      Incidencias.obtenerIncidencia(original.id_incidencia).duplicados_detectados,
       [repetida.id_incidencia]
     );
-    assert.equal(paginacion.total, 1, 'el total tiene que contar con el mismo filtro');
+    assert.deepEqual(Incidencias.obtenerIncidencia(repetida.id_incidencia).duplicados_detectados, []);
+
+    // Descartar en la marcada basta: la original no guarda una copia que
+    // pudiera quedar desfasada.
+    Incidencias.actualizarIncidencia(repetida.id_incidencia, { posible_duplicado_de: null });
+    assert.deepEqual(Incidencias.obtenerIncidencia(original.id_incidencia).duplicados_detectados, []);
   });
 
   test('el filtro de duplicados solo acepta 1', () => {

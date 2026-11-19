@@ -65,25 +65,37 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
                 {/* Los avisos van bajo el titulo y no en columnas propias: son
                     la excepcion y no el caso habitual, y dos columnas casi
                     siempre vacias solo estrechan el resto de la tabla. */}
-                {(incidencia.posible_duplicado_de || incidencia.clasificacion_automatica === 1) && (
+                {/* Las marcas de duplicado son enlaces a la otra mitad de la
+                    pareja: lo primero que se quiere al verlas es comparar. Antes
+                    eran texto con un title, y en la revision de la autora se
+                    vio el problema: el cursor de ayuda invitaba a pulsar, el
+                    globo del navegador no se puede estilizar y pulsar no hacia
+                    nada. La explicacion larga sigue en el detalle. */}
+                {(incidencia.posible_duplicado_de ||
+                  incidencia.duplicados_detectados?.length > 0 ||
+                  incidencia.clasificacion_automatica === 1) && (
                   <span className="tabla__marcas">
                     {incidencia.posible_duplicado_de && (
-                      <span
+                      <Link
                         className="marca marca--duplicado"
-                        title={
-                          'El detector de duplicados encontr\u00f3 similitud con la incidencia ' +
-                          `#${incidencia.posible_duplicado_de}. Es un aviso, no una certeza.`
-                        }
+                        to={`/incidencias/${incidencia.posible_duplicado_de}`}
                       >
                         Posible duplicado de #{incidencia.posible_duplicado_de}
-                      </span>
+                      </Link>
                     )}
 
-                    {incidencia.clasificacion_automatica === 1 && (
-                      <span
-                        className="marca marca--automatica"
-                        title="La categor&iacute;a y la prioridad las dedujo el motor de clasificaci&oacute;n, no una persona."
+                    {incidencia.duplicados_detectados?.map((idDuplicado) => (
+                      <Link
+                        key={idDuplicado}
+                        className="marca marca--duplicado"
+                        to={`/incidencias/${idDuplicado}`}
                       >
+                        Tiene un posible duplicado: #{idDuplicado}
+                      </Link>
+                    ))}
+
+                    {incidencia.clasificacion_automatica === 1 && (
+                      <span className="marca marca--automatica">
                         Clasificada autom&aacute;ticamente
                       </span>
                     )}

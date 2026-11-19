@@ -813,14 +813,21 @@ body {
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 600;
-  /* Indica que el texto tiene una explicacion al pasar el cursor (title). */
-  cursor: help;
 }
 
+/* La marca de duplicado es un enlace a la otra incidencia de la pareja. Se ve
+   como etiqueta, no como texto subrayado, y el subrayado aparece al pasar el
+   cursor para confirmar que se puede pulsar. */
 .marca--duplicado {
   color: var(--color-aviso);
   background: var(--color-aviso-tinte);
   border: 1px solid var(--color-aviso-borde);
+  text-decoration: none;
+}
+
+.marca--duplicado:hover,
+.marca--duplicado:focus-visible {
+  text-decoration: underline;
 }
 
 .marca--automatica {

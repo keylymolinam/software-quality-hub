@@ -86,12 +86,23 @@ test('desde un posible duplicado se llega al listado con todos los marcados', as
   await expect(page).toHaveURL(/posible_duplicado=1/);
   await expect(filtro(page, 'Duplicados')).toHaveValue('1');
 
-  // Cada fila trae la marca del detector, y la incidencia distinta no esta.
+  // Cada fila trae una marca del detector, y la incidencia distinta no esta.
   const filas = page.locator('tbody tr');
   await expect(filas.first()).toBeVisible();
   for (const fila of await filas.all()) {
-    await expect(fila.locator('.marca--duplicado')).toBeVisible();
+    await expect(fila.locator('.marca--duplicado').first()).toBeVisible();
   }
-  await expect(page.locator('tbody')).toContainText(repetida.titulo);
   await expect(page.locator('tbody')).not.toContainText(distinta.titulo);
+
+  // Estan las dos mitades de la pareja: la marcada y la original. Los titulos
+  // son iguales, asi que se distinguen por el enlace de cada fila.
+  const tituloDe = (id) => page.locator(`tbody a.tabla__titulo[href="/incidencias/${id}"]`);
+  await expect(tituloDe(repetida.id_incidencia)).toBeVisible();
+  await expect(tituloDe(original.id_incidencia)).toBeVisible();
+
+  // Y la marca de la original lleva a la marcada.
+  await page
+    .locator(`tbody a.marca--duplicado[href="/incidencias/${repetida.id_incidencia}"]`)
+    .click();
+  await expect(page).toHaveURL(new RegExp(`/incidencias/${repetida.id_incidencia}$`));
 });

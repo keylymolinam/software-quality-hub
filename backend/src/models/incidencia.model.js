@@ -107,6 +107,13 @@ const ORDENES_PERMITIDOS = {
  * LEFT JOIN (y no INNER JOIN) en el usuario asignado porque `asignado_a` puede
  * ser NULL: una incidencia sin asignar debe aparecer igual en el listado. Con
  * INNER JOIN esas filas desapareceria.
+ *
+ * `duplicados_detectados` es el otro lado de `posible_duplicado_de`. La marca
+ * se guarda solo en la incidencia que llego despues, apuntando a la original;
+ * sin esta subconsulta la original no sabria que alguien se le parece, y quien
+ * la mirara veria un duplicado "de nada" al otro lado. Se calcula en cada
+ * lectura en vez de guardarse en una columna para que no pueda quedar
+ * desfasada: al descartar un duplicado, la original lo deja de mostrar sola.
  */
 const SELECT_BASE = `
   SELECT
@@ -125,7 +132,10 @@ const SELECT_BASE = `
       i.asignado_a,
       p.nombre  AS proyecto_nombre,
       ur.nombre AS reportado_por_nombre,
-      ua.nombre AS asignado_a_nombre
+      ua.nombre AS asignado_a_nombre,
+      (SELECT GROUP_CONCAT(d.id_incidencia)
+         FROM INCIDENCIA d
+        WHERE d.posible_duplicado_de = i.id_incidencia) AS duplicados_detectados
     FROM INCIDENCIA i
     INNER JOIN PROYECTO p  ON p.id_proyecto = i.id_proyecto
     INNER JOIN USUARIO  ur ON ur.id_usuario = i.reportado_por
@@ -135,6 +145,22 @@ const SELECT_BASE = `
 // ---------------------------------------------------------------------------
 // Utilidades internas
 // ---------------------------------------------------------------------------
+
+/**
+ * Convierte `duplicados_detectados` del texto que entrega GROUP_CONCAT ("4,7",
+ * o NULL si no hay) en un arreglo de numeros, que es lo que el frontend puede
+ * recorrer sin saber como lo arma SQLite.
+ */
+function conDuplicados(fila) {
+  if (!fila) return fila;
+
+  return {
+    ...fila,
+    duplicados_detectados: fila.duplicados_detectados
+      ? fila.duplicados_detectados.split(',').map(Number).sort((a, b) => a - b)
+      : [],
+  };
+}
 
 /**
  * Arma la clausula WHERE a partir de los filtros recibidos.
@@ -162,8 +188,15 @@ function construirWhere(filtros = {}) {
   // del detector existe. Por eso no cabe en FILTROS_PERMITIDOS, cuyas
   // condiciones llevan siempre un `?`, y la condicion va fija, sin nada que
   // venga de afuera.
+  //
+  // Trae las dos mitades de cada pareja: la marcada y la original a la que
+  // apunta. Con solo la marcada, la lista mostraba duplicados de una incidencia
+  // que no aparecia en ninguna parte, y no habia con que compararlos.
   if (filtros.posible_duplicado === true) {
-    condiciones.push('i.posible_duplicado_de IS NOT NULL');
+    condiciones.push(`(
+      i.posible_duplicado_de IS NOT NULL
+      OR EXISTS (SELECT 1 FROM INCIDENCIA d WHERE d.posible_duplicado_de = i.id_incidencia)
+    )`);
   }
 
   // Busqueda libre de texto sobre titulo y descripcion.
@@ -210,7 +243,7 @@ export function listar(filtros = {}) {
     LIMIT ? OFFSET ?
   `;
 
-  return db.prepare(sql).all(...valores, limite, desplazamiento);
+  return db.prepare(sql).all(...valores, limite, desplazamiento).map(conDuplicados);
 }
 
 /**
@@ -241,7 +274,7 @@ export function contar(filtros = {}) {
  * @returns {object|undefined} La fila, o undefined si no existe.
  */
 export function obtenerPorId(id) {
-  return db.prepare(`${SELECT_BASE} WHERE i.id_incidencia = ?`).get(id);
+  return conDuplicados(db.prepare(`${SELECT_BASE} WHERE i.id_incidencia = ?`).get(id));
 }
 
 /**

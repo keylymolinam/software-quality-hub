@@ -373,6 +373,53 @@ describe('Pantalla de detalle', () => {
 
 // --- Pantalla de inicio ----------------------------------------------------
 
+describe('Parejas de duplicados', () => {
+  // La original de la pareja: no lleva marca propia, pero el backend le
+  // informa quien se le parece.
+  const ORIGINAL = {
+    ...INCIDENCIA_DUPLICADA,
+    id_incidencia: 1,
+    posible_duplicado_de: null,
+    clasificacion_automatica: 0,
+    duplicados_detectados: [2],
+  };
+
+  test('la original avisa que tiene un duplicado y enlaza a el', async () => {
+    const { default: DetalleIncidencia } = await cargar('/src/pages/DetalleIncidencia.jsx');
+
+    declararEscenario(escenarioDetalle(ORIGINAL, historialDe([CREACION])));
+
+    const html = dibujarDetalle(DetalleIncidencia, ORIGINAL);
+    const visible = texto(html);
+
+    assert.match(visible, /Tiene posibles duplicados/);
+    assert.ok(html.includes('href="/incidencias/2"'), 'deberia enlazar a la marcada');
+    assert.ok(html.includes('href="/incidencias?posible_duplicado=1"'));
+
+    // La decision se toma en la marcada, no aqui.
+    assert.doesNotMatch(visible, /No es duplicado/);
+  });
+
+  test('en el listado las dos marcas son enlaces a la otra mitad', async () => {
+    const { default: TablaIncidencias } = await cargar('/src/components/TablaIncidencias.jsx');
+
+    const html = dibujar(TablaIncidencias, {
+      propiedades: {
+        incidencias: [ORIGINAL, { ...INCIDENCIA_DUPLICADA, duplicados_detectados: [] }],
+        hayFiltros: true,
+      },
+    });
+
+    assert.match(html, /<a class="marca marca--duplicado" href="\/incidencias\/2"/);
+    assert.match(html, /<a class="marca marca--duplicado" href="\/incidencias\/1"/);
+    assert.match(texto(html), /Tiene un posible duplicado: #2/);
+    assert.match(texto(html), /Posible duplicado de #1/);
+
+    // Sin el globo del navegador: ninguna marca lleva title.
+    assert.doesNotMatch(html, /class="marca[^"]*"[^>]*title=/);
+  });
+});
+
 describe('Pantalla de inicio', () => {
   const ESTADO_API = respondeCon({
     servicio: 'Software Quality Hub API',

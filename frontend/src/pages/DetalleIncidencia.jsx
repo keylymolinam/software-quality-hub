@@ -180,8 +180,38 @@ export default function DetalleIncidencia() {
           cambia como se lee todo lo demas. Saber que la categoria la dedujo el
           motor, o que esto quizas ya estaba reportado, condiciona lo que se
           decida con esta incidencia. */}
-      {(datos.clasificacion_automatica === 1 || datos.posible_duplicado_de) && (
+      {(datos.clasificacion_automatica === 1 ||
+        datos.posible_duplicado_de ||
+        datos.duplicados_detectados?.length > 0) && (
         <div className="detalle__senales">
+          {/* El otro lado de la pareja. La marca se guarda solo en la que llego
+              despues, y antes la original no decia nada: quien la abria no
+              tenia como saber que alguien habia reportado lo mismo. Aqui no va
+              el boton "No es duplicado" porque la decision se toma sobre la
+              marcada, que es la que lleva el aviso. */}
+          {datos.duplicados_detectados?.length > 0 && (
+            <div className="alerta alerta--aviso">
+              <p className="alerta__texto">
+                <strong>Tiene posibles duplicados.</strong> El detector encontr&oacute; que{' '}
+                {datos.duplicados_detectados.length === 1 ? 'la incidencia' : 'las incidencias'}{' '}
+                {datos.duplicados_detectados.map((idDuplicado, posicion) => (
+                  <span key={idDuplicado}>
+                    {posicion > 0 && ', '}
+                    <Link to={`/incidencias/${idDuplicado}`}>#{idDuplicado}</Link>
+                  </span>
+                ))}{' '}
+                {datos.duplicados_detectados.length === 1 ? 'se parece' : 'se parecen'} a esta.
+                Si no es el mismo problema, el aviso se quita desde esa incidencia.
+              </p>
+
+              <p className="alerta__texto">
+                <Link to="/incidencias?posible_duplicado=1">
+                  Ver todos los posibles duplicados
+                </Link>
+              </p>
+            </div>
+          )}
+
           {datos.posible_duplicado_de && (
             <div className="alerta alerta--aviso">
               <p className="alerta__texto">
