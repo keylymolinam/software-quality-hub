@@ -1298,11 +1298,202 @@ a.tabla__titulo:hover {
 
 /* --- Acciones de estado --------------------------------------------------- */
 
-.acciones__botones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+/* Etiqueta del estado actual que abre el menu de acciones. Parece una
+   etiqueta y no un boton grande: el estado es el dato; cambiarlo, la accion
+   que se descubre al pulsarlo. */
+.selector-estado {
+  position: relative;
   margin-top: 16px;
+}
+
+.selector-estado__boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 6px;
+  font: inherit;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.selector-estado__boton:hover:not(:disabled),
+.selector-estado__boton[aria-expanded='true'] {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-tinte);
+}
+
+.selector-estado__boton:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.selector-estado__flecha {
+  font-size: 0.7rem;
+}
+
+.selector-estado__menu {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 240px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-2);
+}
+
+.selector-estado__menu[hidden] {
+  display: none;
+}
+
+.selector-estado__opcion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: var(--texto-sm);
+  text-align: left;
+  color: var(--color-texto);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.selector-estado__opcion:hover,
+.selector-estado__opcion:focus-visible {
+  background: var(--color-sutil);
+  outline: none;
+}
+
+.selector-estado__accion {
+  font-weight: 600;
+}
+
+.selector-estado__destino {
+  font-size: 0.75rem;
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+}
+
+/* --- Progreso del ciclo de vida -------------------------------------------- */
+
+/* Una linea continua que se rellena hasta el paso actual. La linea es un solo
+   pseudo-elemento de fondo y el relleno otro encima, con su ancho en una
+   variable CSS que fija el componente: asi el largo es un dato y no cinco
+   tramos sueltos que habria que pintar uno por uno. */
+.progreso {
+  padding-top: 20px;
+  padding-bottom: 16px;
+}
+
+.progreso__pasos {
+  --progreso-borde: 10%;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* La linea va del centro del primer punto al centro del ultimo: con cinco
+   columnas iguales, eso es un decimo del ancho a cada lado. */
+.progreso__pasos::before,
+.progreso__pasos::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: var(--progreso-borde);
+  height: 4px;
+  border-radius: 999px;
+}
+
+.progreso__pasos::before {
+  right: var(--progreso-borde);
+  background: var(--color-borde);
+}
+
+.progreso__pasos::after {
+  width: calc((100% - 2 * var(--progreso-borde)) * var(--progreso-relleno));
+  background: var(--color-primario);
+  transition: width 0.4s ease;
+}
+
+.progreso__paso {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.progreso__punto {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-superficie);
+  border: 3px solid var(--color-borde-fuerte);
+  box-sizing: border-box;
+}
+
+.progreso__nombre {
+  font-size: 0.75rem;
+  color: var(--color-texto-suave);
+}
+
+.progreso__paso--hecho .progreso__punto {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.progreso__paso--actual .progreso__punto {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 5px var(--color-primario-tinte);
+}
+
+.progreso__paso--actual .progreso__nombre {
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.progreso__paso--omitido .progreso__punto {
+  border-style: dashed;
+}
+
+.progreso__paso--omitido .progreso__nombre {
+  text-decoration: line-through;
+}
+
+.progreso__paso--rechazado .progreso__punto {
+  background: var(--color-texto-suave);
+  border-color: var(--color-texto-suave);
+}
+
+.progreso__paso--rechazado .progreso__nombre {
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.progreso__nota {
+  margin: 14px 0 0;
+  font-size: var(--texto-sm);
+  color: var(--color-texto-suave);
+  text-align: center;
 }
 
 .acciones__confirmacion {

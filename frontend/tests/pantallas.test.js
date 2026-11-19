@@ -318,6 +318,59 @@ describe('Panel de transiciones', () => {
     assert.match(texto(html), /estado final/);
     assert.doesNotMatch(html, /<button/);
   });
+
+  test('las acciones van en un menu que parte cerrado y dice a donde lleva cada una', async () => {
+    const { default: PanelTransicion } = await cargar('/src/components/PanelTransicion.jsx');
+
+    const html = dibujar(PanelTransicion, {
+      propiedades: { ...comunes, estado: 'RESUELTA', transicionesPosibles: ['EN_PROGRESO', 'VALIDADA'] },
+    });
+
+    // La etiqueta del estado actual abre el menu, que parte escondido.
+    assert.match(html, /aria-haspopup="menu"/);
+    assert.match(html, /aria-expanded="false"/);
+    assert.match(html, /<ul[^>]*role="menu"[^>]*hidden=""/);
+
+    // Cada opcion nombra la accion y el estado de llegada.
+    assert.match(texto(html), /Validar \u2192 Validada/);
+    assert.match(texto(html), /Reabrir \u2192 En desarrollo/);
+  });
+});
+
+describe('Barra de progreso', () => {
+  async function pasos(estado, fechaResolucion = null) {
+    const { default: ProgresoFlujo } = await cargar('/src/components/ProgresoFlujo.jsx');
+    const html = dibujar(ProgresoFlujo, { propiedades: { estado, fechaResolucion } });
+
+    return [...html.matchAll(/progreso__paso--(\w+)"[^>]*>.*?progreso__nombre">([^<]+)</g)].map(
+      ([, situacion, nombre]) => `${nombre}:${situacion}`
+    );
+  }
+
+  test('marca lo hecho, el paso actual y lo que falta', async () => {
+    assert.deepEqual(await pasos('RESUELTA', '2026-11-01 10:00:00'), [
+      'Pendiente:hecho',
+      'En desarrollo:hecho',
+      'Resuelta:actual',
+      'Validada:pendiente',
+      'Cerrada:pendiente',
+    ]);
+  });
+
+  test('un rechazo no finge que paso por resolucion y validacion', async () => {
+    const { default: ProgresoFlujo } = await cargar('/src/components/ProgresoFlujo.jsx');
+
+    assert.deepEqual(await pasos('CERRADA', null), [
+      'Pendiente:hecho',
+      'En desarrollo:omitido',
+      'Resuelta:omitido',
+      'Validada:omitido',
+      'Cerrada:rechazado',
+    ]);
+
+    const html = dibujar(ProgresoFlujo, { propiedades: { estado: 'CERRADA', fechaResolucion: null } });
+    assert.match(texto(html), /sin resolver/);
+  });
 });
 
 // --- Detalle de incidencia -------------------------------------------------

@@ -26,15 +26,63 @@
  * decide como recargar los datos. Por eso `onEjecutar` devuelve si funciono:
  * sin ese dato el panel no sabria si dejar el formulario como estaba para
  * corregirlo o limpiarlo porque el cambio ya ocurrio.
+ *
+ * ---------------------------------------------------------------------------
+ * UNA ETIQUETA CON MENU EN VEZ DE UNA FILA DE BOTONES
+ *
+ * Antes cada transicion era un boton suelto. La autora lo encontro anticuado,
+ * y es la forma en que lo resuelven las herramientas actuales de seguimiento:
+ * el estado es una etiqueta y al pulsarla se despliega lo que se puede hacer.
+ * Cada opcion dice ademas a que estado lleva ("Validar -> Validada"), que es
+ * justo lo que en la prueba de usuarios no se entendia de los botones.
+ *
+ * Las opciones se dibujan siempre y se esconden con `hidden` en vez de
+ * montarse al abrir: el menu queda en el HTML aunque este cerrado, y las
+ * pruebas de pantallas, que no pueden pulsar nada, siguen viendo que acciones
+ * ofrece cada estado.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+import EtiquetaEstado from './EtiquetaEstado.jsx';
 import { accionDe, etiquetaDe, ESTADOS } from '../dominio/incidencias.js';
 
 export default function PanelTransicion({ estado, transicionesPosibles, onEjecutar, enviando, error }) {
   // Transicion elegida, a la espera de confirmacion. null = ninguna elegida.
   const [destino, setDestino] = useState(null);
   const [comentario, setComentario] = useState('');
+
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const selector = useRef(null);
+  const disparador = useRef(null);
+
+  // Con el menu abierto: el foco va a la primera opcion, Escape lo cierra y
+  // devuelve el foco a la etiqueta, y un clic fuera tambien lo cierra. Es lo
+  // que se espera de cualquier menu desplegable; sin esto quedaria abierto
+  // tapando la pantalla hasta volver a pulsar la etiqueta.
+  useEffect(() => {
+    if (!menuAbierto) return undefined;
+
+    selector.current?.querySelector('[role="menuitem"]')?.focus();
+
+    function alPulsarFuera(evento) {
+      if (!selector.current?.contains(evento.target)) setMenuAbierto(false);
+    }
+
+    function alPulsarTecla(evento) {
+      if (evento.key === 'Escape') {
+        setMenuAbierto(false);
+        disparador.current?.focus();
+      }
+    }
+
+    document.addEventListener('mousedown', alPulsarFuera);
+    document.addEventListener('keydown', alPulsarTecla);
+
+    return () => {
+      document.removeEventListener('mousedown', alPulsarFuera);
+      document.removeEventListener('keydown', alPulsarTecla);
+    };
+  }, [menuAbierto]);
 
   // Un estado final no tiene nada que ofrecer. Se dice en palabras en lugar de
   // esconder la seccion: quien busca el boton de reabrir necesita saber que no
@@ -55,6 +103,7 @@ export default function PanelTransicion({ estado, transicionesPosibles, onEjecut
 
   function elegir(estadoDestino) {
     setDestino(estadoDestino);
+    setMenuAbierto(false);
     // El motivo se limpia al cambiar de accion: un texto escrito para "cerrar
     // sin resolver" no describe un "tomar y empezar", y arrastrarlo dejaria en
     // la bitacora una explicacion que no corresponde al cambio.
@@ -78,26 +127,45 @@ export default function PanelTransicion({ estado, transicionesPosibles, onEjecut
     <section className="tarjeta acciones">
       <h2>Cambiar el estado</h2>
 
-      <div className="acciones__botones">
-        {transicionesPosibles.map((estadoDestino) => {
-          const posible = accionDe(estado, estadoDestino);
+      <div className="selector-estado" ref={selector}>
+        <button
+          ref={disparador}
+          className="selector-estado__boton"
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={menuAbierto}
+          aria-controls="menu-estado"
+          onClick={() => setMenuAbierto((abierto) => !abierto)}
+          disabled={enviando}
+        >
+          <EtiquetaEstado estado={estado} />
+          <span className="selector-estado__texto">Cambiar estado</span>
+          <span className="selector-estado__flecha" aria-hidden="true">
+            &#9662;
+          </span>
+        </button>
 
-          return (
-            <button
-              key={estadoDestino}
-              className={
-                estadoDestino === destino
-                  ? 'boton boton--primario boton--auto'
-                  : 'boton boton--discreto boton--auto'
-              }
-              type="button"
-              onClick={() => elegir(estadoDestino)}
-              disabled={enviando}
-            >
-              {posible.etiqueta}
-            </button>
-          );
-        })}
+        <ul className="selector-estado__menu" id="menu-estado" role="menu" hidden={!menuAbierto}>
+          {transicionesPosibles.map((estadoDestino) => {
+            const posible = accionDe(estado, estadoDestino);
+
+            return (
+              <li key={estadoDestino} role="none">
+                <button
+                  className="selector-estado__opcion"
+                  type="button"
+                  role="menuitem"
+                  onClick={() => elegir(estadoDestino)}
+                >
+                  <span className="selector-estado__accion">{posible.etiqueta}</span>
+                  <span className="selector-estado__destino">
+                    &rarr; {etiquetaDe(ESTADOS, estadoDestino)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       {destino && (

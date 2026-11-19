@@ -30,6 +30,7 @@ import EtiquetaEstado from '../components/EtiquetaEstado.jsx';
 import EtiquetaPrioridad from '../components/EtiquetaPrioridad.jsx';
 import LineaTiempo from '../components/LineaTiempo.jsx';
 import PanelTransicion from '../components/PanelTransicion.jsx';
+import ProgresoFlujo from '../components/ProgresoFlujo.jsx';
 import {
   cambiarEstado,
   descartarDuplicado,
@@ -183,6 +184,10 @@ export default function DetalleIncidencia() {
           </Link>
         </div>
       </header>
+
+      {/* El camino completo, justo bajo el titulo: es lo primero que se
+          pregunta de una incidencia (en que va y que le falta). */}
+      <ProgresoFlujo estado={datos.estado} fechaResolucion={datos.fecha_resolucion} />
 
       {/* Lo que aportaron los diferenciadores va arriba, antes de los datos:
           cambia como se lee todo lo demas. Saber que la categoria la dedujo el
