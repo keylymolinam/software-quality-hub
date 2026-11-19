@@ -606,6 +606,12 @@ body {
   max-width: 1180px;
 }
 
+/* El tablero usa todo el ancho: cinco columnas lado a lado no caben en 1180px
+   sin estrechar las tarjetas hasta partir cada titulo en muchas lineas. */
+.contenedor--tablero {
+  max-width: 1600px;
+}
+
 .contenido__cabecera {
   display: flex;
   align-items: flex-start;
@@ -1850,6 +1856,252 @@ a.tabla__titulo:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* ===========================================================================
+   Tablero
+   Columnas por estado y tarjetas que se arrastran entre ellas.
+   =========================================================================== */
+
+.campo--en-linea {
+  min-width: 220px;
+  margin-bottom: 0;
+}
+
+/* Cinco columnas iguales. En pantallas angostas no se aprietan: el tablero se
+   desplaza de lado dentro de su caja, como en cualquier herramienta de este
+   tipo, y la pagina no. */
+.tablero {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(230px, 1fr));
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  align-items: start;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 320px;
+  padding: 12px;
+  background: var(--color-sutil);
+  border: 2px solid transparent;
+  border-radius: var(--radio-lg);
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+/* Mientras se arrastra: las columnas donde se puede soltar se marcan, y las
+   demas se apagan. Asi el flujo se ve en el momento en que importa. */
+.columna--permitida {
+  border-color: var(--color-primario);
+  border-style: dashed;
+  background: var(--color-primario-tinte);
+}
+
+.columna--encima {
+  border-style: solid;
+}
+
+.columna--bloqueada {
+  opacity: 0.45;
+}
+
+.columna__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.columna__titulo {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.columna__total {
+  min-width: 24px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border-radius: 999px;
+}
+
+.columna__nota {
+  margin: -4px 4px 0;
+  font-size: 0.75rem;
+  color: var(--color-texto-suave);
+}
+
+.columna__tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.columna__vacia {
+  margin: 8px 0;
+  font-size: var(--texto-sm);
+  text-align: center;
+  color: var(--color-texto-suave);
+}
+
+.columna__mas {
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.tarjeta-incidencia {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-1);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.tarjeta-incidencia[draggable='true'] {
+  cursor: grab;
+}
+
+.tarjeta-incidencia:hover {
+  box-shadow: var(--sombra-2);
+  transform: translateY(-1px);
+}
+
+.tarjeta-incidencia__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tarjeta-incidencia__numero {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.tarjeta-incidencia__titulo {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-texto);
+  text-decoration: none;
+}
+
+.tarjeta-incidencia__titulo:hover {
+  color: var(--color-primario);
+}
+
+.tarjeta-incidencia__marca {
+  align-self: flex-start;
+}
+
+.tarjeta-incidencia__pie {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.tarjeta-incidencia__persona {
+  color: var(--color-texto-suave);
+}
+
+.tarjeta-incidencia__mover summary {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  color: var(--color-texto-suave);
+  list-style: none;
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.tarjeta-incidencia__mover summary::-webkit-details-marker {
+  display: none;
+}
+
+.tarjeta-incidencia__mover[open] summary,
+.tarjeta-incidencia__mover summary:hover {
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.tarjeta-incidencia__opciones {
+  position: absolute;
+  z-index: 10;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 220px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-2);
+}
+
+.tarjeta-incidencia__opcion {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  color: var(--color-texto);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tarjeta-incidencia__opcion:hover,
+.tarjeta-incidencia__opcion:focus-visible {
+  background: var(--color-sutil);
+  outline: none;
+}
+
+.tarjeta-incidencia__destino {
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+}
+
+/* Cuadro del motivo, encima de todo y con el fondo oscurecido. */
+.modal {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(18, 24, 38, 0.45);
+}
+
+.modal__cuadro {
+  width: 100%;
+  max-width: 480px;
+  margin: 0;
+}
+
+.modal__cuadro h2 {
+  margin-top: 0;
 }
 
 /* ===========================================================================

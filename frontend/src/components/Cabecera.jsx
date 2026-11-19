@@ -20,6 +20,7 @@ import { useSesion } from '../context/SesionContext.jsx';
 const SECCIONES = [
   { ruta: '/', etiqueta: 'Inicio', exacta: true },
   { ruta: '/incidencias', etiqueta: 'Incidencias' },
+  { ruta: '/tablero', etiqueta: 'Tablero' },
   { ruta: '/salud', etiqueta: 'Salud' },
   { ruta: '/proyectos', etiqueta: 'Proyectos' },
   { ruta: '/usuarios', etiqueta: 'Usuarios' },

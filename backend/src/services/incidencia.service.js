@@ -236,6 +236,18 @@ export function listarIncidencias(consulta = {}) {
     filtros.posible_duplicado =
       validarEnumerado(consulta.posible_duplicado, ['1'], 'posible_duplicado', errores) === '1';
   }
+  // Las que se cerraron en los ultimos N dias. Lo usa la columna Cerrada del
+  // tablero: sin limite de tiempo, esa columna crece sin fin y entierra a las
+  // demas. Se mide por la fecha del cierre en la bitacora y no por la de
+  // resolucion, que queda nula en un rechazo.
+  if (vino(consulta.cerrada_hace_dias)) {
+    filtros.cerrada_hace_dias = validarEntero(
+      consulta.cerrada_hace_dias,
+      'cerrada_hace_dias',
+      { min: 1, max: 3650 },
+      errores
+    );
+  }
 
   // El limite tiene tope maximo para que nadie pueda pedir ?limite=999999 y
   // obligar al servidor a serializar la tabla entera en una sola respuesta.
@@ -265,7 +277,14 @@ export function listarIncidencias(consulta = {}) {
   filtros.ordenarPor = consulta.ordenarPor;
   filtros.direccion = consulta.direccion;
 
-  const datos = Incidencia.listar(filtros);
+  // Cada fila lleva sus transiciones posibles, igual que el detalle. El
+  // tablero las necesita para saber a que columnas se puede soltar una
+  // tarjeta; sin esto tendria que repetir la maquina de estados en el
+  // navegador, que es justo lo que el frontend no debe hacer.
+  const datos = Incidencia.listar(filtros).map((incidencia) => ({
+    ...incidencia,
+    transiciones_posibles: transicionesPosibles(incidencia.estado),
+  }));
   const total = Incidencia.contar(filtros);
 
   return {

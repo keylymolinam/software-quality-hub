@@ -450,6 +450,62 @@ describe('Deteccion de duplicados', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Lo que necesita el tablero
+// ---------------------------------------------------------------------------
+
+describe('Listado para el tablero', () => {
+  const cerrarSinResolver = (id) =>
+    Incidencias.cambiarEstado(id, { estado: 'CERRADA', comentario: 'No aplica.' }, autora.id_usuario);
+
+  test('cada fila del listado trae sus transiciones posibles', () => {
+    const pendiente = crear();
+    const resuelta = crear({
+      titulo: 'Otra falla distinta para el tablero',
+      descripcion: 'Un texto que no se parece en nada al de la primera incidencia.',
+    });
+    transicionar(resuelta.id_incidencia, ['EN_PROGRESO', 'RESUELTA']);
+
+    const { datos } = Incidencias.listarIncidencias({});
+    const de = (id) => datos.find((i) => i.id_incidencia === id).transiciones_posibles;
+
+    assert.deepEqual(de(pendiente.id_incidencia), ['EN_PROGRESO', 'CERRADA']);
+    assert.deepEqual(de(resuelta.id_incidencia), ['EN_PROGRESO', 'VALIDADA']);
+  });
+
+  test('filtra las cerradas en los ultimos N dias, segun la bitacora', () => {
+    const reciente = crear();
+    const antigua = crear({
+      titulo: 'Una falla vieja que ya se cerro',
+      descripcion: 'Un texto que no se parece en nada al de la incidencia reciente.',
+    });
+    cerrarSinResolver(reciente.id_incidencia);
+    cerrarSinResolver(antigua.id_incidencia);
+
+    // El cierre de la antigua se lleva 40 dias atras en la bitacora.
+    db.prepare(
+      `UPDATE HISTORIAL_INCIDENCIA SET fecha_cambio = datetime('now', '-40 days')
+        WHERE id_incidencia = ? AND estado_nuevo = 'CERRADA'`
+    ).run(antigua.id_incidencia);
+
+    const { datos, paginacion } = Incidencias.listarIncidencias({
+      estado: 'CERRADA',
+      cerrada_hace_dias: '30',
+    });
+
+    assert.deepEqual(
+      datos.map((i) => i.id_incidencia),
+      [reciente.id_incidencia]
+    );
+    assert.equal(paginacion.total, 1);
+  });
+
+  test('el plazo de cierre tiene que ser un entero positivo', () => {
+    falla(() => Incidencias.listarIncidencias({ cerrada_hace_dias: '0' }), 400, 'cerrada_hace_dias');
+    falla(() => Incidencias.listarIncidencias({ cerrada_hace_dias: 'mes' }), 400, 'cerrada_hace_dias');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Diferenciador 2: clasificacion automatica
 // ---------------------------------------------------------------------------
 

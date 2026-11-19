@@ -13,7 +13,7 @@ el código que la implementa.
 
 Estado actual: la API REST está completa (tres entidades, máquina de estados,
 autenticación por rol y los tres diferenciadores). El frontend ya permite recorrer el
-ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Diez pantallas,
+ciclo de trabajo completo, y los tres diferenciadores se ven en pantalla. Once pantallas,
 que ya cubren todo lo que la API ofrece:
 
 | Pantalla | Ruta | Qué resuelve |
@@ -21,6 +21,7 @@ que ya cubren todo lo que la API ofrece:
 | Login | — (fuera de sesión) | Única pantalla sin sesión; `App.jsx` decide |
 | Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
 | Listado | `/incidencias` | Filtros, búsqueda, orden y paginación en la dirección |
+| Tablero | `/tablero?proyecto=N` | Columnas por estado; arrastrar una tarjeta la cambia de estado |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
 | Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
@@ -263,8 +264,8 @@ La de interacción es la única excepción, y está justificada en `playwright.c
   Las afirmaciones van sobre el `status` y el `campo` de los detalles, nunca sobre el texto
   del mensaje: reescribir una frase para que se entienda mejor no debe romper una prueba.
 
-**Frontend** — `npm test` desde `frontend/`. Cuatro archivos (`pantallas`, `salud`,
-`proyectos`, `usuarios`) dibujan las pantallas con `renderToStaticMarkup` y afirman sobre
+**Frontend** — `npm test` desde `frontend/`. Cinco archivos (`pantallas`, `salud`,
+`proyectos`, `usuarios`, `tablero`) dibujan las pantallas con `renderToStaticMarkup` y afirman sobre
 el HTML resultante. `declararUsuario({ rol: 'TESTER' })` cambia quién está usando la
 aplicación, que es lo que permite comprobar las dos caras de cada permiso: que la acción
 aparezca para quien puede y que no aparezca para quien no. Los archivos corren en serie (`--test-concurrency=1`): cada uno levanta
@@ -283,8 +284,8 @@ el aspecto (el CSS no se aplica), la interacción (nadie pulsa un botón) y los 
 hook de peticiones real. Eso lo cubre la tercera suite.
 
 **Interacción** — `npm run test:e2e` desde `frontend/`. Playwright con Chromium; la
-primera vez hay que descargarlo con `npx playwright install chromium`. Cuatro archivos en
-`e2e/` (`sesion`, `registro`, `transiciones`, `listado`) y sus utilidades en
+primera vez hay que descargarlo con `npx playwright install chromium`. Cinco archivos en
+`e2e/` (`sesion`, `registro`, `transiciones`, `listado`, `tablero`) y sus utilidades en
 `e2e/apoyo.js`.
 
 - `playwright.config.js` levanta backend y frontend por su cuenta, en **puertos propios
@@ -300,6 +301,10 @@ primera vez hay que descargarlo con `npx playwright install chromium`. Cuatro ar
   se usan para encontrar elementos, porque es como los encuentra una persona.
 - `getByLabel` sobre un `<select>` incluye el texto de sus opciones: en el listado,
   "Estado" también calza con "Ordenar por". Los filtros se buscan por su etiqueta exacta.
+- **Arrastrar en el tablero**: las incidencias se crean con prioridad `ALTA` para quedar
+  primeras en su columna, y se sueltan arriba (`targetPosition`). Con las tarjetas que dejan
+  las demás pruebas, el centro de una columna queda bajo la ventana, y desplazar la página
+  en medio de un arrastre lo corta: la prueba pasaba sola y fallaba con la suite completa.
 - Corren con un solo trabajador y sin reintentos: una prueba que pasa al segundo intento
   esconde un problema de sincronización.
 

@@ -200,6 +200,19 @@ function construirWhere(filtros = {}) {
     )`);
   }
 
+  // Cerradas hace menos de N dias, segun la bitacora. El numero llega ya
+  // validado como entero, y aun asi va como parametro: el texto '-N days' se
+  // arma aqui, pero SQLite lo recibe como valor y no como parte del SQL.
+  if (Number.isInteger(filtros.cerrada_hace_dias)) {
+    condiciones.push(`EXISTS (
+      SELECT 1 FROM HISTORIAL_INCIDENCIA h
+       WHERE h.id_incidencia = i.id_incidencia
+         AND h.estado_nuevo = 'CERRADA'
+         AND h.fecha_cambio >= datetime('now', ?)
+    )`);
+    valores.push(`-${filtros.cerrada_hace_dias} days`);
+  }
+
   // Busqueda libre de texto sobre titulo y descripcion.
   // LIKE con % a ambos lados equivale a "contiene". En SQLite LIKE no
   // distingue mayusculas de minusculas para caracteres ASCII.

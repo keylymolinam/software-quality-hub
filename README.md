@@ -6,10 +6,10 @@ Ingeniería en Computación e Informática.
 > **Estado:** funcional de punta a punta. La **API REST** está completa: las tres
 > entidades principales (incidencias, proyectos y usuarios), la máquina de estados
 > con bitácora de cambios, la autenticación con control de acceso por rol y los tres
-> diferenciadores. El **frontend** recorre el ciclo de trabajo completo en nueve
-> pantallas, y los tres diferenciadores se ven en pantalla. Hay **92 pruebas
-> automatizadas**: 33 del backend y 49 de las pantallas, que corren con el ejecutor
-> que viene con Node, y 10 de interacción, que recorren el sistema en un navegador
+> diferenciadores. El **frontend** recorre el ciclo de trabajo completo en once
+> pantallas, entre ellas un tablero por estados, y los tres diferenciadores se ven en
+> pantalla. Hay **130 pruebas automatizadas**: 45 del backend y 70 de las pantallas,
+> que corren con el ejecutor que viene con Node, y 15 de interacción, que recorren el sistema en un navegador
 > real con Playwright.
 
 ## Diferenciadores
@@ -195,7 +195,7 @@ muestra el indicador **"API conectada"** con los datos del servicio.
 
 ## Pantallas
 
-Nueve pantallas, que cubren todo lo que la API ofrece. El mapa de navegación y el
+Once pantallas, que cubren todo lo que la API ofrece. El mapa de navegación y el
 reparto en capas están en la figura
 [`docs/diagramas/frontend.md`](docs/diagramas/frontend.md).
 
@@ -204,10 +204,12 @@ reparto en capas están en la figura
 | Login | — (fuera de sesión) | La única sin sesión; `App.jsx` decide cuál mostrar |
 | Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
 | Listado | `/incidencias` | Filtros, búsqueda, orden y paginación, todo en la dirección |
+| Tablero | `/tablero?proyecto=N` | Una columna por estado; se arrastran las tarjetas para cambiarlo |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
 | Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
 | Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
+| Guía de salud | `/salud/guia` | Qué es el índice, para qué sirve y cómo se calcula, con un ejemplo |
 | Proyectos | `/proyectos` | El listado para todos; crear, editar y eliminar para el administrador |
 | Usuarios | `/usuarios` | El equipo, con las seis reglas de acceso reflejadas en la tabla |
 
@@ -464,7 +466,7 @@ identidad sale de la sesión. Usa **su propia base**
 (`data/pruebas-funcionales.sqlite`, ignorada por git) y vacía las tablas antes de
 cada prueba, lo que con la base de desarrollo habría borrado datos en uso.
 
-**Frontend.** Cuatro archivos dibujan las pantallas con `renderToStaticMarkup` y
+**Frontend.** Cinco archivos dibujan las pantallas con `renderToStaticMarkup` y
 afirman sobre el HTML resultante. Cambiando quién está usando la aplicación se
 comprueban **las dos caras de cada permiso**: que la acción aparezca para quien
 puede y que no aparezca para quien no. La aplicación no lleva ni una línea añadida

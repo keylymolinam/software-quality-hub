@@ -37,6 +37,7 @@ import Proyectos from './pages/Proyectos.jsx';
 import Usuarios from './pages/Usuarios.jsx';
 import Salud from './pages/Salud.jsx';
 import GuiaSalud from './pages/GuiaSalud.jsx';
+import Tablero from './pages/Tablero.jsx';
 import NuevaIncidencia from './pages/NuevaIncidencia.jsx';
 import { useSesion } from './context/SesionContext.jsx';
 
@@ -79,6 +80,8 @@ export default function App() {
             pantalla y no un id, que es la confusion que produce un :id suelto. */}
         <Route path="/incidencias/:id" element={<DetalleIncidencia />} />
         <Route path="/incidencias/:id/editar" element={<EditarIncidencia />} />
+
+        <Route path="/tablero" element={<Tablero />} />
 
         <Route path="/proyectos" element={<Proyectos />} />
         <Route path="/usuarios" element={<Usuarios />} />
