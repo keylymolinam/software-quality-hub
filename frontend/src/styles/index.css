@@ -436,6 +436,12 @@ body {
   color: var(--color-aviso);
 }
 
+.alerta--ok {
+  background: var(--color-ok-tinte);
+  border: 1px solid var(--color-ok-borde);
+  color: var(--color-ok);
+}
+
 .ayuda--neutra {
   background: var(--color-fondo);
   border-color: var(--color-borde);

@@ -55,6 +55,13 @@ export default function DetalleIncidencia() {
   const [descartando, setDescartando] = useState(false);
   const [errorDuplicado, setErrorDuplicado] = useState(null);
 
+  // La incidencia en la que se acaba de descartar el duplicado, para confirmar
+  // que funciono: al recargar, el aviso amarillo desaparece, y sin una
+  // confirmacion no se distingue "se quito" de "no paso nada". Se guarda el id
+  // y no un si/no porque la pantalla se reutiliza al navegar a otra
+  // incidencia, y la confirmacion no debe seguirla.
+  const [descartadoEn, setDescartadoEn] = useState(null);
+
   const incidencia = usePeticion(() => obtenerIncidencia(id), `incidencia-${id}-${version}`);
 
   const historial = usePeticion(() => obtenerHistorial(id), `historial-${id}-${version}`);
@@ -101,6 +108,7 @@ export default function DetalleIncidencia() {
 
     try {
       await descartarDuplicado(id);
+      setDescartadoEn(id);
       setVersion((n) => n + 1);
     } catch (fallo) {
       setErrorDuplicado(fallo);
@@ -180,6 +188,16 @@ export default function DetalleIncidencia() {
           cambia como se lee todo lo demas. Saber que la categoria la dedujo el
           motor, o que esto quizas ya estaba reportado, condiciona lo que se
           decida con esta incidencia. */}
+      {/* Verde porque es el resultado de una decision que salio bien, igual
+          que los demas mensajes de exito. El aviso de duplicado se queda en
+          amarillo y no pasa a rojo: el detector no esta seguro, solo pide
+          revisar, y el rojo ya significa prioridad alta y error. */}
+      {descartadoEn === id && !datos.posible_duplicado_de && (
+        <p className="alerta alerta--ok" role="status">
+          Listo: se quit&oacute; el aviso de posible duplicado.
+        </p>
+      )}
+
       {(datos.clasificacion_automatica === 1 ||
         datos.posible_duplicado_de ||
         datos.duplicados_detectados?.length > 0) && (

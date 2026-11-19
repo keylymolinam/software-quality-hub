@@ -124,9 +124,14 @@ test('descartar el posible duplicado quita el aviso y no toca nada mas', async (
   await descartar.click();
   await expect(descartar).toHaveCount(0);
 
-  // La decision humana persiste: recargar no trae el aviso de vuelta.
+  // Se confirma en verde que se quito, para que no parezca que no paso nada.
+  await expect(page.locator('.alerta--ok')).toBeVisible();
+
+  // La decision humana persiste: recargar no trae el aviso de vuelta. La
+  // confirmacion tampoco vuelve: era la respuesta a pulsar, no un estado.
   await page.reload();
   await expect(page.getByRole('button', { name: 'No es duplicado' })).toHaveCount(0);
+  await expect(page.locator('.alerta--ok')).toHaveCount(0);
 
   // Y lo demas sigue igual: el estado, y la marca de que la clasifico el motor.
   await expect(estadoVisible(page)).toHaveText('Abierta');
