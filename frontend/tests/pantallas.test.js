@@ -127,6 +127,7 @@ describe('Barra de filtros', () => {
     categoria: '',
     id_proyecto: '',
     asignado_a: '',
+    posible_duplicado: '',
     ordenarPor: 'fecha_creacion',
     direccion: 'DESC',
   };
@@ -173,6 +174,17 @@ describe('Barra de filtros', () => {
     assert.match(visible, /Menos filtros \(2\)/);
     assert.match(visible, /Categor\u00eda/);
     assert.match(visible, /Ordenar por/);
+  });
+
+  test('el enlace a los posibles duplicados llega con el panel abierto', async () => {
+    const { default: FiltrosIncidencias } = await cargar('/src/components/FiltrosIncidencias.jsx');
+
+    const html = dibujarFiltros(FiltrosIncidencias, { ...SIN_FILTROS, posible_duplicado: '1' });
+
+    assert.match(texto(html), /Menos filtros \(1\)/);
+    // El desplegable muestra la opcion elegida, para que se sepa por que la
+    // lista trae solo esas.
+    assert.match(html, /<option value="1" selected="">Solo posibles duplicados<\/option>/);
   });
 });
 
@@ -287,6 +299,9 @@ describe('Pantalla de detalle', () => {
     // Los dos avisos de los diferenciadores, con el enlace a la original.
     assert.match(visible, /Posible duplicado/);
     assert.ok(html.includes('href="/incidencias/1"'));
+
+    // Y el atajo al listado con todos los marcados por el detector.
+    assert.ok(html.includes('href="/incidencias?posible_duplicado=1"'));
 
     // La decision humana cierra el ciclo del detector.
     assert.match(visible, /No es duplicado/);

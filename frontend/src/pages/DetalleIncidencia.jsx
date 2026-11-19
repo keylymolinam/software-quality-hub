@@ -194,6 +194,15 @@ export default function DetalleIncidencia() {
                 la misma falla, cerrarla sin resolver deja el motivo en la bit&aacute;cora.
               </p>
 
+              {/* Lleva al listado ya filtrado: revisar los duplicados de a uno
+                  obligaria a buscarlos a mano, y el filtro vive en la direccion,
+                  asi que el enlace es solo una direccion con el filtro puesto. */}
+              <p className="alerta__texto">
+                <Link to="/incidencias?posible_duplicado=1">
+                  Ver todos los posibles duplicados
+                </Link>
+              </p>
+
               {errorDuplicado && <p className="alerta__texto">{errorDuplicado.message}</p>}
 
               {/* La decision humana cierra el ciclo del detector: si no son el

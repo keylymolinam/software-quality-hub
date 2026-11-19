@@ -158,6 +158,14 @@ function construirWhere(filtros = {}) {
     valores.push(valor);
   }
 
+  // Posible duplicado no compara una columna con un valor: pregunta si la marca
+  // del detector existe. Por eso no cabe en FILTROS_PERMITIDOS, cuyas
+  // condiciones llevan siempre un `?`, y la condicion va fija, sin nada que
+  // venga de afuera.
+  if (filtros.posible_duplicado === true) {
+    condiciones.push('i.posible_duplicado_de IS NOT NULL');
+  }
+
   // Busqueda libre de texto sobre titulo y descripcion.
   // LIKE con % a ambos lados equivale a "contiene". En SQLite LIKE no
   // distingue mayusculas de minusculas para caracteres ASCII.

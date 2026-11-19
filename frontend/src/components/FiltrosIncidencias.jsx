@@ -42,6 +42,7 @@ function contarOcultosEnUso(valores) {
   return [
     valores.categoria !== '',
     valores.asignado_a !== '',
+    valores.posible_duplicado !== '',
     valores.ordenarPor !== ORDEN_POR_DEFECTO.ordenarPor ||
       valores.direccion !== ORDEN_POR_DEFECTO.direccion,
   ].filter(Boolean).length;
@@ -168,6 +169,15 @@ export default function FiltrosIncidencias({
               etiqueta: u.nombre,
             }))}
             onCambiar={(v) => onCambiar('asignado_a', v)}
+          />
+
+          {/* Es el destino del enlace "Ver todos los posibles duplicados" del
+              detalle, que llega con ?posible_duplicado=1 y abre este panel. */}
+          <Desplegable
+            etiqueta="Duplicados"
+            valor={valores.posible_duplicado}
+            opciones={[{ valor: '1', etiqueta: 'Solo posibles duplicados' }]}
+            onCambiar={(v) => onCambiar('posible_duplicado', v)}
           />
 
           <Desplegable

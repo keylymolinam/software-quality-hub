@@ -48,6 +48,7 @@ const CAMPOS_FILTRABLES = [
   'categoria',
   'id_proyecto',
   'asignado_a',
+  'posible_duplicado',
 ];
 
 export default function Incidencias() {
@@ -64,6 +65,7 @@ export default function Incidencias() {
       categoria: parametrosUrl.get('categoria') ?? '',
       id_proyecto: parametrosUrl.get('id_proyecto') ?? '',
       asignado_a: parametrosUrl.get('asignado_a') ?? '',
+      posible_duplicado: parametrosUrl.get('posible_duplicado') ?? '',
       ordenarPor: parametrosUrl.get('ordenarPor') ?? 'fecha_creacion',
       direccion: parametrosUrl.get('direccion') ?? 'DESC',
       pagina: parametrosUrl.get('pagina') ?? '1',

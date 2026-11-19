@@ -372,6 +372,24 @@ describe('Deteccion de duplicados', () => {
     assert.equal(segunda.posible_duplicado_de, primera.id_incidencia);
     assert.equal(tercera.posible_duplicado_de, primera.id_incidencia);
   });
+
+  test('el listado se puede filtrar por las que marco el detector', () => {
+    crear(ORIGINAL);
+    const repetida = crear(PARECIDA);
+    crear(DISTINTA);
+
+    const { datos, paginacion } = Incidencias.listarIncidencias({ posible_duplicado: '1' });
+
+    assert.deepEqual(
+      datos.map((i) => i.id_incidencia),
+      [repetida.id_incidencia]
+    );
+    assert.equal(paginacion.total, 1, 'el total tiene que contar con el mismo filtro');
+  });
+
+  test('el filtro de duplicados solo acepta 1', () => {
+    falla(() => Incidencias.listarIncidencias({ posible_duplicado: 'si' }), 400, 'posible_duplicado');
+  });
 });
 
 // ---------------------------------------------------------------------------

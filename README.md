@@ -313,7 +313,7 @@ trabajo futuro.
 | `POST` | `/api/incidencias/clasificar` | Vista previa de la clasificación, sin crear nada |
 
 Filtros del listado: `estado`, `prioridad`, `categoria`, `id_proyecto`,
-`asignado_a`, `reportado_por`, `busqueda`, `ordenarPor`, `direccion`, `pagina`,
+`asignado_a`, `reportado_por`, `posible_duplicado` (solo `1`), `busqueda`, `ordenarPor`, `direccion`, `pagina`,
 `limite`.
 
 ### Proyectos

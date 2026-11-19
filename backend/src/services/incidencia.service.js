@@ -205,6 +205,14 @@ export function listarIncidencias(consulta = {}) {
   if (vino(consulta.busqueda)) {
     filtros.busqueda = String(consulta.busqueda).trim();
   }
+  // Solo se admite '1': el filtro responde "cuales marco el detector". Lo
+  // contrario (las no marcadas) no lo usa nadie, y aceptarlo seria una segunda
+  // regla que mantener. Cualquier otro valor es un 400, no un filtro ignorado
+  // en silencio que devolveria la lista completa haciendose pasar por filtrada.
+  if (vino(consulta.posible_duplicado)) {
+    filtros.posible_duplicado =
+      validarEnumerado(consulta.posible_duplicado, ['1'], 'posible_duplicado', errores) === '1';
+  }
 
   // El limite tiene tope maximo para que nadie pueda pedir ?limite=999999 y
   // obligar al servidor a serializar la tabla entera en una sola respuesta.

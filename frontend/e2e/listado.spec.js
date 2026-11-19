@@ -8,7 +8,7 @@
  */
 import { test, expect } from '@playwright/test';
 
-import { entrar } from './apoyo.js';
+import { crearPorApi, entrar } from './apoyo.js';
 
 /**
  * El desplegable de un filtro, por el texto exacto de su etiqueta.
@@ -60,4 +60,38 @@ test('un enlace con filtros abre el listado ya filtrado', async ({ page }) => {
   for (const texto of await etiquetas.allTextContents()) {
     expect(texto).toBe('En progreso');
   }
+});
+
+test('desde un posible duplicado se llega al listado con todos los marcados', async ({ page, request }) => {
+  // Dos textos casi iguales para que el detector marque el segundo, y un
+  // tercero distinto que no debe aparecer en el resultado.
+  const original = await crearPorApi(request, {
+    titulo: 'La exportacion de reportes a planilla se corta a la mitad',
+    descripcion: 'Al exportar el reporte mensual la planilla queda con la mitad de las filas.',
+  });
+  const repetida = await crearPorApi(request, {
+    titulo: 'La exportacion de reportes a planilla se corta a la mitad',
+    descripcion: 'Al exportar el reporte mensual, la planilla queda con la mitad de las filas.',
+  });
+  const distinta = await crearPorApi(request, {
+    titulo: 'Cambiar el color del boton principal del formulario',
+    descripcion: 'El tono actual se confunde con el fondo en monitores con poco contraste.',
+  });
+  expect(repetida.posible_duplicado_de).toBe(original.id_incidencia);
+
+  await entrar(page);
+  await page.goto(`/incidencias/${repetida.id_incidencia}`);
+  await page.getByRole('link', { name: 'Ver todos los posibles duplicados' }).click();
+
+  await expect(page).toHaveURL(/posible_duplicado=1/);
+  await expect(filtro(page, 'Duplicados')).toHaveValue('1');
+
+  // Cada fila trae la marca del detector, y la incidencia distinta no esta.
+  const filas = page.locator('tbody tr');
+  await expect(filas.first()).toBeVisible();
+  for (const fila of await filas.all()) {
+    await expect(fila.locator('.marca--duplicado')).toBeVisible();
+  }
+  await expect(page.locator('tbody')).toContainText(repetida.titulo);
+  await expect(page.locator('tbody')).not.toContainText(distinta.titulo);
 });
