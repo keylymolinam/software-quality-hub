@@ -2,22 +2,25 @@
  * Usuarios: el equipo y su administracion.
  *
  * ---------------------------------------------------------------------------
- * TRES PERMISOS DISTINTOS EN UNA SOLA TABLA
+ * SEIS PERMISOS DISTINTOS EN UNA SOLA TABLA
  *
  * Esta pantalla es donde el control de acceso del sistema se ve completo,
  * porque cada accion tiene una regla diferente:
  *
- *   ver la lista        cualquier sesion
- *   crear y eliminar    solo un ADMINISTRADOR
- *   modificar           el propio usuario, o un ADMINISTRADOR
- *   cambiar el rol      solo un ADMINISTRADOR, aunque sea su propia cuenta
- *   cambiar la clave    SOLO el propio usuario, ni un administrador
+ *   ver la lista          cualquier sesion
+ *   crear y eliminar      solo un ADMINISTRADOR
+ *   modificar             el propio usuario, o un ADMINISTRADOR
+ *   cambiar el rol        solo un ADMINISTRADOR, aunque sea su propia cuenta
+ *   cambiar la clave      SOLO el propio usuario, ni un administrador
+ *   restablecer la clave  solo un ADMINISTRADOR, y nunca la propia
  *
- * La ultima es la interesante: es la unica operacion del sistema que el rol de
- * administrador no alcanza, porque exige conocer la contrasena vigente. Un
- * administrador puede borrar una cuenta, pero no apropiarse de ella.
+ * Las dos ultimas son las interesantes, porque son espejo una de la otra.
+ * Cambiar exige la clave vigente, y por eso solo la puede usar su dueno.
+ * Restablecer es la salida para quien la olvido: no la pide, y por eso la
+ * hace otra persona. El costo de esa excepcion esta argumentado en
+ * restablecerContrasena() de usuario.service.js.
  *
- * El backend hace cumplir las cinco reglas. Aqui se reflejan para no ofrecer
+ * El backend hace cumplir las seis reglas. Aqui se reflejan para no ofrecer
  * botones que iban a responder 403, que es lo unico que la interfaz puede
  * aportar: esconder un boton no es seguridad.
  */
@@ -30,6 +33,7 @@ import {
   crearUsuario,
   eliminarUsuario,
   listarUsuarios,
+  restablecerContrasena,
 } from '../api/usuarios.js';
 import { ROLES, etiquetaRol } from '../dominio/usuarios.js';
 import { formatearFechaHora } from '../dominio/incidencias.js';
@@ -47,8 +51,10 @@ export default function Usuarios() {
 
   const [version, setVersion] = useState(0);
 
-  // Un solo estado para los tres formularios, porque son excluyentes:
-  // { modo: 'nuevo' | 'editar' | 'clave', id }. null = ninguno abierto.
+  // Un solo estado para los cuatro formularios, porque son excluyentes:
+  // { modo: 'nuevo' | 'editar' | 'clave' | 'restablecer', id, nombre }.
+  // null = ninguno abierto. El nombre solo lo usa 'restablecer', para que el
+  // titulo diga de quien es la clave que se va a reemplazar.
   const [formulario, setFormulario] = useState(null);
   const [valores, setValores] = useState(EN_BLANCO);
   const [claves, setClaves] = useState(CLAVES_EN_BLANCO);
@@ -63,7 +69,7 @@ export default function Usuarios() {
   function abrir(modo, usuario = null) {
     setError(null);
     setAviso(null);
-    setFormulario({ modo, id: usuario?.id_usuario ?? null });
+    setFormulario({ modo, id: usuario?.id_usuario ?? null, nombre: usuario?.nombre ?? null });
 
     if (modo === 'nuevo') setValores(EN_BLANCO);
     if (modo === 'editar') {
@@ -74,7 +80,7 @@ export default function Usuarios() {
         rol: usuario.rol,
       });
     }
-    if (modo === 'clave') setClaves(CLAVES_EN_BLANCO);
+    if (modo === 'clave' || modo === 'restablecer') setClaves(CLAVES_EN_BLANCO);
   }
 
   function cerrar() {
@@ -106,6 +112,11 @@ export default function Usuarios() {
         if (esAdministrador) cambios.rol = valores.rol;
 
         await actualizarUsuario(formulario.id, cambios);
+      } else if (formulario.modo === 'restablecer') {
+        await restablecerContrasena(formulario.id, { contrasena_nueva: claves.contrasena_nueva });
+        setAviso(
+          `La contrase\u00f1a de ${formulario.nombre} qued\u00f3 restablecida. Entr\u00e9gasela en persona y p\u00eddele que la cambie al entrar.`
+        );
       } else {
         await cambiarContrasena(formulario.id, claves);
         setAviso('La contrase\u00f1a qued\u00f3 cambiada.');
@@ -219,8 +230,50 @@ export default function Usuarios() {
 
           <p className="ayuda ayuda--neutra">
             Se pide la contrase&ntilde;a actual a prop&oacute;sito: as&iacute; una sesi&oacute;n
-            que quede abierta no basta para apropiarse de la cuenta. Ni un administrador
-            puede cambiar la clave de otra persona.
+            que quede abierta no basta para apropiarse de la cuenta.
+          </p>
+        </form>
+      ) : formulario?.modo === 'restablecer' ? (
+        <form className="tarjeta" onSubmit={guardar}>
+          <h2>Restablecer la contrase&ntilde;a de {formulario.nombre}</h2>
+
+          <Campo
+            etiqueta="Contrase&ntilde;a temporal"
+            ayuda={`Entre ${LARGO_CONTRASENA.min} y ${LARGO_CONTRASENA.max} caracteres`}
+            error={error?.mensajeDe('contrasena_nueva')}
+          >
+            {/* type="text" y no password: quien la escribe tiene que poder
+                leerla para entregarsela a su dueno sin errores. */}
+            <input
+              className="campo__control"
+              type="text"
+              value={claves.contrasena_nueva}
+              onChange={(e) => setClaves({ ...claves, contrasena_nueva: e.target.value })}
+              maxLength={LARGO_CONTRASENA.max}
+              autoComplete="off"
+              autoFocus
+              required
+            />
+          </Campo>
+
+          <div className="acciones__confirmar">
+            <button className="boton boton--primario boton--auto" type="submit" disabled={enviando}>
+              {enviando ? 'Restableciendo...' : 'Restablecer'}
+            </button>
+            <button
+              className="boton boton--discreto boton--auto"
+              type="button"
+              onClick={cerrar}
+              disabled={enviando}
+            >
+              Cancelar
+            </button>
+          </div>
+
+          <p className="ayuda ayuda--neutra">
+            Para quien olvid&oacute; su contrase&ntilde;a. La anterior deja de servir de
+            inmediato; entr&eacute;gale la temporal en persona y p&iacute;dele que la cambie
+            desde esta misma pantalla al entrar.
           </p>
         </form>
       ) : (
@@ -398,8 +451,9 @@ export default function Usuarios() {
                                 </button>
                               )}
 
-                              {/* La clave, solo la propia. Es la unica accion
-                                  que un administrador no puede hacer por otro. */}
+                              {/* La clave: cambiarla, solo la propia; restablecerla,
+                                  solo la ajena y solo un administrador. Nunca
+                                  aparecen las dos en la misma fila. */}
                               {esUnoMismo && (
                                 <button
                                   className="enlace-boton"
@@ -407,6 +461,16 @@ export default function Usuarios() {
                                   onClick={() => abrir('clave', usuario)}
                                 >
                                   Contrase&ntilde;a
+                                </button>
+                              )}
+
+                              {esAdministrador && !esUnoMismo && (
+                                <button
+                                  className="enlace-boton"
+                                  type="button"
+                                  onClick={() => abrir('restablecer', usuario)}
+                                >
+                                  Restablecer clave
                                 </button>
                               )}
 

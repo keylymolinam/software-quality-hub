@@ -108,18 +108,25 @@ describe('Pantalla de usuarios', () => {
     assert.ok(!propias.includes('Eliminar'), 'no deberia ofrecer eliminarse');
   });
 
-  test('la contrasena solo se ofrece en la propia fila, ni para un administrador', async () => {
+  test('cambiar la clave solo en la propia fila; restablecerla solo en las ajenas', async () => {
     declararEscenario({ [CLAVE]: LISTA });
 
     const html = await dibujarUsuarios();
 
-    assert.ok(accionesDeLaFila(html, 'Carolina Nunez').includes('Contrase\u00f1a'));
+    const propias = accionesDeLaFila(html, 'Carolina Nunez');
+    const ajenas = accionesDeLaFila(html, 'Luis Fuentes');
 
-    // Es la unica operacion que el rol de administrador no alcanza.
+    // Cambiar exige la clave vigente: solo su dueno.
+    assert.ok(propias.includes('Contrase\u00f1a'));
     assert.ok(
-      !accionesDeLaFila(html, 'Luis Fuentes').includes('Contrase\u00f1a'),
-      'un administrador no puede cambiar la clave de otra persona'
+      !ajenas.includes('Contrase\u00f1a'),
+      'un administrador no cambia la clave de otro por la via que pide la actual'
     );
+
+    // Restablecer es para quien la olvido: la hace el administrador por otro,
+    // nunca sobre si mismo.
+    assert.ok(ajenas.includes('Restablecer clave'), 'deberia poder restablecer la de otro');
+    assert.ok(!propias.includes('Restablecer clave'), 'no deberia restablecer la propia');
   });
 
   test('quien no es administrador solo puede actuar sobre su propia cuenta', async () => {
@@ -140,8 +147,9 @@ describe('Pantalla de usuarios', () => {
     const propias = accionesDeLaFila(html, 'Luis Fuentes');
     assert.ok(propias.includes('Editar'));
     assert.ok(propias.includes('Contrase\u00f1a'));
+    assert.ok(!propias.includes('Restablecer clave'));
 
-    // Sobre la cuenta ajena: nada.
+    // Sobre la cuenta ajena: nada, tampoco restablecer.
     assert.deepEqual(accionesDeLaFila(html, 'Carolina Nunez'), []);
   });
 

@@ -367,6 +367,54 @@ export function cambiarContrasena(id, datos = {}) {
 }
 
 /**
+ * Un administrador restablece la contrasena de otra persona que la olvido.
+ *
+ * Es la via de recuperacion del sistema. Se descarto el enlace por correo,
+ * que es lo habitual en un servicio abierto al publico, porque exige un
+ * servidor de correo, una tabla de enlaces con vencimiento y dos pantallas
+ * mas; para un sistema interno, donde un administrador ya da de alta las
+ * cuentas, es mas trabajo del que aporta, y queda como trabajo futuro.
+ *
+ * Esto relaja a proposito la regla de cambiarContrasena(): ahora un
+ * administrador SI puede fijar la clave de otro, sin conocer la anterior. El
+ * costo se acepta porque la alternativa era peor: quien olvidaba su clave
+ * quedaba fuera para siempre, y la unica salida era borrar la cuenta, que el
+ * sistema impide si tiene historial. Y no es una toma silenciosa de la cuenta:
+ * el dueno lo nota la proxima vez que entra, porque su clave deja de servir.
+ *
+ * Sobre la PROPIA cuenta no se permite: un administrador que conoce su clave
+ * usa cambiarContrasena(), y si se aceptara aqui, una sesion de administrador
+ * abierta y desatendida bastaria para cambiarla sin conocer la actual, que es
+ * justo lo que aquella funcion protege.
+ *
+ * @param {object} sesion Usuario que realiza la operacion (req.usuario).
+ * @throws {ErrorHttp} 404 si no existe, 400 datos invalidos, 403 sobre la
+ *                     propia cuenta.
+ */
+export function restablecerContrasena(id, datos = {}, sesion = {}) {
+  const idUsuario = exigirIdValido(id);
+
+  if (!Usuario.existe(idUsuario)) {
+    throw errorNoEncontrado(`No existe el usuario con id ${idUsuario}.`);
+  }
+
+  if (idUsuario === sesion.id_usuario) {
+    throw errorProhibido(
+      'Tu propia contraseña se cambia con PUT /api/usuarios/:id/contrasena, que exige la actual.'
+    );
+  }
+
+  const errores = [];
+  const nueva = validarContrasena(datos.contrasena_nueva, 'contrasena_nueva', errores);
+
+  lanzarSiHayErrores(errores);
+
+  Usuario.actualizar(idUsuario, { contrasena_hash: calcularHash(nueva) });
+
+  return { id_usuario: idUsuario, contrasena_restablecida: true };
+}
+
+/**
  * Elimina un usuario, siempre que no tenga rastro en el sistema.
  *
  * Las claves foraneas reportado_por (INCIDENCIA) y modificado_por

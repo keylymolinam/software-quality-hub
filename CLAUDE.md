@@ -26,7 +26,7 @@ que ya cubren todo lo que la API ofrece:
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
 | Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
 | Proyectos | `/proyectos` | El listado para todos; crear, editar y eliminar para el administrador |
-| Usuarios | `/usuarios` | El equipo, con las cinco reglas de acceso reflejadas en la tabla |
+| Usuarios | `/usuarios` | El equipo, con las seis reglas de acceso reflejadas en la tabla |
 
 Hay tres suites de pruebas: backend, pantallas e interacción. La última recorre el
 sistema en un navegador real (ver "Pruebas").

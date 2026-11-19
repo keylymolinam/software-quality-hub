@@ -8,6 +8,8 @@
  *   GET     /api/usuarios/:id               cualquier sesion
  *   PUT     /api/usuarios/:id               el propio usuario o ADMINISTRADOR
  *   PUT     /api/usuarios/:id/contrasena    SOLO el propio usuario
+ *   PUT     /api/usuarios/:id/restablecer-contrasena
+ *                                           ADMINISTRADOR, sobre otra cuenta
  *   DELETE  /api/usuarios/:id               ADMINISTRADOR
  *
  * Razones de cada permiso:
@@ -21,9 +23,11 @@
  *   porque depende de que campos trae el cuerpo de la peticion y no de la
  *   direccion: esta en usuario.service.js.
  *
- *   Cambiar la contrasena es lo unico que ni siquiera un administrador puede
- *   hacer por otra persona: la operacion exige la contrasena actual, que solo
- *   su dueno conoce. Por eso requiereSerElMismoO() va sin roles.
+ *   Cambiar la contrasena exige la actual, que solo su dueno conoce. Por eso
+ *   requiereSerElMismoO() va sin roles: un administrador no la cambia por esa
+ *   via. Lo que si puede es restablecerla cuando su dueno la olvido, por una
+ *   ruta aparte que no pide la vigente; por que se acepto esa excepcion esta
+ *   en restablecerContrasena() de usuario.service.js.
  */
 import { Router } from 'express';
 
@@ -33,6 +37,7 @@ import {
   crear,
   actualizar,
   actualizarContrasena,
+  restablecerContrasena,
   eliminar,
 } from '../controllers/usuario.controller.js';
 import {
@@ -58,5 +63,6 @@ router.delete('/:id', soloAdmin, eliminar);
 
 // --- Subrecursos ----------------------------------------------------------
 router.put('/:id/contrasena', requiereSerElMismoO(), actualizarContrasena);
+router.put('/:id/restablecer-contrasena', soloAdmin, restablecerContrasena);
 
 export default router;

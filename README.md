@@ -209,7 +209,7 @@ reparto en capas están en la figura
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
 | Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
 | Proyectos | `/proyectos` | El listado para todos; crear, editar y eliminar para el administrador |
-| Usuarios | `/usuarios` | El equipo, con las cinco reglas de acceso reflejadas en la tabla |
+| Usuarios | `/usuarios` | El equipo, con las seis reglas de acceso reflejadas en la tabla |
 
 Tres decisiones que se notan al usarla:
 
@@ -263,8 +263,16 @@ alimenta el índice de salud podría falsificarse.
 | Proyectos | cualquier sesión | `ADMINISTRADOR` | `ADMINISTRADOR` | `ADMINISTRADOR` |
 | Usuarios | cualquier sesión | `ADMINISTRADOR` | uno mismo o `ADMINISTRADOR` | `ADMINISTRADOR` |
 
-Cambiar una contraseña es la única operación que ni un administrador puede hacer
-por otra persona: exige conocer la contraseña vigente.
+Cambiar una contraseña exige conocer la vigente, así que solo lo hace su dueño.
+Si alguien **olvida su contraseña**, un administrador la restablece desde la
+pantalla Usuarios con una clave temporal, que la persona cambia después por una
+suya. El administrador no puede usar esa vía sobre su propia cuenta. La pantalla
+de login lo explica en el enlace *¿Olvidaste tu contraseña?*.
+
+Se eligió esta vía y no un enlace por correo porque el sistema es interno: un
+administrador ya da de alta las cuentas, y el correo exigiría un servidor SMTP,
+enlaces con vencimiento y dos pantallas más. El enlace por correo queda como
+trabajo futuro.
 
 ## Endpoints disponibles
 
@@ -317,6 +325,7 @@ Filtros del listado: `estado`, `prioridad`, `categoria`, `id_proyecto`,
 | `GET` | `/api/usuarios/:id` | Detalle de un usuario |
 | `PUT` | `/api/usuarios/:id` | Actualización parcial (no la contraseña) |
 | `PUT` | `/api/usuarios/:id/contrasena` | Cambia la contraseña; exige la actual |
+| `PUT` | `/api/usuarios/:id/restablecer-contrasena` | Restablece la de otra persona (`ADMINISTRADOR`) |
 | `DELETE` | `/api/usuarios/:id` | Elimina; falla si tiene incidencias o historial |
 
 ### Métricas e índice de salud
@@ -488,6 +497,59 @@ volver a ejecutar el proyecto:
 del backend\data\software_quality_hub.sqlite    # Windows
 rm backend/data/software_quality_hub.sqlite     # macOS / Linux
 ```
+
+## Evaluación del clasificador
+
+Las pruebas comprueban que el motor de clasificación **funcione**; esta evaluación
+mide **cuánto acierta**. Todo está en `backend/evaluacion/`:
+
+| Archivo | Contenido |
+|---|---|
+| `INSTRUCCIONES.md` | Cómo se etiquetaron los casos y las reglas para que la medición valga |
+| `casos-clasificacion.csv` | 48 incidencias de ejemplo con la categoría y prioridad de referencia |
+| `evaluar.js` | Compara la referencia con la respuesta del motor y reporta la exactitud |
+
+```bash
+# Desde backend/
+node evaluacion/evaluar.js
+```
+
+### Cómo se midió
+
+- Los 48 casos se escribieron **sin mirar el léxico** del motor, y la autora decidió
+  la respuesta correcta de cada uno **sin consultar al motor**.
+- Los casos se dividen en dos grupos fijos: los **impares** son de desarrollo (se
+  pueden mirar sus errores para ajustar el léxico) y los **pares** son de prueba
+  (solo se informa su exactitud, nunca caso por caso). Así un ajuste no puede
+  aprenderse las respuestas del examen.
+- El script se niega a correr si falta una etiqueta, para que nadie vea las
+  respuestas del motor antes de terminar la referencia.
+
+### Resultados
+
+| Grupo | Categoría, léxico original | Categoría, léxico ajustado | Prioridad, original → ajustado |
+|---|---|---|---|
+| Desarrollo (impares) | 5 de 24 | 12 de 24 | 18 → 17 de 24 |
+| **Prueba (pares)** | **5 de 24** | **5 de 24** | **9 → 10 de 24** |
+| Los 48 | 10 de 48 | — | 27 de 48 (original) |
+
+La cifra que vale para el léxico ajustado es la de los **pares**: los impares
+subieron porque el ajuste se hizo mirando sus errores. En los pares la categoría no
+cambió, de modo que **el ajuste no mostró mejora** fuera de los casos que lo
+motivaron. Con 24 casos cada acierto vale unos 4 puntos porcentuales, así que el
+punto que ganó la prioridad no alcanza para atribuirlo al cambio.
+
+### Limitaciones declaradas
+
+- **Una sola persona** hizo la referencia. No hay medición de acuerdo entre dos
+  personas, que sería el techo realista para el motor.
+- Cuatro casos de desarrollo (#7, #31, #37 y #43) se **reetiquetaron según las
+  definiciones** después de la primera evaluación; la columna `notas` del CSV
+  registra el valor anterior. Son impares, así que no afectan el resultado de
+  prueba.
+- La mayoría de los errores son textos sin ningún término del léxico, que el motor
+  deja en `OTRO` a propósito: prefiere no clasificar antes que adivinar. Es el límite
+  propio de un clasificador por palabras clave.
 
 ## Autor
 

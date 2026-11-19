@@ -48,6 +48,19 @@ export function actualizarContrasena(req, res) {
   res.json(servicioUsuarios.cambiarContrasena(req.params.id, req.body));
 }
 
+/**
+ * PUT /api/usuarios/:id/restablecer-contrasena
+ * Cuerpo: { contrasena_nueva }
+ *
+ * La recuperacion de una clave olvidada, a cargo de un administrador. Ruta
+ * distinta de la anterior porque la regla es la opuesta: no pide la clave
+ * vigente, y por eso no la puede usar el propio dueno.
+ */
+export function restablecerContrasena(req, res) {
+  // req.usuario se necesita para rechazar el restablecimiento de la propia cuenta.
+  res.json(servicioUsuarios.restablecerContrasena(req.params.id, req.body, req.usuario));
+}
+
 /** DELETE /api/usuarios/:id — 409 si tiene incidencias o historial. */
 export function eliminar(req, res) {
   res.json(servicioUsuarios.eliminarUsuario(req.params.id));

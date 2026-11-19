@@ -18,6 +18,7 @@ export default function Login() {
   const [contrasena, setContrasena] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
+  const [olvido, setOlvido] = useState(false);
 
   async function alEnviar(evento) {
     // Sin esto el navegador recarga la pagina al enviar el formulario, y se
@@ -93,6 +94,24 @@ export default function Login() {
         <button className="boton boton--primario" type="submit" disabled={enviando}>
           {enviando ? 'Entrando...' : 'Entrar'}
         </button>
+
+        {/* La recuperacion la hace un administrador desde Usuarios (ver
+            restablecerContrasena() en el backend), asi que aqui no hay
+            formulario: solo se dice a quien acudir. Pedir el correo para
+            "enviar instrucciones" prometeria un correo que nunca llega. */}
+        <p className="ayuda ayuda--neutra">
+          <button className="enlace-boton" type="button" onClick={() => setOlvido(!olvido)}>
+            &iquest;Olvidaste tu contrase&ntilde;a?
+          </button>
+          {olvido && (
+            <>
+              <br />
+              P&iacute;dele a un administrador del sistema que la restablezca. Te entregar&aacute;
+              una contrase&ntilde;a temporal para entrar, y luego podr&aacute;s cambiarla por una
+              tuya en la pantalla Usuarios.
+            </>
+          )}
+        </p>
       </form>
     </main>
   );

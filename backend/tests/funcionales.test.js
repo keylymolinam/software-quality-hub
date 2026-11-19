@@ -44,6 +44,7 @@ const Incidencias = await import('../src/services/incidencia.service.js');
 const Proyectos = await import('../src/services/proyecto.service.js');
 const Usuarios = await import('../src/services/usuario.service.js');
 const Salud = await import('../src/services/salud.service.js');
+const Auth = await import('../src/services/auth.service.js');
 const { clasificar } = await import('../src/services/clasificacion.service.js');
 
 // ---------------------------------------------------------------------------
@@ -611,5 +612,87 @@ describe('La identidad sale de la sesion y no del cuerpo', () => {
 
     assert.equal(bitacora[0].modificado_por, autora.id_usuario);
     assert.equal(bitacora[1].modificado_por, revisor.id_usuario);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Recuperacion de contrasena
+// ---------------------------------------------------------------------------
+
+describe('Recuperacion de una contrasena olvidada', () => {
+  /** Intenta entrar; devuelve true si la clave sirve. */
+  function entra(correo, contrasena) {
+    try {
+      Auth.iniciarSesion({ correo_electronico: correo, contrasena });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  test('un administrador restablece la clave de otro: la nueva sirve y la anterior no', () => {
+    Usuarios.restablecerContrasena(
+      revisor.id_usuario,
+      { contrasena_nueva: 'ClaveTemporal9' },
+      autora
+    );
+
+    assert.equal(entra('revisor@ejemplo.cl', 'ClaveTemporal9'), true);
+    assert.equal(entra('revisor@ejemplo.cl', 'ClaveDePrueba2'), false);
+  });
+
+  test('sobre la propia cuenta se rechaza: para eso se pide la clave actual', () => {
+    falla(
+      () =>
+        Usuarios.restablecerContrasena(
+          autora.id_usuario,
+          { contrasena_nueva: 'ClaveTemporal9' },
+          autora
+        ),
+      403
+    );
+    assert.equal(entra('autora@ejemplo.cl', 'ClaveDePrueba1'), true);
+  });
+
+  test('la clave nueva pasa por la misma validacion que al crear la cuenta', () => {
+    falla(
+      () => Usuarios.restablecerContrasena(revisor.id_usuario, { contrasena_nueva: 'corta' }, autora),
+      400,
+      'contrasena_nueva'
+    );
+  });
+
+  test('un usuario que no existe da 404', () => {
+    falla(
+      () => Usuarios.restablecerContrasena(999999, { contrasena_nueva: 'ClaveTemporal9' }, autora),
+      404
+    );
+  });
+
+  // El rol se exige en la ruta y no en el service, asi que esta prueba va por
+  // HTTP: es la unica forma de comprobar que el middleware esta puesto.
+  test('quien no es administrador recibe 403 en la ruta', async () => {
+    const { default: app } = await import('../src/app.js');
+    const servidor = app.listen(0);
+    await new Promise((resolve) => servidor.once('listening', resolve));
+
+    try {
+      const respuesta = await fetch(
+        `http://localhost:${servidor.address().port}/api/usuarios/${autora.id_usuario}/restablecer-contrasena`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${Auth.emitirToken(revisor)}`,
+          },
+          body: JSON.stringify({ contrasena_nueva: 'ClaveTemporal9' }),
+        }
+      );
+
+      assert.equal(respuesta.status, 403);
+      assert.equal(entra('autora@ejemplo.cl', 'ClaveDePrueba1'), true);
+    } finally {
+      servidor.close();
+    }
   });
 });

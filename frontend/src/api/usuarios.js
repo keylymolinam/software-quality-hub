@@ -46,15 +46,23 @@ export function actualizarUsuario(id, cambios) {
 /**
  * Cambia la contrasena. SOLO el propio usuario, ni un administrador.
  *
- * Es la unica operacion del sistema que el rol de administrador no alcanza, y
- * el motivo es que exige conocer la contrasena vigente: eso protege contra
- * quien se siente frente a una sesion ajena abierta, y deja claro que nadie
- * puede apropiarse de una cuenta sin conocer su clave.
+ * Exige conocer la contrasena vigente: eso protege contra quien se siente
+ * frente a una sesion ajena abierta.
  *
  * @param {object} datos  { contrasena_actual, contrasena_nueva }
  */
 export function cambiarContrasena(id, datos) {
   return api.put(`/usuarios/${id}/contrasena`, datos);
+}
+
+/**
+ * Restablece la contrasena de otra persona que la olvido. Solo ADMINISTRADOR,
+ * y nunca sobre su propia cuenta (403): para esa existe cambiarContrasena().
+ *
+ * @param {object} datos  { contrasena_nueva }
+ */
+export function restablecerContrasena(id, datos) {
+  return api.put(`/usuarios/${id}/restablecer-contrasena`, datos);
 }
 
 /**
