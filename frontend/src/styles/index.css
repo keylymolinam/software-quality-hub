@@ -141,10 +141,15 @@
   /* El anillo de foco es el mismo en toda la aplicacion. */
   --anillo-foco: 0 0 0 3px rgba(79, 70, 229, 0.22);
 
-  /* Alto de la cabecera. Lo usan la cabecera misma y los encabezados de tabla,
-     que se quedan pegados justo debajo: si fueran dos numeros escritos aparte,
-     al cambiar uno la tabla se esconderia detras de la barra. */
-  --alto-cabecera: 54px;
+  /* Ancho del menu lateral. */
+  --ancho-lateral: 240px;
+
+  /* Menu lateral: pizarra oscura con el indigo del acento para lo activo. */
+  --lateral-fondo: #111827;
+  --lateral-texto: #a3adc2;
+  --lateral-hover: rgba(255, 255, 255, 0.06);
+  --lateral-activo: rgba(99, 102, 241, 0.22);
+  --lateral-borde: rgba(255, 255, 255, 0.08);
 
   /* --- Tipografia --------------------------------------------------------- */
   /* Detras de cada fuente propia va la pila del sistema: si el archivo no
@@ -452,65 +457,228 @@ body {
   border-color: var(--color-borde);
 }
 
-/* --- Cabecera ------------------------------------------------------------ */
+/* ===========================================================================
+   Menu lateral
+   Columna fija a la izquierda con las secciones y la sesion. Va oscura para
+   separarse del contenido sin necesitar bordes: es la convencion de las
+   herramientas de trabajo actuales, y deja el blanco para lo que se esta
+   leyendo.
+   =========================================================================== */
 
-.cabecera {
+.aplicacion {
+  display: grid;
+  grid-template-columns: var(--ancho-lateral) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.aplicacion__principal {
+  min-width: 0;
+}
+
+.lateral {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: var(--espacio-5) var(--espacio-3);
+  color: var(--lateral-texto);
+  background: var(--lateral-fondo);
+}
+
+.lateral__barra {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--espacio-4);
-  padding: var(--espacio-3) var(--espacio-6);
-  /* Se queda arriba al desplazarse: la navegacion y el rol tienen que estar a
-     mano en una bitacora larga. El fondo translucido con desenfoque deja ver
-     que hay contenido pasando por debajo, en vez de taparlo con una banda
-     opaca. */
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  min-height: var(--alto-cabecera);
-  background: color-mix(in srgb, var(--color-superficie) 88%, transparent);
-  backdrop-filter: saturate(1.6) blur(10px);
-  border-bottom: 1px solid var(--color-borde);
+  padding: 0 var(--espacio-2) var(--espacio-6);
+}
+
+.lateral__marca {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  font-size: var(--texto-sm);
+  line-height: 1.25;
+  color: #fff;
 }
 
 /* La marca, dibujada en CSS: un cuadrado redondeado con las iniciales. No hay
    archivo de imagen que mantener ni que cargar. */
-.cabecera__marca {
-  display: flex;
-  align-items: center;
-  gap: var(--espacio-2);
-  font-size: var(--texto-base);
-  letter-spacing: -0.012em;
+.lateral__logo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  font-size: var(--texto-xs);
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(145deg, #6d64f5, var(--color-primario-fuerte));
+  border-radius: var(--radio-sm);
+  box-shadow: 0 4px 14px -4px rgba(79, 70, 229, 0.7);
 }
 
-.cabecera__marca::before {
-  content: 'SQ';
+/* El boton que pliega el menu solo existe en pantallas angostas. */
+.lateral__alternar {
+  display: none;
+}
+
+.lateral__cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lateral__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lateral__enlace {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  padding: 9px var(--espacio-3);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--lateral-texto);
+  text-decoration: none;
+  border-radius: var(--radio-sm);
+  transition: background 0.15s, color 0.15s;
+}
+
+.lateral__enlace:hover {
+  color: #fff;
+  background: var(--lateral-hover);
+}
+
+.lateral__enlace--activo,
+.lateral__enlace--activo:hover {
+  color: #fff;
+  background: var(--lateral-activo);
+  box-shadow: inset 3px 0 0 var(--color-primario);
+}
+
+.icono {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+/* La sesion va abajo del todo: margin-top auto empuja el bloque al fondo de
+   la columna, quede el espacio que quede entre medio. */
+.lateral__sesion {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--espacio-2) var(--espacio-3);
+  margin-top: auto;
+  padding: var(--espacio-4) var(--espacio-2) 0;
+  border-top: 1px solid var(--lateral-borde);
+}
+
+.lateral__avatar {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   font-size: var(--texto-xs);
   font-weight: 700;
-  letter-spacing: 0;
   color: #fff;
-  background: linear-gradient(145deg, var(--color-primario), var(--color-primario-fuerte));
+  background: var(--lateral-activo);
+  border-radius: 50%;
+}
+
+.lateral__usuario {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.lateral__nombre {
+  overflow: hidden;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lateral__rol {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.lateral__salir {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  padding: 8px var(--espacio-3);
+  font: inherit;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--lateral-texto);
+  background: none;
+  border: 0;
   border-radius: var(--radio-sm);
-  box-shadow: var(--sombra-1);
+  cursor: pointer;
 }
 
-.cabecera__sesion {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.lateral__salir:hover {
+  color: #fff;
+  background: var(--lateral-hover);
 }
 
-.cabecera__usuario {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+/* En pantallas angostas la columna se vuelve una barra arriba, y el menu se
+   despliega bajo ella al pulsar el boton. */
+@media (max-width: 900px) {
+  .aplicacion {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lateral {
+    z-index: 20;
+    height: auto;
+    padding: var(--espacio-3) var(--espacio-4);
+  }
+
+  .lateral__barra {
+    padding: 0;
+  }
+
+  .lateral__alternar {
+    display: block;
+    padding: 6px 14px;
+    font: inherit;
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: #fff;
+    background: var(--lateral-hover);
+    border: 1px solid var(--lateral-borde);
+    border-radius: var(--radio-pildora);
+    cursor: pointer;
+  }
+
+  .lateral__cuerpo {
+    display: none;
+    padding-top: var(--espacio-4);
+  }
+
+  .lateral--abierto .lateral__cuerpo {
+    display: flex;
+  }
+
+  .lateral__sesion {
+    margin-top: var(--espacio-4);
+  }
 }
 
+/* Rol de un usuario como etiqueta, en la tabla de usuarios. */
 .etiqueta-rol {
   padding: 2px 8px;
   font-size: 0.7rem;
@@ -563,37 +731,6 @@ body {
 .etiqueta-salud--sin_datos {
   color: var(--color-texto-suave);
   background: var(--color-fondo);
-}
-
-/* ===========================================================================
-   Navegacion de la cabecera
-   =========================================================================== */
-
-.cabecera__nav {
-  display: flex;
-  gap: 4px;
-  /* Ocupa el espacio sobrante para que la marca quede a la izquierda y los
-     datos de sesion a la derecha, con la navegacion junto a la marca. */
-  flex: 1;
-  margin-left: 16px;
-}
-
-.cabecera__enlace {
-  padding: 6px 12px;
-  border-radius: var(--radio);
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-decoration: none;
-  color: var(--color-texto-suave);
-}
-
-.cabecera__enlace:hover {
-  background: var(--color-fondo);
-}
-
-.cabecera__enlace--activo {
-  color: var(--color-primario-fuerte);
-  background: var(--color-primario-tinte);
 }
 
 /* ===========================================================================
@@ -666,8 +803,8 @@ body {
 /* --- Tabla --------------------------------------------------------------- */
 
 /* El desplazamiento horizontal se queda dentro de este contenedor. Si se
-   permitiera en el body, en una pantalla angosta se desplazaria tambien la
-   cabecera y se perderia la navegacion de vista. */
+   permitiera en el body, en una pantalla angosta se desplazaria la pagina
+   entera y se perderia la navegacion de vista. */
 .tabla-contenedor {
   overflow-x: auto;
   background: var(--color-superficie);
@@ -1868,13 +2005,14 @@ a.tabla__titulo:hover {
   margin-bottom: 0;
 }
 
-/* Cinco columnas iguales. En pantallas angostas no se aprietan: el tablero se
-   desplaza de lado dentro de su caja, como en cualquier herramienta de este
-   tipo, y la pagina no. */
+/* Cinco columnas iguales. El minimo de 180px es el que deja caber las cinco
+   en una pantalla de notebook (1280px) junto al menu lateral; con 230px la
+   columna Cerrada quedaba fuera de la vista. Mas angosto que eso no se
+   aprietan: el tablero se desplaza de lado dentro de su caja, y la pagina no. */
 .tablero {
   display: grid;
-  grid-template-columns: repeat(5, minmax(230px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(5, minmax(180px, 1fr));
+  gap: 12px;
   overflow-x: auto;
   padding-bottom: 8px;
   align-items: start;

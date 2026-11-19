@@ -29,7 +29,7 @@ test('con credenciales incorrectas avisa y no deja entrar', async ({ page }) => 
 test('la sesion sobrevive a una recarga y se pierde al salir', async ({ page }) => {
   await entrar(page, USUARIOS.tester);
 
-  const cabecera = page.locator('.cabecera__usuario');
+  const cabecera = page.locator('.lateral__usuario');
   await expect(cabecera).toContainText(USUARIOS.tester.nombre);
   await expect(cabecera).toContainText('TESTER');
 

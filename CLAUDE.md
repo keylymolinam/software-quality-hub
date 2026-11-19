@@ -161,7 +161,7 @@ de los datos: si se cambian, hay que decir por qué.
   `from './client.js'`, `from '../context/SesionContext.jsx'`.
 - **Todo el dominio está en español**: identificadores, funciones, mensajes de error,
   clases CSS, nombres de archivo. `crearIncidencia`, `lanzarSiHayErrores`,
-  `ProveedorSesion`, `.cabecera__usuario`.
+  `ProveedorSesion`, `.lateral__usuario`.
 - **Los `.js` y `.jsx` se escriben sin acentos ni `ñ`**, comentarios incluidos. Las tildes
   aparecen solo en `.md`, en `.sql` y en los textos de dominio de
   `clasificacion.service.js` y `similitud.js`. Al escribir código nuevo, mantener ASCII.

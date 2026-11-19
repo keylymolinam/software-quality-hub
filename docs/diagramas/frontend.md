@@ -19,11 +19,13 @@ flowchart TB
     subgraph sesion["Con sesión — las rutas se declaran solo aquí"]
         direction TB
 
-        cabecera{{"Cabecera — las cinco secciones<br/>presente en todas las pantallas"}}
+        menu{{"Menú lateral — las seis secciones<br/>presente en todas las pantallas"}}
 
         home["Inicio<br/>/"]
         listado["Listado<br/>/incidencias"]
+        tablero["Tablero<br/>/tablero"]
         salud["Salud<br/>/salud"]
+        guia["Guía de salud<br/>/salud/guia"]
         proyectos["Proyectos<br/>/proyectos"]
         usuarios["Usuarios<br/>/usuarios"]
 
@@ -31,13 +33,16 @@ flowchart TB
         detalle["Detalle<br/>/incidencias/:id"]
         editar["Edición<br/>/incidencias/:id/editar"]
 
-        cabecera --> home
-        cabecera --> listado
-        cabecera --> salud
-        cabecera --> proyectos
-        cabecera --> usuarios
+        menu --> home
+        menu --> listado
+        menu --> tablero
+        menu --> salud
+        menu --> proyectos
+        menu --> usuarios
 
         home -->|"ver el desglose"| salud
+        salud -->|"¿qué es y cómo se calcula?"| guia
+        tablero -->|"el título de una tarjeta"| detalle
 
         listado -->|"registrar"| nueva
         listado -->|"el título de una fila"| detalle
@@ -56,9 +61,11 @@ flowchart TB
 
 Tres detalles de la figura que son decisiones y no casualidades:
 
-**La cabecera es el eje de la navegación**, no las pantallas entre sí. Sus cinco
-secciones se declaran como datos en `components/Cabecera.jsx`, así que agregar una
-pantalla al menú es agregar una línea. Entre pantallas solo hay flechas donde una
+**El menú lateral es el eje de la navegación**, no las pantallas entre sí. Sus seis
+secciones se declaran como datos en `components/MenuLateral.jsx`, así que agregar una
+pantalla al menú es agregar una línea. Reemplazó a una cabecera horizontal en la
+modernización: con siete secciones la barra de arriba se quedaba corta, y la columna
+fija deja todo el ancho al tablero y al listado. Entre pantallas solo hay flechas donde una
 tarea continúa en otra: del listado al detalle, del detalle a la edición.
 
 **El registro vuelve al listado y no al detalle.** Al guardar muestra una

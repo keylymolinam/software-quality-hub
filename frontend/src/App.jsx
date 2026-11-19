@@ -27,7 +27,7 @@
  */
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import Cabecera from './components/Cabecera.jsx';
+import MenuLateral from './components/MenuLateral.jsx';
 import DetalleIncidencia from './pages/DetalleIncidencia.jsx';
 import EditarIncidencia from './pages/EditarIncidencia.jsx';
 import Incidencias from './pages/Incidencias.jsx';
@@ -56,43 +56,47 @@ export default function App() {
     return <Login />;
   }
 
+  // El menu va a la izquierda y el contenido a la derecha. El contenedor
+  // .aplicacion los pone lado a lado, y en pantallas angostas uno sobre otro.
   return (
-    <>
-      <Cabecera />
+    <div className="aplicacion">
+      <MenuLateral />
 
-      {/* Cada pagina dibuja su propio <main> con el ancho que necesita: el
-          listado de incidencias pide una tabla ancha, y las tarjetas del inicio
-          se leen mejor en una columna angosta. Un contenedor unico aqui obligaria
-          a las dos a conformarse con el mismo ancho. */}
-      <Routes>
-        <Route path="/" element={<Inicio />} />
-        <Route path="/incidencias" element={<Incidencias />} />
+      <div className="aplicacion__principal">
+        {/* Cada pagina dibuja su propio <main> con el ancho que necesita: el
+            listado de incidencias pide una tabla ancha, y las tarjetas del inicio
+            se leen mejor en una columna angosta. Un contenedor unico aqui obligaria
+            a las dos a conformarse con el mismo ancho. */}
+        <Routes>
+          <Route path="/" element={<Inicio />} />
+          <Route path="/incidencias" element={<Incidencias />} />
 
-        {/* Va junto al listado y no dentro de el: registrar no es "ver una
-            incidencia", es otra pantalla. React Router resuelve por
-            especificidad, asi que /incidencias/nueva no compite con un futuro
-            /incidencias/:id aunque se declaren en cualquier orden. */}
-        <Route path="/incidencias/nueva" element={<NuevaIncidencia />} />
+          {/* Va junto al listado y no dentro de el: registrar no es "ver una
+              incidencia", es otra pantalla. React Router resuelve por
+              especificidad, asi que /incidencias/nueva no compite con un futuro
+              /incidencias/:id aunque se declaren en cualquier orden. */}
+          <Route path="/incidencias/nueva" element={<NuevaIncidencia />} />
 
-        {/* Va DESPUES de /incidencias/nueva. React Router resuelve por
-            especificidad y no por orden, asi que hoy da igual; se declara en
-            este orden para que al leer el archivo se vea que "nueva" es una
-            pantalla y no un id, que es la confusion que produce un :id suelto. */}
-        <Route path="/incidencias/:id" element={<DetalleIncidencia />} />
-        <Route path="/incidencias/:id/editar" element={<EditarIncidencia />} />
+          {/* Va DESPUES de /incidencias/nueva. React Router resuelve por
+              especificidad y no por orden, asi que hoy da igual; se declara en
+              este orden para que al leer el archivo se vea que "nueva" es una
+              pantalla y no un id, que es la confusion que produce un :id suelto. */}
+          <Route path="/incidencias/:id" element={<DetalleIncidencia />} />
+          <Route path="/incidencias/:id/editar" element={<EditarIncidencia />} />
 
-        <Route path="/tablero" element={<Tablero />} />
+          <Route path="/tablero" element={<Tablero />} />
 
-        <Route path="/proyectos" element={<Proyectos />} />
-        <Route path="/usuarios" element={<Usuarios />} />
-        <Route path="/salud" element={<Salud />} />
-        <Route path="/salud/guia" element={<GuiaSalud />} />
+          <Route path="/proyectos" element={<Proyectos />} />
+          <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/salud" element={<Salud />} />
+          <Route path="/salud/guia" element={<GuiaSalud />} />
 
-        {/* Una direccion que no existe vuelve al inicio en lugar de dejar la
-            pantalla en blanco. Se reemplaza la entrada del historial para que el
-            boton atras no traiga de vuelta la direccion equivocada. */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </>
+          {/* Una direccion que no existe vuelve al inicio en lugar de dejar la
+              pantalla en blanco. Se reemplaza la entrada del historial para que el
+              boton atras no traiga de vuelta la direccion equivocada. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </div>
   );
 }
