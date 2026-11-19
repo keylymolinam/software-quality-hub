@@ -49,7 +49,8 @@ npm run test:e2e   # interaccion con Playwright; levanta backend y frontend solo
 
 El backend corre en `:3000`, el frontend en `:5173`. Ambos necesitan su `.env` copiado
 desde `.env.example`. Los usuarios de prueba comparten la contraseña `Demo1234`
-(administrador: `carolina.nunez@ejemplo.cl`).
+y su correo dice el rol: `superusuario@ejemplo.cl` (administrador), `desarrollador1@`,
+`desarrollador2@`, `tester@` y `analista@`, todos en `ejemplo.cl`.
 
 Requiere **Node >= 22.5.0** por el módulo integrado `node:sqlite`; lo fija `package.json`
 en `engines` y el README ya lo dice igual. No hay ESLint ni Prettier: el estilo

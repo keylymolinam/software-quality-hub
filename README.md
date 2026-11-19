@@ -235,13 +235,23 @@ Se obtiene con `POST /api/auth/login` y se envía en cada petición siguiente:
 Authorization: Bearer <token>
 ```
 
-Los usuarios de prueba comparten la contraseña **`Demo1234`**. Para entrar como
-administrador:
+Los usuarios de prueba comparten la contraseña **`Demo1234`**, y su correo dice
+el rol:
+
+| Correo | Rol |
+|---|---|
+| `superusuario@ejemplo.cl` | ADMINISTRADOR |
+| `desarrollador1@ejemplo.cl` | DESARROLLADOR |
+| `desarrollador2@ejemplo.cl` | DESARROLLADOR |
+| `tester@ejemplo.cl` | TESTER |
+| `analista@ejemplo.cl` | ANALISTA |
+
+Para entrar como administrador:
 
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d "{\"correo_electronico\":\"carolina.nunez@ejemplo.cl\",\"contrasena\":\"Demo1234\"}"
+  -d "{\"correo_electronico\":\"superusuario@ejemplo.cl\",\"contrasena\":\"Demo1234\"}"
 ```
 
 La respuesta incluye `token`, su vigencia y los datos del usuario. La contraseña

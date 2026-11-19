@@ -24,8 +24,8 @@ import { API_URL } from '../playwright.config.js';
 export const CONTRASENA = 'Demo1234';
 
 export const USUARIOS = {
-  administrador: { correo: 'carolina.nunez@ejemplo.cl', nombre: 'Carolina Nunez' },
-  tester: { correo: 'daniela.rojas@ejemplo.cl', nombre: 'Daniela Rojas' },
+  administrador: { correo: 'superusuario@ejemplo.cl', nombre: 'Superusuario' },
+  tester: { correo: 'tester@ejemplo.cl', nombre: 'Tester' },
 };
 
 /** Inicia sesion por la pantalla de login y espera a estar dentro. */

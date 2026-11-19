@@ -31,6 +31,10 @@ DELETE FROM sqlite_sequence
 -- USUARIO
 -- Un usuario por cada rol definido en el modelo.
 --
+-- Los nombres y correos dicen el rol (superusuario@, tester@...) en vez de ser
+-- nombres de personas: en una demostracion se sabe de inmediato con que perfil
+-- entrar, y nadie los confunde con datos de personas reales.
+--
 -- Todos los usuarios de prueba comparten la contrasena:  Demo1234
 --
 -- El valor guardado NO es esa contrasena, sino su hash bcrypt. bcrypt es una
@@ -48,11 +52,11 @@ DELETE FROM sqlite_sequence
 --   node -e "console.log(require('bcryptjs').hashSync('TuClave', 10))"
 -- =============================================================================
 INSERT INTO USUARIO (nombre, correo_electronico, contrasena_hash, rol, fecha_creacion) VALUES
-    ('Carolina Nunez',  'carolina.nunez@ejemplo.cl',  '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'ADMINISTRADOR', datetime('now', '-180 days')),
-    ('Luis Fuentes',    'luis.fuentes@ejemplo.cl',    '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'DESARROLLADOR', datetime('now', '-175 days')),
-    ('Daniela Rojas',   'daniela.rojas@ejemplo.cl',   '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'TESTER',        datetime('now', '-170 days')),
-    ('Matias Herrera',  'matias.herrera@ejemplo.cl',  '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'ANALISTA',      datetime('now', '-160 days')),
-    ('Javiera Soto',    'javiera.soto@ejemplo.cl',    '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'DESARROLLADOR', datetime('now', '-120 days'));
+    ('Superusuario',    'superusuario@ejemplo.cl',    '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'ADMINISTRADOR', datetime('now', '-180 days')),
+    ('Desarrollador 1', 'desarrollador1@ejemplo.cl',  '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'DESARROLLADOR', datetime('now', '-175 days')),
+    ('Tester',          'tester@ejemplo.cl',          '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'TESTER',        datetime('now', '-170 days')),
+    ('Analista',        'analista@ejemplo.cl',        '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'ANALISTA',      datetime('now', '-160 days')),
+    ('Desarrollador 2', 'desarrollador2@ejemplo.cl',  '$2b$10$RxWpNHJ5BOQneWPzw0Pq.ele/pDtGgM0gHJWEG2/joOI40Q3HR722', 'DESARROLLADOR', datetime('now', '-120 days'));
 
 
 -- =============================================================================
@@ -231,7 +235,7 @@ VALUES
 -- Incidencia 1: creada, tomada por un desarrollador.
 INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
     (NULL,      'ABIERTA',     datetime('now', '-45 days'), 'Incidencia registrada por el analista.',        1, 4),
-    ('ABIERTA', 'EN_PROGRESO', datetime('now', '-44 days'), 'Se asigna a Luis Fuentes para diagnostico.',   1, 1);
+    ('ABIERTA', 'EN_PROGRESO', datetime('now', '-44 days'), 'Se asigna a Desarrollador 1 para diagnostico.',   1, 1);
 
 -- Incidencia 2: solo creacion (marcada como posible duplicado por el sistema).
 INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
@@ -250,7 +254,7 @@ INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, c
 -- Incidencia 5: ciclo completo hasta CERRADA.
 INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
     (NULL,          'ABIERTA',     datetime('now', '-95 days'), 'Reportada por el equipo de pruebas.',      5, 3),
-    ('ABIERTA',     'EN_PROGRESO', datetime('now', '-93 days'), 'Se asigna a Javiera Soto.',                5, 1),
+    ('ABIERTA',     'EN_PROGRESO', datetime('now', '-93 days'), 'Se asigna a Desarrollador 2.',                5, 1),
     ('EN_PROGRESO', 'RESUELTA',    datetime('now', '-88 days'), 'Se ajusto el diseno adaptable.',           5, 5),
     ('RESUELTA',    'CERRADA',     datetime('now', '-86 days'), 'Verificado en pruebas. Se cierra.',        5, 3);
 
@@ -266,7 +270,7 @@ INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, c
 -- Incidencia 8: CASO DE REAPERTURA (RESUELTA -> EN_PROGRESO).
 INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
     (NULL,          'ABIERTA',     datetime('now', '-18 days'), 'Reportada desde terreno.',                              8, 3),
-    ('ABIERTA',     'EN_PROGRESO', datetime('now', '-17 days'), 'Se asigna a Luis Fuentes.',                             8, 1),
+    ('ABIERTA',     'EN_PROGRESO', datetime('now', '-17 days'), 'Se asigna a Desarrollador 1.',                             8, 1),
     ('EN_PROGRESO', 'RESUELTA',    datetime('now', '-9 days'),  'Se libero la memoria de la camara al cerrar la vista.', 8, 2),
     ('RESUELTA',    'EN_PROGRESO', datetime('now', '-6 days'),  'La falla se repite en equipos Android 11. Se reabre.',  8, 3);
 

@@ -367,10 +367,10 @@ Ejemplo de la traza resultante para una incidencia reabierta:
 
 | Fecha | Transición | Autor | Rol |
 |---|---|---|---|
-| día 0 | (nueva) → ABIERTA | Daniela Rojas | TESTER |
-| día 1 | ABIERTA → EN_PROGRESO | Carolina Núñez | ADMINISTRADOR |
-| día 9 | EN_PROGRESO → RESUELTA | Luis Fuentes | DESARROLLADOR |
-| día 12 | RESUELTA → EN_PROGRESO | Daniela Rojas | TESTER |
+| día 0 | (nueva) → ABIERTA | Tester | TESTER |
+| día 1 | ABIERTA → EN_PROGRESO | Superusuario | ADMINISTRADOR |
+| día 9 | EN_PROGRESO → RESUELTA | Desarrollador 1 | DESARROLLADOR |
+| día 12 | RESUELTA → EN_PROGRESO | Tester | TESTER |
 
 ### 6.2 Denominación del campo `contrasena_hash`
 
