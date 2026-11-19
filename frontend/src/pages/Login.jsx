@@ -47,6 +47,11 @@ export default function Login() {
   return (
     <main className="pantalla-centrada">
       <form className="tarjeta tarjeta--login" onSubmit={alEnviar}>
+        {/* El mismo logo del menu lateral: es lo primero que se ve, y lo que
+            se vuelve a ver al entrar. */}
+        <span className="login__logo" aria-hidden="true">
+          SQ
+        </span>
         <h1 className="titulo">Software Quality Hub</h1>
         <p className="subtitulo">Sistema de gesti&oacute;n de incidencias de software</p>
 

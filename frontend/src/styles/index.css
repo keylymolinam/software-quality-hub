@@ -188,10 +188,18 @@ body {
   color: var(--color-primario-fuerte);
 }
 
+/* Junto al menu lateral, el titulo ya no necesita tanto aire arriba: la
+   columna oscura marca el borde, y 48px lo dejaban flotando. */
 .contenedor {
-  max-width: 760px;
+  max-width: 820px;
   margin: 0 auto;
-  padding: var(--espacio-12) var(--espacio-6);
+  padding: var(--espacio-8) var(--espacio-8) var(--espacio-12);
+}
+
+@media (max-width: 600px) {
+  .contenedor {
+    padding: var(--espacio-6) var(--espacio-4) var(--espacio-8);
+  }
 }
 
 /* Los titulos van con el espaciado entre letras apretado. A tamano grande, el
@@ -200,8 +208,8 @@ body {
 .titulo {
   margin: 0 0 var(--espacio-1);
   font-size: var(--texto-xl);
-  font-weight: 700;
-  letter-spacing: -0.021em;
+  font-weight: 750;
+  letter-spacing: -0.025em;
   line-height: 1.2;
 }
 
@@ -308,22 +316,37 @@ body {
   display: grid;
   place-items: center;
   padding: var(--espacio-6);
-  /* Degradado muy suave en diagonal. Es la unica pantalla sin cabecera ni
-     datos, asi que es donde un fondo plano se nota mas vacio. Los dos extremos
-     estan a dos pasos de distancia en la rampa: se percibe profundidad, no una
-     mancha de color. */
+  /* El fondo oscuro del menu lateral, con un resplandor indigo. Es la primera
+     pantalla que se ve y la unica sin datos: aqui el color presenta el sistema
+     y anticipa el menu que aparece al entrar. */
   background:
-    radial-gradient(1100px 520px at 12% -10%, var(--color-primario-tinte), transparent 70%),
-    linear-gradient(170deg, var(--color-superficie), var(--color-fondo) 60%);
+    radial-gradient(900px 500px at 15% 0%, rgba(99, 102, 241, 0.35), transparent 65%),
+    radial-gradient(700px 420px at 100% 100%, rgba(79, 70, 229, 0.25), transparent 60%),
+    var(--lateral-fondo);
+}
+
+.login__logo {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: var(--espacio-4);
+  font-size: var(--texto-sm);
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(145deg, #6d64f5, var(--color-primario-fuerte));
+  border-radius: var(--radio);
+  box-shadow: 0 6px 18px -6px rgba(79, 70, 229, 0.8);
 }
 
 .tarjeta--login {
   width: 100%;
   max-width: 400px;
   padding: var(--espacio-8);
+  border-color: transparent;
   /* La sombra fuerte, la unica de la aplicacion: aqui la tarjeta es el centro
      de la pantalla y no una entre varias. */
-  box-shadow: var(--sombra-2);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.55);
 }
 
 .tarjeta--login .titulo {
@@ -352,10 +375,13 @@ body {
 
 .campo__control {
   width: 100%;
-  padding: 10px var(--espacio-3);
+  padding: 9px var(--espacio-3);
   font: inherit;
+  font-size: var(--texto-sm);
   color: inherit;
-  background: var(--color-superficie);
+  /* Un fondo apenas tintado distingue el campo de la tarjeta sin necesitar
+     un borde oscuro; al recibir el foco se vuelve blanco. */
+  background: #fbfcfe;
   border: 1px solid var(--color-borde-fuerte);
   border-radius: var(--radio);
   /* La transicion es corta a proposito: lo suficiente para que el cambio se
@@ -369,6 +395,7 @@ body {
 
 .campo__control:focus {
   outline: none;
+  background: var(--color-superficie);
   border-color: var(--color-primario);
   /* El anillo exterior mantiene visible el foco para quien navega con el
      teclado, sin desplazar el resto del formulario como haria un borde mas
@@ -379,9 +406,9 @@ body {
 /* --- Botones ------------------------------------------------------------- */
 
 .boton {
-  padding: 10px var(--espacio-4);
+  padding: 9px var(--espacio-4);
   font: inherit;
-  font-size: var(--texto-base);
+  font-size: var(--texto-sm);
   font-weight: 600;
   letter-spacing: -0.006em;
   border-radius: var(--radio);
@@ -405,12 +432,15 @@ body {
 .boton--primario {
   width: 100%;
   color: #fff;
-  background: var(--color-primario);
-  box-shadow: var(--sombra-1);
+  background: linear-gradient(180deg, #5b53ea, var(--color-primario));
+  box-shadow: 0 1px 2px rgba(18, 24, 38, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
+/* Al pasar el raton el boton principal se ilumina con su propio color: un
+   resplandor y no una sombra gris, que lo hacia parecer pegado al fondo. */
 .boton--primario:hover:not(:disabled) {
-  background: var(--color-primario-fuerte);
+  background: linear-gradient(180deg, var(--color-primario), var(--color-primario-fuerte));
+  box-shadow: 0 6px 16px -6px rgba(79, 70, 229, 0.65);
 }
 
 .boton--discreto {
@@ -420,9 +450,9 @@ body {
 }
 
 .boton--discreto:hover:not(:disabled) {
-  background: var(--color-sutil);
-  border-color: var(--color-texto-tenue);
-  color: var(--color-texto);
+  background: var(--color-superficie);
+  border-color: var(--color-primario-borde);
+  color: var(--color-primario-fuerte);
 }
 
 /* --- Avisos -------------------------------------------------------------- */
@@ -821,7 +851,7 @@ body {
 
 .tabla th,
 .tabla td {
-  padding: 10px 14px;
+  padding: 12px 16px;
   text-align: left;
   vertical-align: top;
   border-bottom: 1px solid var(--color-borde);
@@ -836,7 +866,8 @@ body {
    dentro de otro) o renunciar al desplazamiento horizontal en pantallas
    angostas; ninguna de las dos compensa unos encabezados a la vista. */
 .tabla thead th {
-  background: var(--color-sutil);
+  background: var(--color-superficie);
+  border-bottom-color: var(--color-borde-fuerte);
   font-size: var(--texto-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -851,8 +882,12 @@ body {
   border-bottom: none;
 }
 
+.tabla tbody tr {
+  transition: background-color 120ms ease;
+}
+
 .tabla tbody tr:hover {
-  background: var(--color-fondo);
+  background: #f8f8ff;
 }
 
 .tabla__num {
@@ -900,13 +935,27 @@ body {
 
 /* --- Distintivos de estado y prioridad ----------------------------------- */
 
+/* Pildora con un punto del mismo color delante del nombre, como en las
+   herramientas de seguimiento actuales. El punto se ve aunque la pildora este
+   en una columna angosta, y el nombre sigue escrito para quien no distingue
+   el color. */
 .etiqueta-estado {
-  display: inline-block;
-  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.etiqueta-estado::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .etiqueta-estado--abierta {
