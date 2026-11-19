@@ -119,6 +119,63 @@ after(cerrarEntorno);
 
 // --- Linea de tiempo -------------------------------------------------------
 
+describe('Barra de filtros', () => {
+  const SIN_FILTROS = {
+    busqueda: '',
+    estado: '',
+    prioridad: '',
+    categoria: '',
+    id_proyecto: '',
+    asignado_a: '',
+    ordenarPor: 'fecha_creacion',
+    direccion: 'DESC',
+  };
+
+  function dibujarFiltros(FiltrosIncidencias, valores) {
+    return dibujar(FiltrosIncidencias, {
+      propiedades: {
+        valores,
+        onCambiar: () => {},
+        onLimpiar: () => {},
+        proyectos: [],
+        usuarios: [],
+        hayFiltros: false,
+      },
+    });
+  }
+
+  test('a la vista solo estado, prioridad y proyecto; el resto tras "Mas filtros"', async () => {
+    const { default: FiltrosIncidencias } = await cargar('/src/components/FiltrosIncidencias.jsx');
+
+    const visible = texto(dibujarFiltros(FiltrosIncidencias, SIN_FILTROS));
+
+    assert.match(visible, /Estado/);
+    assert.match(visible, /Prioridad/);
+    assert.match(visible, /Proyecto/);
+    assert.match(visible, /\+ M\u00e1s filtros/);
+    assert.doesNotMatch(visible, /\(\d\)/, 'sin filtros ocultos en uso no hay contador');
+
+    // Las opciones "Estado" y "Prioridad" de "Ordenar por" no deben colarse:
+    // se busca la etiqueta de cada desplegable oculto.
+    assert.doesNotMatch(visible, /Categor\u00eda/);
+    assert.doesNotMatch(visible, /Asignada a/);
+    assert.doesNotMatch(visible, /Ordenar por/);
+  });
+
+  test('un filtro oculto en uso abre el panel y se cuenta en el boton', async () => {
+    const { default: FiltrosIncidencias } = await cargar('/src/components/FiltrosIncidencias.jsx');
+
+    const visible = texto(
+      dibujarFiltros(FiltrosIncidencias, { ...SIN_FILTROS, categoria: 'SEGURIDAD', direccion: 'ASC' })
+    );
+
+    // Categoria y un orden distinto del de siempre: dos ocultos en uso.
+    assert.match(visible, /Menos filtros \(2\)/);
+    assert.match(visible, /Categor\u00eda/);
+    assert.match(visible, /Ordenar por/);
+  });
+});
+
 describe('Linea de tiempo de la bitacora', () => {
   test('dibuja un hito por movimiento y nombra la creacion', async () => {
     const { default: LineaTiempo } = await cargar('/src/components/LineaTiempo.jsx');

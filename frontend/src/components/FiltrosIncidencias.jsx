@@ -8,6 +8,19 @@
  * Las listas de proyectos y usuarios tambien llegan como propiedades, por el
  * mismo motivo: si este componente las pidiera por su cuenta, dejaria de poder
  * dibujarse en una prueba sin un servidor detras.
+ *
+ * TRES FILTROS A LA VISTA Y EL RESTO EN "MAS FILTROS"
+ *
+ * Antes se mostraban los siete desplegables a la vez, y dos participantes de
+ * la prueba de usuarios (P1 y P2) los encontraron amontonados. A la vista
+ * quedan Estado, Prioridad y Proyecto: son las tres preguntas que mas se hace
+ * un equipo (en que va, que tan urgente es, de donde viene) y justo las que
+ * pedia la tarea 3 de esa prueba. Categoria, asignacion y orden pasan a un
+ * panel que se abre con un boton.
+ *
+ * Se descarto esconder los filtros sin aviso: una lista filtrada por algo que
+ * no se ve parece incompleta y nadie sabe por que. Por eso el boton cuenta
+ * cuantos filtros ocultos estan en uso, y el panel parte abierto si hay alguno.
  */
 import { useEffect, useState } from 'react';
 
@@ -15,6 +28,24 @@ import { CATEGORIAS, ESTADOS, ORDENES, PRIORIDADES } from '../dominio/incidencia
 
 /** Milisegundos de espera antes de buscar mientras se escribe. */
 const ESPERA_BUSQUEDA = 350;
+
+/** Orden que usa el backend cuando no se indica otro; no cuenta como filtro. */
+const ORDEN_POR_DEFECTO = { ordenarPor: 'fecha_creacion', direccion: 'DESC' };
+
+/**
+ * Cuantos de los filtros del panel "Mas filtros" estan en uso.
+ *
+ * El orden cuenta solo si se aparta del de siempre: tiene un valor aunque nadie
+ * lo haya tocado, y contarlo siempre dejaria el aviso encendido sin motivo.
+ */
+function contarOcultosEnUso(valores) {
+  return [
+    valores.categoria !== '',
+    valores.asignado_a !== '',
+    valores.ordenarPor !== ORDEN_POR_DEFECTO.ordenarPor ||
+      valores.direccion !== ORDEN_POR_DEFECTO.direccion,
+  ].filter(Boolean).length;
+}
 
 export default function FiltrosIncidencias({
   valores,
@@ -51,6 +82,15 @@ export default function FiltrosIncidencias({
     return () => clearTimeout(temporizador);
   }, [textoBusqueda, valores.busqueda, onCambiar]);
 
+  const ocultosEnUso = contarOcultosEnUso(valores);
+
+  // Abierto o cerrado vive en useState y no en la direccion, a diferencia de
+  // los filtros: no cambia que incidencias se ven, solo cuanto ocupa la barra.
+  // En la direccion, el boton atras abriria y cerraria el panel, que no es lo
+  // que alguien espera al volver. Parte abierto si llega un enlace que ya usa
+  // un filtro oculto, para que se vea por que la lista es la que es.
+  const [masFiltrosAbierto, setMasFiltrosAbierto] = useState(() => ocultosEnUso > 0);
+
   return (
     <section className="filtros" aria-label="Filtros del listado">
       <div className="filtros__fila">
@@ -80,15 +120,6 @@ export default function FiltrosIncidencias({
         />
 
         <Desplegable
-          etiqueta="Categor&iacute;a"
-          valor={valores.categoria}
-          opciones={CATEGORIAS}
-          onCambiar={(v) => onCambiar('categoria', v)}
-        />
-      </div>
-
-      <div className="filtros__fila">
-        <Desplegable
           etiqueta="Proyecto"
           valor={valores.id_proyecto}
           // Los proyectos llegan del backend, asi que hay que adaptarlos a la
@@ -100,36 +131,16 @@ export default function FiltrosIncidencias({
           onCambiar={(v) => onCambiar('id_proyecto', v)}
         />
 
-        <Desplegable
-          etiqueta="Asignada a"
-          valor={valores.asignado_a}
-          opciones={usuarios.map((u) => ({
-            valor: String(u.id_usuario),
-            etiqueta: u.nombre,
-          }))}
-          onCambiar={(v) => onCambiar('asignado_a', v)}
-        />
-
-        <Desplegable
-          etiqueta="Ordenar por"
-          valor={valores.ordenarPor}
-          opciones={ORDENES}
-          // El orden siempre tiene un valor: no existe "sin ordenar", el
-          // backend usa fecha_creacion cuando no se indica nada.
-          sinVacio
-          onCambiar={(v) => onCambiar('ordenarPor', v)}
-        />
-
-        <Desplegable
-          etiqueta="Direcci&oacute;n"
-          valor={valores.direccion}
-          opciones={[
-            { valor: 'DESC', etiqueta: 'Descendente' },
-            { valor: 'ASC', etiqueta: 'Ascendente' },
-          ]}
-          sinVacio
-          onCambiar={(v) => onCambiar('direccion', v)}
-        />
+        <button
+          className="boton boton--discreto filtros__mas"
+          type="button"
+          aria-expanded={masFiltrosAbierto}
+          aria-controls="filtros-adicionales"
+          onClick={() => setMasFiltrosAbierto((abierto) => !abierto)}
+        >
+          {masFiltrosAbierto ? '- Menos filtros' : '+ M\u00e1s filtros'}
+          {ocultosEnUso > 0 && ` (${ocultosEnUso})`}
+        </button>
 
         {/* Aparece solo cuando hay algo que limpiar: un boton que no haria nada
             no ayuda, y su ausencia ya informa que no hay filtros puestos. */}
@@ -139,6 +150,48 @@ export default function FiltrosIncidencias({
           </button>
         )}
       </div>
+
+      {masFiltrosAbierto && (
+        <div className="filtros__fila" id="filtros-adicionales">
+          <Desplegable
+            etiqueta="Categor&iacute;a"
+            valor={valores.categoria}
+            opciones={CATEGORIAS}
+            onCambiar={(v) => onCambiar('categoria', v)}
+          />
+
+          <Desplegable
+            etiqueta="Asignada a"
+            valor={valores.asignado_a}
+            opciones={usuarios.map((u) => ({
+              valor: String(u.id_usuario),
+              etiqueta: u.nombre,
+            }))}
+            onCambiar={(v) => onCambiar('asignado_a', v)}
+          />
+
+          <Desplegable
+            etiqueta="Ordenar por"
+            valor={valores.ordenarPor}
+            opciones={ORDENES}
+            // El orden siempre tiene un valor: no existe "sin ordenar", el
+            // backend usa fecha_creacion cuando no se indica nada.
+            sinVacio
+            onCambiar={(v) => onCambiar('ordenarPor', v)}
+          />
+
+          <Desplegable
+            etiqueta="Direcci&oacute;n"
+            valor={valores.direccion}
+            opciones={[
+              { valor: 'DESC', etiqueta: 'Descendente' },
+              { valor: 'ASC', etiqueta: 'Ascendente' },
+            ]}
+            sinVacio
+            onCambiar={(v) => onCambiar('direccion', v)}
+          />
+        </div>
+      )}
     </section>
   );
 }
@@ -147,7 +200,7 @@ export default function FiltrosIncidencias({
  * Desplegable de un filtro.
  *
  * Vive en este archivo y no en el suyo porque no se usa en otra parte: solo
- * existe para no repetir siete veces la misma estructura de label + select.
+ * existe para no repetir la misma estructura de label + select.
  *
  * @param {boolean} sinVacio  Oculta la opcion "Todas". La usan los filtros que
  *                            siempre tienen un valor, como el orden.
