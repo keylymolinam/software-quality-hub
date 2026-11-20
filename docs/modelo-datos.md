@@ -432,8 +432,8 @@ ficticios diseñado para ejercitar los tres diferenciadores del sistema:
 |---|---|---|
 | Usuarios | 5 | Cubre los cuatro roles definidos |
 | Proyectos | 4 | Cubre los tres estados de proyecto |
-| Incidencias | 40 | Las seis categorías, las tres prioridades y los cinco estados |
-| Registros de historial | 123 | Trazabilidad completa de cada incidencia |
+| Incidencias | 45 | Las seis categorías, las tres prioridades y los cinco estados |
+| Registros de historial | 137 | Trazabilidad completa de cada incidencia |
 | Métricas | 7 | Formato de almacenamiento del módulo de métricas |
 
 Casos de prueba incorporados deliberadamente:
@@ -450,13 +450,16 @@ Casos de prueba incorporados deliberadamente:
   | Portal de Autoatención | Tres reaperturas (17 %) | 67,6 — Atención |
   | Aplicación Móvil de Terreno | Abiertas de hasta 120 días y cuatro reaperturas (31 %) | 33,0 — Crítico |
   | Migración Sistema Legado | Casi todo cerrado a tiempo, sin reaperturas | 92,8 — Saludable |
-  | Módulo de Reportes Gerenciales | Pausado, sin incidencias | Sin datos |
+  | Módulo de Reportes Gerenciales | Pausado a mitad de camino: dos cerradas y tres detenidas | 85,7 — Saludable |
 
-  Los valores se recalculan con la fecha de carga, así que pueden variar en
-  décimas si pasa el tiempo sin volver a ejecutar el seed.
+  Los valores se recalculan con la fecha de carga, así que cambian si pasa el
+  tiempo sin volver a ejecutar el seed: en el proyecto pausado nadie mueve las
+  incidencias, y en unas dos semanas baja a Atención. El caso «Sin datos» no
+  aparece en el seed; lo cubren las pruebas automáticas, y se ve en pantalla
+  creando un proyecto nuevo.
 - **Rechazo con motivo:** la incidencia 23 se cierra desde `ABIERTA` porque no
   es un defecto, y su `fecha_resolucion` queda nula.
-- **Cobertura del motor:** 32 de 40 incidencias (80 %) figuran como clasificadas
+- **Cobertura del motor:** 37 de 45 incidencias (82 %) figuran como clasificadas
   automáticamente, permitiendo comparar clasificación automática y manual.
 
 Son datos de **demostración**, no evidencia: la precisión del clasificador se

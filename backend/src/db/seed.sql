@@ -79,7 +79,7 @@ INSERT INTO PROYECTO (nombre, descripcion, fecha_inicio, estado) VALUES
 
 -- =============================================================================
 -- INCIDENCIA
--- Los IDs resultantes son 1..12 en el mismo orden de insercion. Las 13 a 40
+-- Los IDs resultantes son 1..12 en el mismo orden de insercion. Las 13 a 45
 -- estan mas abajo, en la ampliacion para la demostracion.
 -- =============================================================================
 
@@ -298,7 +298,7 @@ INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, c
 
 
 -- =============================================================================
--- AMPLIACION PARA LA DEMOSTRACION (IDs 13 a 40)
+-- AMPLIACION PARA LA DEMOSTRACION (IDs 13 a 45)
 --
 -- Datos ficticios, agregados para que la demostracion tenga volumen y para que
 -- cada proyecto cuente una historia distinta en el indice de salud:
@@ -306,7 +306,10 @@ INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, c
 --   Portal de Autoatencion     varias reaperturas            -> ATENCION
 --   Aplicacion Movil           abiertas antiguas, reaperturas -> CRITICO
 --   Migracion Sistema Legado   casi todo cerrado a tiempo     -> SALUDABLE
---   Reportes Gerenciales       sin incidencias (pausado)      -> SIN DATOS
+--   Reportes Gerenciales       pausado a mitad de camino      -> SALUDABLE
+--
+-- Ningun proyecto queda en SIN DATOS: ese caso lo cubren las pruebas
+-- automaticas, y basta con crear un proyecto nuevo para verlo en pantalla.
 --
 -- NO son evidencia de nada: la precision del clasificador se mide con el
 -- conjunto etiquetado de backend/evaluacion/, no con estos datos. Las parejas
@@ -682,6 +685,78 @@ INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, c
 INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
     (NULL, 'ABIERTA', datetime('now', '-3 days'), 'Observacion de los usuarios.', 40, 3),
     ('ABIERTA', 'EN_PROGRESO', datetime('now', '-2 days'), 'Se agrega la paginacion.', 40, 5);
+
+
+-- --- Proyecto 4: Modulo de Reportes Gerenciales (historia: pausado a mitad de camino -> SALUDABLE)
+
+-- Alcanzo a avanzar antes de la pausa (hace unos 17 dias): dos cerradas y tres
+-- que quedaron pendientes. Como nadie las mueve, su antiguedad crece con cada
+-- dia; con el seed recien cargado el indice es Saludable, y pasadas unas dos
+-- semanas sin volver a cargarlo baja a Atencion, que es justo lo que le pasa a
+-- un proyecto detenido.
+INSERT INTO INCIDENCIA
+    (titulo, descripcion, prioridad, estado, categoria, fecha_creacion,
+     fecha_resolucion, clasificacion_automatica, posible_duplicado_de,
+     id_proyecto, reportado_por, asignado_a)
+VALUES
+    -- ID 41
+    ('El indicador de ventas mensuales no suma las notas de credito',
+     'El total de ventas del tablero gerencial no descuenta las notas de credito y muestra un monto mayor al real.',
+     'ALTA', 'CERRADA', 'DATOS_INTEGRIDAD',
+     datetime('now', '-50 days'), datetime('now', '-44 days'), 1, NULL, 4, 4, 2),
+
+    -- ID 42
+    ('El tablero no se ajusta al ancho de la pantalla del directorio',
+     'En la pantalla grande de la sala de directorio los graficos quedan pequenos y con mucho espacio vacio.',
+     'BAJA', 'CERRADA', 'USABILIDAD_INTERFAZ',
+     datetime('now', '-40 days'), datetime('now', '-35 days'), 1, NULL, 4, 3, 5),
+
+    -- ID 43 | detenida por la pausa del proyecto
+    ('La exportacion del tablero a PDF demora varios minutos',
+     'Al exportar el tablero completo a PDF la descarga tarda mas de tres minutos.',
+     'MEDIA', 'EN_PROGRESO', 'RENDIMIENTO',
+     datetime('now', '-24 days'), NULL, 1, NULL, 4, 4, 2),
+
+    -- ID 44 | pendiente al pausarse el proyecto
+    ('Usuarios sin perfil gerencial pueden ver el tablero',
+     'Cualquier usuario con sesion puede abrir el tablero gerencial escribiendo su direccion, aunque no tenga el perfil.',
+     'ALTA', 'ABIERTA', 'SEGURIDAD',
+     datetime('now', '-21 days'), NULL, 1, NULL, 4, 3, NULL),
+
+    -- ID 45 | pendiente al pausarse el proyecto
+    ('Falta definir los indicadores del segundo semestre',
+     'La gerencia debe definir que indicadores se agregan al tablero para el segundo semestre.',
+     'BAJA', 'ABIERTA', 'OTRO',
+     datetime('now', '-18 days'), NULL, 1, NULL, 4, 4, NULL);
+
+-- Incidencia 41
+INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
+    (NULL, 'ABIERTA', datetime('now', '-50 days'), 'Detectada en la revision con finanzas.', 41, 4),
+    ('ABIERTA', 'EN_PROGRESO', datetime('now', '-49 days'), 'Se revisa la consulta del indicador.', 41, 2),
+    ('EN_PROGRESO', 'RESUELTA', datetime('now', '-44 days'), 'Se descuentan las notas de credito.', 41, 2),
+    ('RESUELTA', 'VALIDADA', datetime('now', '-43 days'), 'Cuadra con el informe contable.', 41, 3),
+    ('VALIDADA', 'CERRADA', datetime('now', '-42 days'), 'Se cierra.', 41, 3);
+
+-- Incidencia 42
+INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
+    (NULL, 'ABIERTA', datetime('now', '-40 days'), 'Observado en la presentacion al directorio.', 42, 3),
+    ('ABIERTA', 'EN_PROGRESO', datetime('now', '-39 days'), 'Se ajusta el diseno adaptable.', 42, 5),
+    ('EN_PROGRESO', 'RESUELTA', datetime('now', '-35 days'), 'Los graficos ocupan el ancho disponible.', 42, 5),
+    ('RESUELTA', 'VALIDADA', datetime('now', '-34 days'), 'Verificado en la sala.', 42, 3),
+    ('VALIDADA', 'CERRADA', datetime('now', '-33 days'), 'Se cierra.', 42, 3);
+
+-- Incidencia 43
+INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
+    (NULL, 'ABIERTA', datetime('now', '-24 days'), 'Reportada por la gerencia comercial.', 43, 4),
+    ('ABIERTA', 'EN_PROGRESO', datetime('now', '-23 days'), 'Se analiza la generacion. Queda detenida al pausarse el proyecto.', 43, 2);
+
+-- Incidencia 44
+INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
+    (NULL, 'ABIERTA', datetime('now', '-21 days'), 'Hallazgo de la revision de accesos, justo antes de la pausa.', 44, 3);
+
+-- Incidencia 45
+INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, comentario, id_incidencia, modificado_por) VALUES
+    (NULL, 'ABIERTA', datetime('now', '-18 days'), 'Solicitud de la gerencia. Queda en espera hasta reactivar el proyecto.', 45, 4);
 
 
 -- =============================================================================
