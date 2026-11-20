@@ -432,20 +432,35 @@ ficticios diseñado para ejercitar los tres diferenciadores del sistema:
 |---|---|---|
 | Usuarios | 5 | Cubre los cuatro roles definidos |
 | Proyectos | 4 | Cubre los tres estados de proyecto |
-| Incidencias | 12 | Las seis categorías y las tres prioridades |
-| Registros de historial | 28 | Trazabilidad completa de cada incidencia |
+| Incidencias | 40 | Las seis categorías, las tres prioridades y los cinco estados |
+| Registros de historial | 123 | Trazabilidad completa de cada incidencia |
 | Métricas | 7 | Formato de almacenamiento del módulo de métricas |
 
 Casos de prueba incorporados deliberadamente:
 
-- **Detección de duplicados:** las incidencias 1 y 2 describen el mismo problema
-  con redacción distinta. La 2 queda marcada con `posible_duplicado_de = 1`.
-- **Tasa de reapertura:** la incidencia 8 registra la transición
-  `RESUELTA → EN_PROGRESO`, lo que produce una tasa del 25 % en el proyecto 2.
-- **Deuda técnica:** las incidencias abiertas tienen antigüedades entre 3 y 72
-  días, de modo que el índice de salud arroje valores diferenciados por proyecto.
-- **Cobertura del motor:** 8 de 12 incidencias (67 %) figuran como clasificadas
+- **Detección de duplicados:** tres parejas describen el mismo problema con
+  redacción distinta (1 y 2, 8 y 29, 20 y 21). La segunda de cada pareja queda
+  marcada con `posible_duplicado_de`, y el detector las reconoce con el umbral
+  vigente (0,45): ninguna otra pareja lo supera.
+- **Índice de salud:** cada proyecto cuenta una historia distinta, para que la
+  demostración muestre las cuatro etiquetas con los pesos iniciales:
+
+  | Proyecto | Historia | Índice |
+  |---|---|---|
+  | Portal de Autoatención | Tres reaperturas (17 %) | 67,6 — Atención |
+  | Aplicación Móvil de Terreno | Abiertas de hasta 120 días y cuatro reaperturas (31 %) | 33,0 — Crítico |
+  | Migración Sistema Legado | Casi todo cerrado a tiempo, sin reaperturas | 92,8 — Saludable |
+  | Módulo de Reportes Gerenciales | Pausado, sin incidencias | Sin datos |
+
+  Los valores se recalculan con la fecha de carga, así que pueden variar en
+  décimas si pasa el tiempo sin volver a ejecutar el seed.
+- **Rechazo con motivo:** la incidencia 23 se cierra desde `ABIERTA` porque no
+  es un defecto, y su `fecha_resolucion` queda nula.
+- **Cobertura del motor:** 32 de 40 incidencias (80 %) figuran como clasificadas
   automáticamente, permitiendo comparar clasificación automática y manual.
+
+Son datos de **demostración**, no evidencia: la precisión del clasificador se
+mide con el conjunto etiquetado de `backend/evaluacion/`.
 
 Las fechas se generan de forma relativa a la fecha de ejecución
 (`datetime('now', '-N days')`), por lo que el conjunto conserva su
