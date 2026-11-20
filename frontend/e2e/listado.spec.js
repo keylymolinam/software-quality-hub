@@ -123,3 +123,20 @@ test('una tarjeta del resumen filtra por su estado, y pulsarla otra vez lo quita
   await expect(page).not.toHaveURL(/estado=/);
   await expect(pendiente).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('el menu lateral lleva directo a las incidencias de un proyecto', async ({ page }) => {
+  await entrar(page);
+  await page.goto('/salud');
+
+  // Fuera del listado el acordeon esta cerrado; se abre con la cabecera.
+  const grupo = page.locator('.lateral__grupo-boton');
+  await expect(grupo).toHaveAttribute('aria-expanded', 'false');
+  await grupo.click();
+
+  await page.locator('.lateral__sublista').getByRole('link', { name: 'Aplicacion Movil de Terreno' }).click();
+
+  await expect(page).toHaveURL(/\/incidencias\?id_proyecto=2/);
+  // Es el mismo filtro que el de la barra.
+  await expect(filtro(page, 'Proyecto')).toHaveValue('2');
+  await expect(page.locator('.lateral__subenlace--activo')).toHaveText('Aplicacion Movil de Terreno');
+});

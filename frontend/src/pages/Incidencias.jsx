@@ -147,13 +147,26 @@ export default function Incidencias() {
 
   const [proyectos, usuarios] = referencias.datos ?? [null, null];
 
+  // Si se entro a un proyecto (desde el menu o con el filtro), el subtitulo lo
+  // nombra: con la columna Proyecto convertida en una linea chica, sin esto
+  // costaria saber a primera vista que el listado esta acotado.
+  const proyectoActual = proyectos?.datos?.find(
+    (proyecto) => String(proyecto.id_proyecto) === filtros.id_proyecto
+  );
+
   return (
     <main className="contenedor contenedor--ancho contenido">
       <header className="contenido__cabecera">
         <div>
           <h1 className="titulo">Incidencias</h1>
           <p className="subtitulo">
-            Listado completo, con filtros, b&uacute;squeda y orden.
+            {proyectoActual ? (
+              <>
+                Proyecto <strong>{proyectoActual.nombre}</strong>
+              </>
+            ) : (
+              <>Listado completo, con filtros, b&uacute;squeda y orden.</>
+            )}
           </p>
         </div>
 

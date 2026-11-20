@@ -203,7 +203,7 @@ reparto en capas están en la figura
 |---|---|---|
 | Login | — (fuera de sesión) | La única sin sesión; `App.jsx` decide cuál mostrar |
 | Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
-| Listado | `/incidencias` | Tarjetas con la cuenta por estado, que filtran al pulsarlas; filtros, búsqueda, orden y paginación, todo en la dirección |
+| Listado | `/incidencias?id_proyecto=N` | Un proyecto se abre desde el menú lateral, que despliega la lista bajo Incidencias. Tarjetas con la cuenta por estado, que filtran al pulsarlas; filtros, búsqueda, orden y paginación, todo en la dirección |
 | Tablero | `/tablero?proyecto=N` | Una columna por estado; se arrastran las tarjetas para cambiarlo |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
 | Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |

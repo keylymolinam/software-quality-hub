@@ -597,6 +597,103 @@ body {
   height: 18px;
 }
 
+/* --- Acordeon de incidencias por proyecto ------------------------------- */
+
+/* La cabecera del grupo es un <button> con el aspecto de los enlaces: se le
+   quitan los estilos de boton del navegador. */
+.lateral__grupo-boton {
+  width: 100%;
+  font: inherit;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* Dentro de incidencias, pero con un proyecto marcado abajo: el texto se
+   aclara y el relleno queda para el proyecto. */
+.lateral__grupo-boton--dentro {
+  color: #fff;
+}
+
+.lateral__flecha {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
+  transition: transform 0.15s;
+}
+
+.lateral__flecha--abierta {
+  transform: rotate(180deg);
+}
+
+/* La linea vertical a la izquierda ata los proyectos a su seccion. */
+.lateral__sublista {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 2px 0 6px 21px;
+  padding: 0 0 0 10px;
+  list-style: none;
+  border-left: 1px solid var(--lateral-borde);
+}
+
+.lateral__subenlace {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: var(--texto-sm);
+  color: var(--lateral-texto);
+  text-decoration: none;
+  border-radius: var(--radio-sm);
+  transition: background 0.15s, color 0.15s;
+}
+
+.lateral__subenlace:hover {
+  color: #fff;
+  background: var(--lateral-hover);
+}
+
+.lateral__subenlace--activo,
+.lateral__subenlace--activo:hover {
+  color: #fff;
+  font-weight: 600;
+  background: var(--lateral-activo);
+}
+
+/* Los nombres largos parten la linea en vez de cortarse con puntos
+   suspensivos: cortados, "Migracion Siste..." y "Migracion Sistema Nuevo" se
+   verian iguales, y el nombre es lo unico que distingue un enlace de otro. */
+.lateral__subnombre {
+  min-width: 0;
+  line-height: 1.3;
+}
+
+/* Finalizados y pausados: atenuados, con su estado escrito. */
+.lateral__subenlace--inactivo {
+  opacity: 0.6;
+}
+
+.lateral__subestado {
+  flex: none;
+  align-self: flex-start;
+  margin-left: auto;
+  padding: 1px 6px;
+  font-size: 0.65rem;
+  border: 1px solid var(--lateral-borde);
+  border-radius: 999px;
+}
+
+.lateral__subaviso {
+  padding: 6px 10px;
+  font-size: var(--texto-xs);
+  color: var(--lateral-texto);
+}
+
 /* La sesion va abajo del todo: margin-top auto empuja el bloque al fondo de
    la columna, quede el espacio que quede entre medio. */
 .lateral__sesion {

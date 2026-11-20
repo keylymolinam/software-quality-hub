@@ -20,7 +20,7 @@ que ya cubren todo lo que la API ofrece:
 |---|---|---|
 | Login | — (fuera de sesión) | Única pantalla sin sesión; `App.jsx` decide |
 | Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
-| Listado | `/incidencias` | Tarjetas con la cuenta por estado (filtran al pulsarlas); filtros, búsqueda, orden y paginación en la dirección |
+| Listado | `/incidencias?id_proyecto=N` | Un proyecto se abre desde el menú lateral, que despliega la lista bajo Incidencias. Tarjetas con la cuenta por estado (filtran al pulsarlas); filtros, búsqueda, orden y paginación en la dirección |
 | Tablero | `/tablero?proyecto=N` | Columnas por estado; arrastrar una tarjeta la cambia de estado |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
 | Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |

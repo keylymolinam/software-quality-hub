@@ -602,6 +602,87 @@ describe('Listado con resumen por estado', () => {
   });
 });
 
+describe('Menu lateral por proyecto', () => {
+  const PROYECTOS = respondeCon({
+    datos: [
+      { id_proyecto: 1, nombre: 'Portal de Autoatencion', estado: 'ACTIVO' },
+      { id_proyecto: 2, nombre: 'Aplicacion Movil de Terreno', estado: 'ACTIVO' },
+      { id_proyecto: 3, nombre: 'Migracion Sistema Legado', estado: 'FINALIZADO' },
+      { id_proyecto: 4, nombre: 'Modulo de Reportes Gerenciales', estado: 'PAUSADO' },
+    ],
+    paginacion: { total: 4, pagina: 1, limite: 100, paginas: 1 },
+  });
+
+  async function dibujarMenu(ruta) {
+    declararEscenario({ 'menu-proyectos-0': PROYECTOS });
+    const { default: MenuLateral } = await cargar('/src/components/MenuLateral.jsx');
+    return dibujar(MenuLateral, { ruta });
+  }
+
+  test('dentro de incidencias lista cada proyecto y marca el elegido', async () => {
+    const html = await dibujarMenu('/incidencias?id_proyecto=2');
+    const visible = texto(html);
+
+    assert.match(html, /aria-expanded="true"/);
+    assert.match(visible, /Todas/);
+    assert.ok(html.includes('href="/incidencias?id_proyecto=1"'));
+    assert.ok(html.includes('href="/incidencias?id_proyecto=4"'));
+
+    // El proyecto de la direccion es el unico marcado.
+    assert.match(
+      html,
+      /class="lateral__subenlace lateral__subenlace--activo" aria-current="page" href="\/incidencias\?id_proyecto=2"/
+    );
+    assert.equal(html.match(/aria-current="page"/g).length, 1);
+  });
+
+  test('los proyectos inactivos se atenuan y dicen su estado', async () => {
+    const html = await dibujarMenu('/incidencias');
+
+    assert.equal(html.match(/lateral__subenlace--inactivo/g).length, 2);
+    assert.match(texto(html), /Migracion Sistema Legado Finalizado/);
+    assert.match(texto(html), /Modulo de Reportes Gerenciales Pausado/);
+
+    // Sin proyecto en la direccion, la marcada es "Todas".
+    assert.match(html, /lateral__subenlace--activo" aria-current="page" href="\/incidencias"/);
+  });
+
+  test('fuera de incidencias el acordeon empieza cerrado', async () => {
+    const html = await dibujarMenu('/salud');
+
+    assert.match(html, /aria-expanded="false"/);
+    assert.doesNotMatch(texto(html), /Portal de Autoatencion/);
+  });
+
+  test('el listado de un proyecto lo nombra bajo el titulo', async () => {
+    const { default: Incidencias } = await cargar('/src/pages/Incidencias.jsx');
+
+    declararEscenario({
+      [JSON.stringify({
+        busqueda: '',
+        estado: '',
+        prioridad: '',
+        categoria: '',
+        id_proyecto: '2',
+        asignado_a: '',
+        posible_duplicado: '',
+        ordenarPor: 'fecha_creacion',
+        direccion: 'DESC',
+        pagina: '1',
+      })]: respondeCon({
+        datos: [],
+        paginacion: { total: 0, pagina: 1, limite: 50, paginas: 1 },
+        resumen_estados: { ABIERTA: 0, EN_PROGRESO: 0, RESUELTA: 0, VALIDADA: 0, CERRADA: 0 },
+      }),
+      'referencias-de-filtro': respondeCon([PROYECTOS.datos, { datos: [] }]),
+    });
+
+    const visible = texto(dibujar(Incidencias, { ruta: '/incidencias?id_proyecto=2' }));
+
+    assert.match(visible, /Proyecto Aplicacion Movil de Terreno/);
+  });
+});
+
 describe('Pantalla de inicio', () => {
   const ESTADO_API = respondeCon({
     servicio: 'Software Quality Hub API',
