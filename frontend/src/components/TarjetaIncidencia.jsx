@@ -15,12 +15,16 @@
  * `transiciones_posibles`, que manda el backend: la tarjeta no decide que
  * movimientos son legales.
  */
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import EtiquetaPrioridad from './EtiquetaPrioridad.jsx';
 import { accionDe, ESTADOS, etiquetaDe } from '../dominio/incidencias.js';
+import { estadoDesde } from '../dominio/origen.js';
 
 export default function TarjetaIncidencia({ incidencia, onMover, onArrastrar, onSoltar, deshabilitada }) {
+  // El enlace al detalle anota que se vino del tablero, con sus filtros, para
+  // que "Volver" regrese aqui y no a la lista. Ver dominio/origen.js.
+  const location = useLocation();
   const posibles = incidencia.transiciones_posibles ?? [];
 
   return (
@@ -41,7 +45,11 @@ export default function TarjetaIncidencia({ incidencia, onMover, onArrastrar, on
         <EtiquetaPrioridad prioridad={incidencia.prioridad} />
       </div>
 
-      <Link className="tarjeta-incidencia__titulo" to={`/incidencias/${incidencia.id_incidencia}`}>
+      <Link
+        className="tarjeta-incidencia__titulo"
+        to={`/incidencias/${incidencia.id_incidencia}`}
+        state={estadoDesde(location)}
+      >
         {incidencia.titulo}
       </Link>
 

@@ -108,9 +108,14 @@ function escenarioDetalle(incidencia, historial) {
   };
 }
 
-function dibujarDetalle(componente, incidencia) {
+/**
+ * `desde` simula de donde se llego (el estado que dejan los enlaces de la
+ * lista y del tablero); sin el, es entrar por un enlace pegado.
+ */
+function dibujarDetalle(componente, incidencia, desde = null) {
+  const pathname = '/incidencias/' + incidencia.id_incidencia;
   return dibujar(componente, {
-    ruta: '/incidencias/' + incidencia.id_incidencia,
+    ruta: desde ? { pathname, state: { desde } } : pathname,
     patron: '/incidencias/:id',
   });
 }
@@ -132,7 +137,7 @@ describe('Barra de filtros', () => {
     direccion: 'DESC',
   };
 
-  function dibujarFiltros(FiltrosIncidencias, valores) {
+  function dibujarFiltros(FiltrosIncidencias, valores, hayFiltros = false) {
     return dibujar(FiltrosIncidencias, {
       propiedades: {
         valores,
@@ -140,7 +145,7 @@ describe('Barra de filtros', () => {
         onLimpiar: () => {},
         proyectos: [],
         usuarios: [],
-        hayFiltros: false,
+        hayFiltros,
       },
     });
   }
@@ -161,6 +166,23 @@ describe('Barra de filtros', () => {
     assert.doesNotMatch(visible, /Categor\u00eda/);
     assert.doesNotMatch(visible, /Asignada a/);
     assert.doesNotMatch(visible, /Ordenar por/);
+  });
+
+  test('Limpiar filtros esta siempre, y se activa si algo se aparta de como viene', async () => {
+    const { default: FiltrosIncidencias } = await cargar('/src/components/FiltrosIncidencias.jsx');
+    const boton = (html) => html.split('filtros__limpiar')[1]?.split('>')[0] ?? null;
+
+    // Sin nada que limpiar: a la vista, pero desactivado.
+    const limpio = dibujarFiltros(FiltrosIncidencias, SIN_FILTROS);
+    assert.notEqual(boton(limpio), null);
+    assert.match(boton(limpio), /disabled/);
+
+    // Con un filtro puesto, o con el orden cambiado, se puede pulsar.
+    assert.doesNotMatch(boton(dibujarFiltros(FiltrosIncidencias, SIN_FILTROS, true)), /disabled/);
+    assert.doesNotMatch(
+      boton(dibujarFiltros(FiltrosIncidencias, { ...SIN_FILTROS, direccion: 'ASC' })),
+      /disabled/
+    );
   });
 
   test('un filtro oculto en uso abre el panel y se cuenta en el boton', async () => {
@@ -376,6 +398,26 @@ describe('Barra de progreso', () => {
 // --- Detalle de incidencia -------------------------------------------------
 
 describe('Pantalla de detalle', () => {
+  test('volver lleva a la vista desde donde se llego, con sus filtros', async () => {
+    const { default: DetalleIncidencia } = await cargar('/src/pages/DetalleIncidencia.jsx');
+    declararEscenario(escenarioDetalle(INCIDENCIA_DUPLICADA, historialDe([CREACION])));
+
+    // Desde el tablero filtrado: vuelve a ese tablero, y lo dice.
+    const delTablero = dibujarDetalle(DetalleIncidencia, INCIDENCIA_DUPLICADA, '/tablero?id_proyecto=2');
+    assert.match(texto(delTablero), /Volver al tablero/);
+    assert.ok(delTablero.includes('href="/tablero?id_proyecto=2"'));
+
+    // Desde la lista filtrada: vuelve a esa lista, no a la completa.
+    const deLaLista = dibujarDetalle(DetalleIncidencia, INCIDENCIA_DUPLICADA, '/incidencias?prioridad=ALTA');
+    assert.match(texto(deLaLista), /Volver al listado/);
+    assert.ok(deLaLista.includes('href="/incidencias?prioridad=ALTA"'));
+
+    // Sin origen (un enlace pegado): la lista completa, como siempre.
+    const sinOrigen = dibujarDetalle(DetalleIncidencia, INCIDENCIA_DUPLICADA);
+    assert.match(texto(sinOrigen), /Volver al listado/);
+    assert.doesNotMatch(texto(sinOrigen), /Volver al tablero/);
+  });
+
   test('muestra los datos y lo que aportaron los diferenciadores', async () => {
     const { default: DetalleIncidencia } = await cargar('/src/pages/DetalleIncidencia.jsx');
 
@@ -590,6 +632,46 @@ describe('Listado con resumen por estado', () => {
     assert.ok(html.indexOf('resumen-registros') < html.indexOf('<table'));
   });
 
+  test('en la lista, estado, prioridad y asignacion se despliegan para editarse', async () => {
+    const { default: TablaIncidencias } = await cargar('/src/components/TablaIncidencias.jsx');
+
+    const html = dibujar(TablaIncidencias, {
+      propiedades: {
+        incidencias: [{ ...INCIDENCIA_DUPLICADA, asignado_a: 7, asignado_a_nombre: 'Javiera Soto' }, INCIDENCIA_CERRADA],
+        hayFiltros: false,
+        usuarios: [{ id_usuario: 7, nombre: 'Javiera Soto' }],
+        onActualizar: () => {},
+        onCambiarEstado: () => {},
+      },
+    });
+
+    // El estado ofrece solo lo que mando el backend, con el texto de la accion.
+    const estado = html.split('aria-label="Cambiar estado de #2"')[1].split('</select>')[0];
+    const opciones = [...estado.matchAll(/<option value="([A-Z_]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(opciones, ['ABIERTA', 'EN_PROGRESO', 'CERRADA']);
+    assert.match(estado, /Cerrar sin resolver \u2192 Cerrada/);
+
+    // Una cerrada no tiene a donde ir: su estado no se despliega.
+    assert.doesNotMatch(html, /Cambiar estado de #5/);
+    // Prioridad y asignacion si, incluso en la cerrada.
+    assert.match(html, /aria-label="Cambiar prioridad de #5"/);
+
+    // La asignacion parte en la persona actual y ofrece desasignar.
+    const asignada = html.split('asignada #2"')[1].split('</select>')[0];
+    assert.ok(asignada.includes('<option value="7" selected="">Javiera Soto</option>'));
+    assert.ok(asignada.includes('<option value="">Sin asignar</option>'));
+  });
+
+  test('sin quien guarde, la tabla es solo para leer', async () => {
+    const { default: TablaIncidencias } = await cargar('/src/components/TablaIncidencias.jsx');
+
+    const html = dibujar(TablaIncidencias, {
+      propiedades: { incidencias: [INCIDENCIA_DUPLICADA], hayFiltros: false },
+    });
+
+    assert.doesNotMatch(html, /<select/);
+  });
+
   test('cada fila lleva franja de prioridad, iniciales y proyecto bajo el titulo', async () => {
     const { default: TablaIncidencias } = await cargar('/src/components/TablaIncidencias.jsx');
 
@@ -623,7 +705,7 @@ describe('Listado con resumen por estado', () => {
   });
 });
 
-describe('Menu lateral por proyecto', () => {
+describe('Menu lateral', () => {
   const PROYECTOS = respondeCon({
     datos: [
       { id_proyecto: 1, nombre: 'Portal de Autoatencion', estado: 'ACTIVO' },
@@ -635,55 +717,30 @@ describe('Menu lateral por proyecto', () => {
   });
 
   async function dibujarMenu(ruta) {
-    declararEscenario({ 'menu-proyectos-0': PROYECTOS });
     const { default: MenuLateral } = await cargar('/src/components/MenuLateral.jsx');
     return dibujar(MenuLateral, { ruta });
   }
 
-  test('dentro de incidencias lista cada proyecto y marca el elegido', async () => {
-    const html = await dibujarMenu('/incidencias?id_proyecto=2');
+  test('Incidencias es un solo enlace, sin proyectos ni Tablero aparte', async () => {
+    const html = await dibujarMenu('/salud');
     const visible = texto(html);
 
-    assert.match(html, /aria-expanded="true"/);
-    assert.match(visible, /Todas/);
-    assert.ok(html.includes('href="/incidencias?id_proyecto=1"'));
-    assert.ok(html.includes('href="/incidencias?id_proyecto=4"'));
-
-    // El proyecto de la direccion es el unico marcado.
-    assert.match(
-      html,
-      /class="lateral__subenlace lateral__subenlace--activo" aria-current="page" href="\/incidencias\?id_proyecto=2"/
-    );
-    assert.equal(html.match(/aria-current="page"/g).length, 1);
+    // El filtro Proyecto de las dos vistas reemplaza a la lista del menu.
+    assert.doesNotMatch(visible, /Portal de Autoatencion/);
+    assert.doesNotMatch(html, /aria-expanded="true"/);
+    // El tablero se elige con el selector de vista, no desde el menu.
+    assert.doesNotMatch(visible, /Tablero/);
+    // Sin vista elegida, abre el tablero.
+    assert.ok(html.includes('href="/tablero"'));
   });
 
-  test('el tablero es una vista de Incidencias, no una seccion aparte', async () => {
-    const html = await dibujarMenu('/tablero?id_proyecto=2');
-
-    // Sin entrada propia en el menu: se llega desde el selector de vista.
-    assert.doesNotMatch(texto(html), /Tablero/);
-    // Desde el tablero, los proyectos llevan al tablero de cada uno, y el
-    // elegido queda marcado igual que en la lista.
-    assert.ok(html.includes('href="/tablero?id_proyecto=1"'));
-    assert.ok(html.includes('aria-current="page" href="/tablero?id_proyecto=2"'));
-  });
-
-  test('los proyectos inactivos se atenuan y dicen su estado', async () => {
-    const html = await dibujarMenu('/incidencias');
-
-    assert.equal(html.match(/lateral__subenlace--inactivo/g).length, 2);
-    assert.match(texto(html), /Migracion Sistema Legado Finalizado/);
-    assert.match(texto(html), /Modulo de Reportes Gerenciales Pausado/);
-
-    // Sin proyecto en la direccion, la marcada es "Todas".
-    assert.match(html, /lateral__subenlace--activo" aria-current="page" href="\/incidencias"/);
-  });
-
-  test('fuera de incidencias el acordeon empieza cerrado', async () => {
-    const html = await dibujarMenu('/salud');
-
-    assert.match(html, /aria-expanded="false"/);
-    assert.doesNotMatch(texto(html), /Portal de Autoatencion/);
+  test('Incidencias queda marcada en sus dos vistas y en el detalle', async () => {
+    for (const ruta of ['/incidencias?id_proyecto=2', '/tablero', '/incidencias/5']) {
+      const html = await dibujarMenu(ruta);
+      const marcado = html.split('aria-current="page"')[1]?.split('</a>')[0] ?? '';
+      assert.match(texto(marcado), /Incidencias/, ruta);
+      assert.equal(html.match(/aria-current="page"/g).length, 1, ruta);
+    }
   });
 
   test('el listado de un proyecto lo nombra bajo el titulo', async () => {
@@ -749,10 +806,40 @@ describe('Pantalla de inicio', () => {
     ],
   });
 
+  // Lo que entrega pedirResumen(): cuentas por estado y abiertas por prioridad.
+  const RESUMEN = respondeCon({
+    porEstado: { ABIERTA: 12, EN_PROGRESO: 7, RESUELTA: 3, VALIDADA: 2, CERRADA: 21 },
+    abiertasPorPrioridad: { ALTA: 8, MEDIA: 10, BAJA: 3 },
+  });
+
+  test('el mini tablero muestra los estados en anillo y la prioridad en barras', async () => {
+    const { default: Inicio } = await cargar('/src/pages/Inicio.jsx');
+    declararEscenario({ 'estado-api': ESTADO_API, 'salud-global': SALUD, 'resumen-inicio': RESUMEN });
+
+    const html = dibujar(Inicio);
+    const visible = texto(html);
+
+    // El anillo con el total al centro, y la leyenda con numero y porcentaje:
+    // las tajadas finas (Validada, 2 de 45) se leen por la cifra, no por el ancho.
+    assert.match(html, /class="anillo"/);
+    assert.match(visible, /45 incidencias/);
+    assert.match(visible, /Validada\s*2\s*4%/);
+    assert.match(visible, /Cerrada\s*21\s*47%/);
+    // Una tajada por estado, cada una con su color de siempre.
+    assert.match(html, /conic-gradient/);
+    assert.match(html, /--color-validada/);
+
+    // Prioridad de lo abierto en barras, con el valor fuera de la barra.
+    assert.match(html, /aria-label="Alta: 8 abiertas"/);
+    assert.match(html, /aria-label="Baja: 3 abiertas"/);
+    // La barra mas larga es la mayor (Media) y las demas se miden contra ella.
+    assert.ok(html.includes('style="width:100%"'));
+  });
+
   test('muestra el indice global y el desglose por proyecto', async () => {
     const { default: Inicio } = await cargar('/src/pages/Inicio.jsx');
 
-    declararEscenario({ 'estado-api': ESTADO_API, 'salud-global': SALUD });
+    declararEscenario({ 'estado-api': ESTADO_API, 'salud-global': SALUD, 'resumen-inicio': RESUMEN });
 
     const html = dibujar(Inicio);
     const visible = texto(html);
@@ -764,6 +851,12 @@ describe('Pantalla de inicio', () => {
     assert.doesNotMatch(html, />ATENCION</);
 
     assert.equal((html.match(/class="salud-proyecto"/g) || []).length, 3);
+
+    // Cada proyecto con datos lleva su barra (0 a 100), y arriba esta la accion
+    // mas frecuente.
+    const lista = html.split('class="salud-proyectos"')[1].split('</ul>')[0];
+    assert.ok((lista.match(/class="barra__relleno"/g) || []).length >= 1);
+    assert.ok(html.includes('href="/incidencias/nueva"'));
 
     // El orden que manda el backend, peor primero, no se altera.
     assert.ok(html.indexOf('Aplicacion Movil') < html.indexOf('Portal de Clientes'));
@@ -777,6 +870,7 @@ describe('Pantalla de inicio', () => {
 
     declararEscenario({
       'estado-api': ESTADO_API,
+      'resumen-inicio': RESUMEN,
       'salud-global': respondeCon({
         global: { indice: 100, etiqueta: 'SIN_DATOS', datos_suficientes: false },
         proyectos: [],
@@ -795,6 +889,7 @@ describe('Pantalla de inicio', () => {
 
     declararEscenario({
       'estado-api': ESTADO_API,
+      'resumen-inicio': RESUMEN,
       'salud-global': falla('Error 500 al calcular el indice.', 500),
     });
 
@@ -811,18 +906,18 @@ describe('Pantalla de inicio', () => {
     const { default: Inicio } = await cargar('/src/pages/Inicio.jsx');
 
     const caido = falla('No se pudo conectar con el servidor.', 0);
-    declararEscenario({ 'estado-api': caido, 'salud-global': caido });
+    declararEscenario({ 'estado-api': caido, 'salud-global': caido, 'resumen-inicio': caido });
 
     const html = dibujar(Inicio);
 
-    assert.equal((html.match(/No se pudo conectar/g) || []).length, 2);
-    assert.equal((html.match(/Reintentar/g) || []).length, 2);
+    assert.equal((html.match(/No se pudo conectar/g) || []).length, 3);
+    assert.equal((html.match(/Reintentar/g) || []).length, 3);
   });
 
   test('mientras espera lo dice en las dos tarjetas', async () => {
     const { default: Inicio } = await cargar('/src/pages/Inicio.jsx');
 
-    declararEscenario({ 'estado-api': cargando(), 'salud-global': cargando() });
+    declararEscenario({ 'estado-api': cargando(), 'salud-global': cargando(), 'resumen-inicio': cargando() });
 
     const visible = texto(dibujar(Inicio));
 

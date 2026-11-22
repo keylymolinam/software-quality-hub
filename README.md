@@ -8,7 +8,7 @@ Ingeniería en Computación e Informática.
 > con bitácora de cambios, la autenticación con control de acceso por rol y los tres
 > diferenciadores. El **frontend** recorre el ciclo de trabajo completo en doce
 > pantallas, entre ellas un tablero por estados, y los tres diferenciadores se ven en
-> pantalla. Hay **166 pruebas automatizadas**: 55 del backend y 92 de las pantallas,
+> pantalla. Hay **169 pruebas automatizadas**: 55 del backend y 95 de las pantallas,
 > que corren con el ejecutor que viene con Node, y 19 de interacción, que recorren el
 > sistema en un navegador real con Playwright. La interfaz se evaluó con usuarios
 > (SUS promedio 92 en el perfil objetivo; ver [Evaluación de usabilidad](#evaluación-de-usabilidad)).
@@ -205,11 +205,11 @@ reparto en capas están en la figura
 | Pantalla | Ruta | Qué resuelve |
 |---|---|---|
 | Login | — (fuera de sesión) | La única sin sesión; `App.jsx` decide cuál mostrar |
-| Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
-| Incidencias: vista Lista | `/incidencias?id_proyecto=N` | Un proyecto se abre desde el menú lateral, que despliega la lista bajo Incidencias. Tarjetas con la cuenta por estado, que filtran al pulsarlas; filtros, búsqueda, orden y paginación, todo en la dirección |
+| Inicio | `/` | El índice global y la lista por proyecto, de peor a mejor. Debajo, un mini tablero: incidencias por estado en un anillo y las abiertas por prioridad en barras |
+| Incidencias: vista Lista | `/incidencias?id_proyecto=N` | El proyecto se elige con el filtro, que se conserva al pasar al tablero. Tarjetas con la cuenta por estado, que filtran al pulsarlas; filtros, búsqueda, orden y paginación, todo en la dirección. Estado, prioridad y asignación se cambian desde la misma fila |
 | Incidencias: vista Tablero | `/tablero?id_proyecto=N` | Una columna por estado; se arrastran las tarjetas para cambiarlo. Las mismas tarjetas por estado y los mismos filtros que la lista, incluido «Mis incidencias» |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
-| Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
+| Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado. «Volver» regresa a la vista desde donde se llegó (lista o tablero, con sus filtros) |
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
 | Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
 | Guía de salud | `/salud/guia` | Qué es el índice, para qué sirve y cómo se calcula, con un ejemplo |
@@ -457,7 +457,7 @@ es deliberada: pulsar un botón pide un navegador, y Node no trae uno.
 | Suite | Comando | Archivos | Pruebas |
 |---|---|---|---|
 | Backend | `npm test` desde `backend/` | 2 | 55 |
-| Pantallas | `npm test` desde `frontend/` | 5 | 92 |
+| Pantallas | `npm test` desde `frontend/` | 5 | 95 |
 | Interacción | `npm run test:e2e` desde `frontend/` | 6 | 19 |
 
 ### Cómo ejecutarlas

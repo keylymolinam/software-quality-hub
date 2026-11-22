@@ -19,8 +19,8 @@ que ya cubren todo lo que la API ofrece:
 | Pantalla | Ruta | Qué resuelve |
 |---|---|---|
 | Login | — (fuera de sesión) | Única pantalla sin sesión; `App.jsx` decide |
-| Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
-| Incidencias: Lista | `/incidencias?id_proyecto=N` | Un proyecto se abre desde el menú lateral, que despliega la lista bajo Incidencias. Tarjetas con la cuenta por estado (filtran al pulsarlas); filtros, búsqueda, orden y paginación en la dirección |
+| Inicio | `/` | El índice global y la lista por proyecto, de peor a mejor; debajo, un mini tablero: estados en anillo y abiertas por prioridad en barras |
+| Incidencias: Lista | `/incidencias?id_proyecto=N` | El proyecto se elige con el filtro (el menú ya no lista proyectos). Tarjetas con la cuenta por estado (filtran al pulsarlas); filtros, búsqueda, orden y paginación en la dirección. Estado, prioridad y asignación se editan en la fila |
 | Incidencias: Tablero | `/tablero?id_proyecto=N` | Columnas por estado; arrastrar una tarjeta la cambia de estado. Mismos filtros que la lista |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
 | Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
@@ -223,7 +223,10 @@ umbrales** siguen fijos en el código, y la guía los copia a mano (una prueba c
   la cadena de consulta. Un filtro nuevo se agrega con el mismo nombre en las dos.
   «Mis incidencias» viaja como `asignado_a=yo` y se traduce al id con
   `consultaParaApi()` justo antes de pedir. La vista preferida se recuerda en
-  `localStorage`: es una comodidad por persona, no estado de la pantalla.
+  `localStorage`: es una comodidad por persona, no estado de la pantalla. Los enlaces a
+  una incidencia llevan en el `state` del historial de qué vista vienen
+  (`dominio/origen.js`), y el detalle y la edición lo reenvían para que «Volver»
+  regrese a esa vista con sus filtros.
 - **Las dos capas de la máquina de estados no se duplican.** Qué transiciones existen lo
   dice el backend (`transiciones_posibles`, que viene en el detalle y en la respuesta de
   la transición); el frontend solo aporta el texto de los botones y si el motivo es
@@ -255,6 +258,11 @@ umbrales** siguen fijos en el código, y la guía los copia a mano (una prueba c
   - **Una sola magnitud por figura.** Donde hay dos números (el puntaje de un componente
     y su peso), la barra mide uno y el otro va escrito al lado. Codificar los dos
     inventaría una relación que no existe.
+  - **La única excepción es el anillo de estados del inicio** (`ResumenInicio.jsx`):
+    los estados son partes de un todo y ahí el color sí distingue algo, así que cada
+    tajada lleva el color de su estado (el mismo de las etiquetas). Lo eligió la
+    autora en vez de barras. Para no depender del color, la leyenda escribe la
+    cantidad y el porcentaje de cada estado. Es un `conic-gradient`, sin librería.
   - **`tabular-nums` solo en columnas de cifras** (una tabla, los puntajes alineados a la
     derecha). En una cifra grande y suelta deja huecos entre los dígitos.
 

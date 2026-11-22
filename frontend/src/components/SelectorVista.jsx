@@ -22,7 +22,7 @@
  * La ultima vista elegida se guarda en localStorage, y el menu lateral la usa
  * para decidir a donde llevan sus enlaces. Es una comodidad de cada persona, no
  * un dato del sistema: si el navegador no la guarda (modo privado, datos
- * borrados) se abre la lista y nada se rompe. Por eso no va al servidor, y por
+ * borrados) se abre el tablero y nada se rompe. Por eso no va al servidor, y por
  * eso cada acceso esta envuelto en try/catch.
  */
 import { Link, useLocation } from 'react-router-dom';
@@ -31,18 +31,49 @@ import { SOLO_EN_LISTA } from '../dominio/filtros.js';
 
 const CLAVE_PREFERENCIA = 'sqh.vista-incidencias';
 
+/**
+ * Tablero primero, a pedido de la autora: es la vista que un equipo reconoce
+ * de Jira y la que muestra el avance de un vistazo. Por lo mismo es la que se
+ * abre por defecto, hasta que la persona elija otra (tambien lo pidio ella).
+ *
+ * Cada opcion lleva un icono que dibuja su forma: columnas verticales para el
+ * tablero y renglones horizontales para la lista. Acompanan al nombre, no lo
+ * reemplazan: un icono solo obliga a adivinar.
+ */
 const VISTAS = [
-  { valor: 'lista', etiqueta: 'Lista', ruta: '/incidencias' },
-  { valor: 'tablero', etiqueta: 'Tablero', ruta: '/tablero' },
+  {
+    valor: 'tablero',
+    etiqueta: 'Tablero',
+    ruta: '/tablero',
+    trazos: (
+      <>
+        <rect x="4" y="4" width="4" height="16" rx="1" />
+        <rect x="10" y="4" width="4" height="16" rx="1" />
+        <rect x="16" y="4" width="4" height="16" rx="1" />
+      </>
+    ),
+  },
+  {
+    valor: 'lista',
+    etiqueta: 'Lista',
+    ruta: '/incidencias',
+    trazos: (
+      <>
+        <path d="M4 6h16" />
+        <path d="M4 12h16" />
+        <path d="M4 18h16" />
+      </>
+    ),
+  },
 ];
 
-/** Ruta de la vista que la persona eligio la ultima vez; la lista si no hay. */
+/** Ruta de la vista que la persona eligio la ultima vez; el tablero si no hay. */
 export function rutaVistaPreferida() {
   try {
     const guardada = globalThis.localStorage?.getItem(CLAVE_PREFERENCIA);
-    return VISTAS.find((v) => v.valor === guardada)?.ruta ?? '/incidencias';
+    return VISTAS.find((v) => v.valor === guardada)?.ruta ?? '/tablero';
   } catch {
-    return '/incidencias';
+    return '/tablero';
   }
 }
 
@@ -78,6 +109,18 @@ export default function SelectorVista({ vista }) {
             aria-current={activa ? 'page' : undefined}
             onClick={() => guardarVistaPreferida(v.valor)}
           >
+            <svg
+              className="vistas__icono"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              {v.trazos}
+            </svg>
             {v.etiqueta}
           </Link>
         );

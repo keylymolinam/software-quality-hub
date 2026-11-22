@@ -124,19 +124,19 @@ test('una tarjeta del resumen filtra por su estado, y pulsarla otra vez lo quita
   await expect(pendiente).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('el menu lateral lleva directo a las incidencias de un proyecto', async ({ page }) => {
+test('el menu lleva a Incidencias, y el proyecto se elige con el filtro', async ({ page }) => {
   await entrar(page);
   await page.goto('/salud');
 
-  // Fuera del listado el acordeon esta cerrado; se abre con la cabecera.
-  const grupo = page.locator('.lateral__grupo-boton');
-  await expect(grupo).toHaveAttribute('aria-expanded', 'false');
-  await grupo.click();
+  // Sin vista elegida, el menu abre el tablero.
+  await page.locator('.lateral__nav').getByRole('link', { name: 'Incidencias' }).click();
+  await expect(page).toHaveURL(/\/tablero$/);
 
-  await page.locator('.lateral__sublista').getByRole('link', { name: 'Aplicacion Movil de Terreno' }).click();
+  await filtro(page, 'Proyecto').selectOption({ label: 'Aplicacion Movil de Terreno' });
+  await expect(page).toHaveURL(/\/tablero\?id_proyecto=2/);
 
+  // El proyecto sigue elegido al pasar a la lista.
+  await page.locator('.vistas').getByRole('link', { name: 'Lista' }).click();
   await expect(page).toHaveURL(/\/incidencias\?id_proyecto=2/);
-  // Es el mismo filtro que el de la barra.
   await expect(filtro(page, 'Proyecto')).toHaveValue('2');
-  await expect(page.locator('.lateral__subenlace--activo')).toHaveText('Aplicacion Movil de Terreno');
 });

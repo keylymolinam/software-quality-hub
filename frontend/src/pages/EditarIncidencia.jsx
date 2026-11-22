@@ -28,13 +28,14 @@
  * backend rechazaria por vacio.
  */
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Campo from '../components/Campo.jsx';
 import { actualizarIncidencia, obtenerIncidencia } from '../api/incidencias.js';
 import { listarProyectos } from '../api/proyectos.js';
 import { listarUsuarios } from '../api/usuarios.js';
 import { CATEGORIAS, PRIORIDADES } from '../dominio/incidencias.js';
+import { volverA } from '../dominio/origen.js';
 import { usePeticion } from '../hooks/usePeticion.js';
 
 const LARGO_TITULO = { min: 5, max: 150 };
@@ -61,6 +62,9 @@ function aFormulario(incidencia) {
 export default function EditarIncidencia() {
   const { id } = useParams();
   const navegar = useNavigate();
+  // El origen con que se llego al detalle (lista o tablero) se devuelve al
+  // detalle al terminar, para que su "Volver" siga llevando ahi.
+  const { state: origen } = useLocation();
 
   const incidencia = usePeticion(() => obtenerIncidencia(id), `editar-${id}`);
 
@@ -120,7 +124,7 @@ export default function EditarIncidencia() {
       // Se vuelve al detalle, que es de donde se vino y donde se comprueba que
       // el cambio quedo. Se reemplaza la entrada del historial para que el
       // boton atras no traiga de vuelta el formulario ya enviado.
-      navegar(`/incidencias/${id}`, { replace: true });
+      navegar(`/incidencias/${id}`, { replace: true, state: origen });
     } catch (fallo) {
       setError(fallo);
       setEnviando(false);
@@ -132,8 +136,8 @@ export default function EditarIncidencia() {
       <main className="contenedor contenido">
         <h1 className="titulo">Incidencia #{id}</h1>
         <p className="alerta alerta--error">{incidencia.error.message}</p>
-        <Link className="boton boton--discreto boton--auto" to="/incidencias">
-          Volver al listado
+        <Link className="boton boton--discreto boton--auto" to={volverA(origen).ruta}>
+          {volverA(origen).texto}
         </Link>
       </main>
     );
@@ -154,12 +158,15 @@ export default function EditarIncidencia() {
       <header className="contenido__cabecera">
         <div>
           <p className="migas">
-            <Link to={`/incidencias/${id}`}>Incidencia #{id}</Link> &middot; editar
+            <Link to={`/incidencias/${id}`} state={origen}>
+              Incidencia #{id}
+            </Link>{' '}
+            &middot; editar
           </p>
           <h1 className="titulo">Editar incidencia</h1>
         </div>
 
-        <Link className="boton boton--discreto boton--auto" to={`/incidencias/${id}`}>
+        <Link className="boton boton--discreto boton--auto" to={`/incidencias/${id}`} state={origen}>
           Cancelar
         </Link>
       </header>

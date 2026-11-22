@@ -189,6 +189,10 @@ describe('Tablero', () => {
     assert.match(texto(tarjetas), /Cerrada\s*31/);
     // Van antes de la barra de filtros, como en la lista.
     assert.ok(html.indexOf('resumen-estados') < html.indexOf('class="filtros"'));
+    // El total como en la lista: la suma de las tarjetas (12+63+1+0+31),
+    // no la de las columnas, que en Cerrada traen solo las recientes.
+    assert.match(texto(html), /107 incidencias/);
+    assert.ok(html.indexOf('resumen-registros') < html.indexOf('class="tablero'));
     // En el tablero no filtran: no son botones.
     assert.equal((html.match(/resumen-estado--fijo/g) ?? []).length, 5);
     assert.doesNotMatch(html, /aria-pressed/);
@@ -203,7 +207,12 @@ describe('Tablero', () => {
     });
     // Al tablero: el proyecto sigue; estado, orden y pagina no aplican ahi.
     assert.ok(desdeLista.includes('href="/tablero?id_proyecto=2"'));
-    assert.match(desdeLista, /aria-current="page"[^>]*>Lista</);
+    // La activa es Lista, y Tablero va primero.
+    const activa = desdeLista.split('aria-current="page"')[1].split('</a>')[0];
+    assert.match(texto(activa), /Lista/);
+    assert.ok(desdeLista.indexOf('>Tablero<') < desdeLista.indexOf('>Lista<'));
+    // Cada opcion lleva su icono.
+    assert.equal((desdeLista.match(/class="vistas__icono"/g) ?? []).length, 2);
 
     const desdeTablero = dibujar(SelectorVista, {
       ruta: '/tablero?id_proyecto=2&asignado_a=yo',

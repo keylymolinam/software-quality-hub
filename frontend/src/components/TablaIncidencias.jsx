@@ -21,20 +21,95 @@
  *   - Quien la tiene asignada aparece con un circulo de iniciales, como en el
  *     menu lateral.
  *   - La fecha dice cuanto hace ("hace 3 dias") y debajo la fecha exacta.
+ *
+ * ---------------------------------------------------------------------------
+ * EDICION EN LA MISMA TABLA
+ *
+ * Estado, prioridad y asignacion se cambian desde la fila, sin entrar al
+ * detalle: lo pidio la autora, al estilo de Monday. La etiqueta se ve igual que
+ * siempre, con una flecha, y encima lleva un <select> invisible que la cubre
+ * entera. Al pulsarla se abre la lista nativa del navegador. Se eligio asi y no
+ * un menu propio porque el select nativo ya resuelve el teclado, el lector de
+ * pantalla y el celular, y la etiqueta de colores sigue siendo lo que se ve.
+ *
+ * El estado no es un campo mas: solo ofrece las transiciones que el backend
+ * mando en `transiciones_posibles`, igual que el tablero y el detalle, y una
+ * incidencia cerrada no ofrece nada. Los rechazos piden motivo, pero eso lo
+ * resuelve la pagina con el mismo cuadro del tablero: esta tabla solo avisa
+ * hacia arriba que se eligio un destino.
+ *
+ * Sin onActualizar la tabla se dibuja solo para leer, como antes.
  */
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import EtiquetaEstado from './EtiquetaEstado.jsx';
 import EtiquetaPrioridad from './EtiquetaPrioridad.jsx';
+import { estadoDesde } from '../dominio/origen.js';
 import {
+  accionDe,
   CATEGORIAS,
+  ESTADOS,
   etiquetaDe,
+  PRIORIDADES,
   formatearFecha,
   haceCuanto,
   inicialesDe,
 } from '../dominio/incidencias.js';
 
-export default function TablaIncidencias({ incidencias, hayFiltros }) {
+/**
+ * Etiqueta que se despliega: lo que se ve (children) mas un select invisible
+ * encima. El select es lo que recibe el clic, el foco y el teclado.
+ */
+function Editable({ etiqueta, valor, opciones, onElegir, deshabilitado, children }) {
+  return (
+    <span className={`editable${deshabilitado ? ' editable--ocupada' : ''}`}>
+      {children}
+      <select
+        className="editable__control"
+        aria-label={etiqueta}
+        value={valor}
+        disabled={deshabilitado}
+        onChange={(e) => {
+          if (e.target.value !== valor) onElegir(e.target.value);
+        }}
+      >
+        {opciones.map((opcion) => (
+          <option key={opcion.valor} value={opcion.valor}>
+            {opcion.etiqueta}
+          </option>
+        ))}
+      </select>
+    </span>
+  );
+}
+
+/** Quien la tiene asignada, con su circulo de iniciales, o "Sin asignar". */
+function Asignada({ nombre }) {
+  return nombre ? (
+    <span className="persona">
+      <span className="persona__avatar" aria-hidden="true">
+        {inicialesDe(nombre)}
+      </span>
+      {nombre}
+    </span>
+  ) : (
+    <span className="sin-dato">Sin asignar</span>
+  );
+}
+
+export default function TablaIncidencias({
+  incidencias,
+  hayFiltros,
+  usuarios = [],
+  onActualizar,
+  onCambiarEstado,
+  ocupada = false,
+}) {
+  const editable = Boolean(onActualizar);
+  // Cada enlace a una incidencia anota desde donde se fue (la lista, con sus
+  // filtros), para que el detalle sepa a donde volver. Ver dominio/origen.js.
+  const origen = estadoDesde(useLocation());
+
   if (incidencias.length === 0) {
     // Se distinguen los dos vacios posibles, porque piden cosas distintas:
     // sin filtros hay que registrar la primera incidencia; con filtros hay que
@@ -76,7 +151,11 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
                     identifica la incidencia para quien la lee, y da un area de
                     clic grande. El numero queda como referencia para nombrarla
                     en voz alta o en un comentario. */}
-                <Link className="tabla__titulo" to={`/incidencias/${incidencia.id_incidencia}`}>
+                <Link
+                  className="tabla__titulo"
+                  to={`/incidencias/${incidencia.id_incidencia}`}
+                  state={origen}
+                >
                   {incidencia.titulo}
                 </Link>
 
@@ -102,6 +181,7 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
                       <Link
                         className="marca marca--duplicado"
                         to={`/incidencias/${incidencia.posible_duplicado_de}`}
+                        state={origen}
                       >
                         Posible duplicado de #{incidencia.posible_duplicado_de}
                       </Link>
@@ -112,6 +192,7 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
                         key={idDuplicado}
                         className="marca marca--duplicado"
                         to={`/incidencias/${idDuplicado}`}
+                        state={origen}
                       >
                         Tiene un posible duplicado: #{idDuplicado}
                       </Link>
@@ -126,22 +207,68 @@ export default function TablaIncidencias({ incidencias, hayFiltros }) {
                 )}
               </td>
 
-              <td><EtiquetaEstado estado={incidencia.estado} /></td>
-              <td><EtiquetaPrioridad prioridad={incidencia.prioridad} /></td>
+              <td>
+                {/* Una cerrada no tiene a donde ir: se ve la etiqueta sola, sin
+                    flecha, para no ofrecer un menu que solo repetiria su estado. */}
+                {editable && incidencia.transiciones_posibles?.length > 0 ? (
+                  <Editable
+                    etiqueta={`Cambiar estado de #${incidencia.id_incidencia}`}
+                    valor={incidencia.estado}
+                    deshabilitado={ocupada}
+                    opciones={[
+                      { valor: incidencia.estado, etiqueta: etiquetaDe(ESTADOS, incidencia.estado) },
+                      ...incidencia.transiciones_posibles.map((destino) => ({
+                        valor: destino,
+                        etiqueta: `${accionDe(incidencia.estado, destino).etiqueta} \u2192 ${etiquetaDe(ESTADOS, destino)}`,
+                      })),
+                    ]}
+                    onElegir={(destino) => onCambiarEstado(incidencia, destino)}
+                  >
+                    <EtiquetaEstado estado={incidencia.estado} />
+                  </Editable>
+                ) : (
+                  <EtiquetaEstado estado={incidencia.estado} />
+                )}
+              </td>
+
+              <td>
+                {editable ? (
+                  <Editable
+                    etiqueta={`Cambiar prioridad de #${incidencia.id_incidencia}`}
+                    valor={incidencia.prioridad}
+                    deshabilitado={ocupada}
+                    opciones={PRIORIDADES}
+                    onElegir={(prioridad) => onActualizar(incidencia, { prioridad })}
+                  >
+                    <EtiquetaPrioridad prioridad={incidencia.prioridad} />
+                  </Editable>
+                ) : (
+                  <EtiquetaPrioridad prioridad={incidencia.prioridad} />
+                )}
+              </td>
 
               {/* asignado_a puede ser NULL: una incidencia sin asignar debe
                   verse como tal, no como una celda en blanco que parece un
-                  error de carga. */}
+                  error de carga. Elegir "Sin asignar" envia null, que el
+                  backend entiende como desasignar. */}
               <td>
-                {incidencia.asignado_a_nombre ? (
-                  <span className="persona">
-                    <span className="persona__avatar" aria-hidden="true">
-                      {inicialesDe(incidencia.asignado_a_nombre)}
-                    </span>
-                    {incidencia.asignado_a_nombre}
-                  </span>
+                {editable ? (
+                  <Editable
+                    etiqueta={`Cambiar a qui\u00e9n est\u00e1 asignada #${incidencia.id_incidencia}`}
+                    valor={incidencia.asignado_a ? String(incidencia.asignado_a) : ''}
+                    deshabilitado={ocupada}
+                    opciones={[
+                      { valor: '', etiqueta: 'Sin asignar' },
+                      ...usuarios.map((u) => ({ valor: String(u.id_usuario), etiqueta: u.nombre })),
+                    ]}
+                    onElegir={(valor) =>
+                      onActualizar(incidencia, { asignado_a: valor === '' ? null : Number(valor) })
+                    }
+                  >
+                    <Asignada nombre={incidencia.asignado_a_nombre} />
+                  </Editable>
                 ) : (
-                  <span className="sin-dato">Sin asignar</span>
+                  <Asignada nombre={incidencia.asignado_a_nombre} />
                 )}
               </td>
 

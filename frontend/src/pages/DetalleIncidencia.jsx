@@ -24,7 +24,7 @@
  * peticion mas, no puede contradecirse a si misma.
  */
 import { useCallback, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 
 import EtiquetaEstado from '../components/EtiquetaEstado.jsx';
 import EtiquetaPrioridad from '../components/EtiquetaPrioridad.jsx';
@@ -38,10 +38,17 @@ import {
   obtenerIncidencia,
 } from '../api/incidencias.js';
 import { CATEGORIAS, etiquetaDe, formatearFechaHora } from '../dominio/incidencias.js';
+import { volverA } from '../dominio/origen.js';
 import { usePeticion } from '../hooks/usePeticion.js';
 
 export default function DetalleIncidencia() {
   const { id } = useParams();
+
+  // A donde vuelve "Volver": la lista o el tablero desde donde se llego, con
+  // sus filtros. El estado se reenvia en los enlaces que salen de aqui hacia
+  // otra incidencia o a editar, para que la vuelta siga sabiendo el camino.
+  const { state: origen } = useLocation();
+  const volver = volverA(origen);
 
   // Se incrementa despues de cada transicion para que las dos peticiones se
   // vuelvan a lanzar. Es el mecanismo que ofrece usePeticion: cambiar la clave.
@@ -135,8 +142,8 @@ export default function DetalleIncidencia() {
       <main className="contenedor contenido">
         <h1 className="titulo">Incidencia #{id}</h1>
         <p className="alerta alerta--error">{incidencia.error.message}</p>
-        <Link className="boton boton--discreto boton--auto" to="/incidencias">
-          Volver al listado
+        <Link className="boton boton--discreto boton--auto" to={volver.ruta}>
+          {volver.texto}
         </Link>
       </main>
     );
@@ -162,7 +169,7 @@ export default function DetalleIncidencia() {
       <header className="contenido__cabecera">
         <div>
           <p className="migas">
-            <Link to="/incidencias">Incidencias</Link> &middot; #{datos.id_incidencia}
+            <Link to={volver.ruta}>Incidencias</Link> &middot; #{datos.id_incidencia}
           </p>
           <h1 className="titulo">{datos.titulo}</h1>
           <div className="detalle__distintivos">
@@ -176,11 +183,12 @@ export default function DetalleIncidencia() {
           <Link
             className="boton boton--discreto boton--auto"
             to={`/incidencias/${datos.id_incidencia}/editar`}
+            state={origen}
           >
             Editar
           </Link>
-          <Link className="boton boton--discreto boton--auto" to="/incidencias">
-            Volver al listado
+          <Link className="boton boton--discreto boton--auto" to={volver.ruta}>
+            {volver.texto}
           </Link>
         </div>
       </header>
@@ -220,7 +228,7 @@ export default function DetalleIncidencia() {
                 {datos.duplicados_detectados.map((idDuplicado, posicion) => (
                   <span key={idDuplicado}>
                     {posicion > 0 && ', '}
-                    <Link to={`/incidencias/${idDuplicado}`}>#{idDuplicado}</Link>
+                    <Link to={`/incidencias/${idDuplicado}`} state={origen}>#{idDuplicado}</Link>
                   </span>
                 ))}{' '}
                 {datos.duplicados_detectados.length === 1 ? 'se parece' : 'se parecen'} a esta.
@@ -240,7 +248,7 @@ export default function DetalleIncidencia() {
               <p className="alerta__texto">
                 <strong>Posible duplicado.</strong> El detector encontr&oacute; un parecido con
                 la incidencia{' '}
-                <Link to={`/incidencias/${datos.posible_duplicado_de}`}>
+                <Link to={`/incidencias/${datos.posible_duplicado_de}`} state={origen}>
                   #{datos.posible_duplicado_de}
                 </Link>
                 . Es un aviso, no una certeza: comp&aacute;ralas antes de cerrar esta. Si son

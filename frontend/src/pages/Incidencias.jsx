@@ -24,7 +24,7 @@
  * La consecuencia es que no hay un segundo lugar donde viva la verdad: lo que
  * muestra la tabla se deriva siempre de la direccion, y no pueden discrepar.
  */
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import FiltrosIncidencias from '../components/FiltrosIncidencias.jsx';
@@ -33,9 +33,11 @@ import ResumenRegistros from '../components/ResumenRegistros.jsx';
 import SelectorVista from '../components/SelectorVista.jsx';
 import { useSesion } from '../context/SesionContext.jsx';
 import { consultaParaApi } from '../dominio/filtros.js';
+import { accionDe, ESTADOS, etiquetaDe, PRIORIDADES } from '../dominio/incidencias.js';
 import ResumenEstados from '../components/ResumenEstados.jsx';
 import TablaIncidencias from '../components/TablaIncidencias.jsx';
-import { listarIncidencias } from '../api/incidencias.js';
+import DialogoMotivo from '../components/DialogoMotivo.jsx';
+import { actualizarIncidencia, cambiarEstado, listarIncidencias } from '../api/incidencias.js';
 import { listarProyectos } from '../api/proyectos.js';
 import { listarUsuarios } from '../api/usuarios.js';
 import { usePeticion } from '../hooks/usePeticion.js';
@@ -124,12 +126,18 @@ export default function Incidencias() {
     [setParametrosUrl]
   );
 
-  /** Quita los filtros pero conserva el orden elegido, que no es un filtro. */
+  /**
+   * Deja la lista como viene: sin filtros, en la primera pagina y con el orden
+   * de siempre. Antes conservaba el orden elegido, por no ser un filtro; se
+   * cambio cuando el boton paso a estar siempre a la vista, porque quien lo
+   * pulsa espera ver la pantalla como al entrar, y "Mas filtros" ya contaba el
+   * orden como uno mas.
+   */
   const limpiarFiltros = useCallback(() => {
     setParametrosUrl((anteriores) => {
       const siguientes = new URLSearchParams(anteriores);
 
-      for (const campo of [...CAMPOS_FILTRABLES, 'pagina']) {
+      for (const campo of [...CAMPOS_FILTRABLES, 'pagina', 'ordenarPor', 'direccion']) {
         siguientes.delete(campo);
       }
 
@@ -157,6 +165,66 @@ export default function Incidencias() {
 
   const [proyectos, usuarios] = referencias.datos ?? [null, null];
 
+  // --- Edicion desde la tabla ------------------------------------------------
+  // La tabla avisa que se eligio algo; aqui se guarda, se informa y se vuelve
+  // a pedir el listado, para que la fila, las tarjetas por estado y el orden
+  // reflejen el cambio. Mientras se guarda, los desplegables se desactivan:
+  // dos cambios encadenados sobre una fila vieja podrian pisarse.
+  const [enviando, setEnviando] = useState(false);
+  const [aviso, setAviso] = useState(null);
+  // Un cambio de estado que espera su motivo: { incidencia, destino }.
+  const [pendiente, setPendiente] = useState(null);
+
+  async function guardar(accion, textoOk) {
+    setEnviando(true);
+    setAviso(null);
+    try {
+      await accion();
+      setAviso({ tipo: 'ok', texto: textoOk });
+      resultado.reintentar();
+      return true;
+    } catch (fallo) {
+      setAviso({ tipo: 'error', texto: fallo.message });
+      return false;
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  function actualizarFila(incidencia, cambios) {
+    const id = incidencia.id_incidencia;
+    let texto;
+    if ('prioridad' in cambios) {
+      texto = `#${id} ahora tiene prioridad ${etiquetaDe(PRIORIDADES, cambios.prioridad)}.`;
+    } else if (cambios.asignado_a === null) {
+      texto = `#${id} qued\u00f3 sin asignar.`;
+    } else {
+      const persona = usuarios?.datos?.find((u) => u.id_usuario === cambios.asignado_a);
+      texto = `#${id} qued\u00f3 asignada a ${persona?.nombre ?? 'otra persona'}.`;
+    }
+    guardar(() => actualizarIncidencia(id, cambios), texto);
+  }
+
+  function cambiarEstadoFila(incidencia, destino, comentario = '') {
+    return guardar(
+      () => cambiarEstado(incidencia.id_incidencia, { estado: destino, comentario }),
+      `#${incidencia.id_incidencia} pas\u00f3 a ${etiquetaDe(ESTADOS, destino)}.`
+    );
+  }
+
+  function elegirEstado(incidencia, destino) {
+    if (accionDe(incidencia.estado, destino).exigeMotivo) {
+      setPendiente({ incidencia, destino });
+      return;
+    }
+    cambiarEstadoFila(incidencia, destino);
+  }
+
+  async function confirmarMotivo(motivo) {
+    const funciono = await cambiarEstadoFila(pendiente.incidencia, pendiente.destino, motivo);
+    if (funciono) setPendiente(null);
+  }
+
   // Si se entro a un proyecto (desde el menu o con el filtro), el subtitulo lo
   // nombra: con la columna Proyecto convertida en una linea chica, sin esto
   // costaria saber a primera vista que el listado esta acotado.
@@ -165,7 +233,7 @@ export default function Incidencias() {
   );
 
   return (
-    <main className="contenedor contenedor--ancho contenido">
+    <main className="contenedor contenedor--vistas contenido">
       <header className="contenido__cabecera">
         <div>
           <h1 className="titulo">Incidencias</h1>
@@ -214,6 +282,12 @@ export default function Incidencias() {
         usuarios={usuarios?.datos ?? []}
       />
 
+      {aviso && (
+        <p className={`alerta alerta--${aviso.tipo}`} role="status">
+          {aviso.texto}
+        </p>
+      )}
+
       {resultado.error && (
         <p className="alerta alerta--error">
           {resultado.error.message}{' '}
@@ -231,7 +305,14 @@ export default function Incidencias() {
         <div className={resultado.cargando ? 'cargando-suave' : undefined}>
           <ResumenRegistros paginacion={resultado.datos.paginacion} />
 
-          <TablaIncidencias incidencias={resultado.datos.datos} hayFiltros={hayFiltros} />
+          <TablaIncidencias
+            incidencias={resultado.datos.datos}
+            hayFiltros={hayFiltros}
+            usuarios={usuarios?.datos ?? []}
+            onActualizar={actualizarFila}
+            onCambiarEstado={elegirEstado}
+            ocupada={enviando}
+          />
 
           <Paginacion
             paginacion={resultado.datos.paginacion}
@@ -244,6 +325,16 @@ export default function Incidencias() {
           mantener a la vista. */}
       {resultado.cargando && !resultado.datos && (
         <p className="estado estado--cargando">Cargando incidencias...</p>
+      )}
+
+      {pendiente && (
+        <DialogoMotivo
+          incidencia={pendiente.incidencia}
+          destino={pendiente.destino}
+          enviando={enviando}
+          onConfirmar={confirmarMotivo}
+          onCancelar={() => setPendiente(null)}
+        />
       )}
     </main>
   );

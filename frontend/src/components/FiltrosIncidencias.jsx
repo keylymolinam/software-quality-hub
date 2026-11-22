@@ -100,6 +100,14 @@ export default function FiltrosIncidencias({
 
   const ocultosEnUso = contarOcultosEnUso(valores, enTablero);
 
+  // Hay algo que limpiar si hay un filtro puesto o, en la lista, si el orden
+  // se aparto del de siempre: "Limpiar filtros" deja todo como viene.
+  const ordenCambiado =
+    !enTablero &&
+    (valores.ordenarPor !== ORDEN_POR_DEFECTO.ordenarPor ||
+      valores.direccion !== ORDEN_POR_DEFECTO.direccion);
+  const hayQueLimpiar = hayFiltros || ordenCambiado;
+
   // "Mis incidencias" va primero, antes de los nombres: es la opcion que cada
   // persona busca para si misma, y no depende de saber su nombre en la lista.
   const filtroAsignada = (
@@ -179,13 +187,19 @@ export default function FiltrosIncidencias({
           {ocultosEnUso > 0 && ` (${ocultosEnUso})`}
         </button>
 
-        {/* Aparece solo cuando hay algo que limpiar: un boton que no haria nada
-            no ayuda, y su ausencia ya informa que no hay filtros puestos. */}
-        {hayFiltros && (
-          <button className="boton boton--discreto filtros__limpiar" type="button" onClick={onLimpiar}>
-            Limpiar filtros
-          </button>
-        )}
+        {/* Siempre a la vista, para volver de un golpe a como viene la
+            pantalla. Al principio aparecia solo con filtros puestos, y la
+            autora lo busco sin encontrarlo: un boton que aparece y desaparece
+            no se aprende donde esta. Sin nada que limpiar queda desactivado,
+            que tambien informa que la vista esta como viene. */}
+        <button
+          className="boton boton--discreto filtros__limpiar"
+          type="button"
+          onClick={onLimpiar}
+          disabled={!hayQueLimpiar}
+        >
+          Limpiar filtros
+        </button>
       </div>
 
       {masFiltrosAbierto && (

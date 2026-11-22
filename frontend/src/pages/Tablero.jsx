@@ -44,8 +44,10 @@ import TarjetaIncidencia from '../components/TarjetaIncidencia.jsx';
 import { cambiarEstado, listarIncidencias } from '../api/incidencias.js';
 import { listarProyectos } from '../api/proyectos.js';
 import { listarUsuarios } from '../api/usuarios.js';
+import DialogoMotivo from '../components/DialogoMotivo.jsx';
 import FiltrosIncidencias from '../components/FiltrosIncidencias.jsx';
 import ResumenEstados from '../components/ResumenEstados.jsx';
+import ResumenRegistros from '../components/ResumenRegistros.jsx';
 import SelectorVista from '../components/SelectorVista.jsx';
 import { useSesion } from '../context/SesionContext.jsx';
 import { consultaParaApi, FILTROS_COMPARTIDOS } from '../dominio/filtros.js';
@@ -103,7 +105,6 @@ export default function Tablero() {
 
   // Un movimiento que espera su motivo: { incidencia, destino }.
   const [pendiente, setPendiente] = useState(null);
-  const [motivo, setMotivo] = useState('');
 
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState(null);
@@ -167,7 +168,6 @@ export default function Tablero() {
     if (!incidencia.transiciones_posibles?.includes(destino)) return;
 
     if (accionDe(incidencia.estado, destino).exigeMotivo) {
-      setMotivo('');
       setPendiente({ incidencia, destino });
       return;
     }
@@ -175,8 +175,7 @@ export default function Tablero() {
     ejecutar(incidencia, destino);
   }
 
-  async function confirmarMotivo(evento) {
-    evento.preventDefault();
+  async function confirmarMotivo(motivo) {
     const funciono = await ejecutar(pendiente.incidencia, pendiente.destino, motivo);
     if (funciono) setPendiente(null);
   }
@@ -189,11 +188,19 @@ export default function Tablero() {
 
   const resumenEstados = columnas.datos?.find((c) => c.estado === 'ABIERTA')?.resumen_estados;
 
+  // El total, igual que el de la lista: la suma de las tarjetas por estado,
+  // que cuentan con los mismos filtros. No se suman las columnas: la de
+  // Cerrada trae solo los ultimos 30 dias y el total saldria corto. El tablero
+  // no pagina, asi que se presenta como una sola pagina ("45 incidencias").
+  const total = resumenEstados
+    ? Object.values(resumenEstados).reduce((suma, n) => suma + n, 0)
+    : null;
+
   const sePuedeSoltar = (estado) =>
     Boolean(arrastradaAhora.current?.transiciones_posibles?.includes(estado));
 
   return (
-    <main className="contenedor contenedor--tablero contenido">
+    <main className="contenedor contenedor--vistas contenido">
       <header className="contenido__cabecera">
         <div>
           <h1 className="titulo">Incidencias</h1>
@@ -244,6 +251,10 @@ export default function Tablero() {
 
       {!columnas.datos && !columnas.error && (
         <p className="estado estado--cargando">Cargando el tablero...</p>
+      )}
+
+      {total !== null && (
+        <ResumenRegistros paginacion={{ total, pagina: 1, limite: total, paginas: 1 }} />
       )}
 
       {columnas.datos && (
@@ -317,51 +328,13 @@ export default function Tablero() {
       )}
 
       {pendiente && (
-        <div className="modal" role="presentation">
-          <form
-            className="modal__cuadro tarjeta"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="titulo-motivo"
-            onSubmit={confirmarMotivo}
-          >
-            <h2 id="titulo-motivo">
-              {accionDe(pendiente.incidencia.estado, pendiente.destino).etiqueta} #
-              {pendiente.incidencia.id_incidencia}
-            </h2>
-            <p className="subtitulo">{pendiente.incidencia.titulo}</p>
-
-            <label className="campo">
-              <span className="campo__etiqueta">Motivo (obligatorio)</span>
-              <textarea
-                className="campo__control campo__control--area"
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                rows={3}
-                maxLength={1000}
-                placeholder="Por ejemplo: duplicada de la #1, no es un defecto, no se reproduce."
-                required
-                autoFocus
-              />
-            </label>
-
-            <div className="acciones__confirmar">
-              <button className="boton boton--primario boton--auto" type="submit" disabled={enviando}>
-                {enviando
-                  ? 'Guardando...'
-                  : accionDe(pendiente.incidencia.estado, pendiente.destino).etiqueta}
-              </button>
-              <button
-                className="boton boton--discreto boton--auto"
-                type="button"
-                onClick={() => setPendiente(null)}
-                disabled={enviando}
-              >
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </div>
+        <DialogoMotivo
+          incidencia={pendiente.incidencia}
+          destino={pendiente.destino}
+          enviando={enviando}
+          onConfirmar={confirmarMotivo}
+          onCancelar={() => setPendiente(null)}
+        />
       )}
     </main>
   );

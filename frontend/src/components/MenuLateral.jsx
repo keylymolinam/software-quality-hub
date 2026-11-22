@@ -15,19 +15,18 @@
  * simples, y una dependencia de iconos pesaria mas que toda esta pantalla. Van
  * con aria-hidden porque el nombre de la seccion ya esta escrito al lado.
  *
- * Incidencias se despliega como acordeon con un enlace por proyecto, para
- * entrar directo a las de uno solo: quien trabaja en un proyecto no tiene por
- * que pasar cada vez por el filtro. Ver GrupoIncidencias.
+ * Incidencias es un enlace directo, como las demas secciones. Hasta la
+ * entrega final se desplegaba como acordeon con un enlace por proyecto; se
+ * quito cuando lista y tablero pasaron a compartir el filtro Proyecto, que se
+ * conserva al cambiar de vista: el acordeon repetia ese filtro y alargaba el
+ * menu con cada proyecto nuevo. Lo decidio la autora.
  */
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 
-import { listarProyectos } from '../api/proyectos.js';
 import { rutaVistaPreferida } from './SelectorVista.jsx';
 import { useSesion } from '../context/SesionContext.jsx';
 import { inicialesDe } from '../dominio/incidencias.js';
-import { etiquetaEstadoProyecto } from '../dominio/proyectos.js';
-import { usePeticion } from '../hooks/usePeticion.js';
 
 /** Trazos de cada icono, en una cuadricula de 24 x 24. */
 const TRAZOS = {
@@ -52,7 +51,6 @@ const TRAZOS = {
     </>
   ),
   salir: <path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10" />,
-  flecha: <path d="m6 9 6 6 6-6" />,
 };
 
 function Icono({ nombre, clase = 'icono' }) {
@@ -86,145 +84,25 @@ const SECCIONES = [
 ];
 
 /**
- * Incidencias con sus proyectos debajo, como acordeon.
- *
- * Cada proyecto es un enlace al listado ya filtrado
- * (`/incidencias?id_proyecto=2`), no una pantalla nueva: el listado ya sabia
- * filtrar por proyecto, y asi las tarjetas por estado, la busqueda y el resto
- * de los filtros siguen funcionando dentro del proyecto, y el filtro Proyecto
- * de la barra muestra el mismo valor que el menu.
- *
- * Aparecen todos los proyectos. Los finalizados y pausados van atenuados y con
- * su estado escrito al lado (el gris solo no lo diria a quien no distingue el
- * tono): se ven menos, pero se pueden revisar igual.
- *
- * La cabecera del grupo es un boton y no un enlace: abre y cierra la lista, y
- * aria-expanded le dice al lector de pantalla en que estado esta. "Todas" es
- * el primer enlace de la lista, para quien quiere el listado completo.
- *
- * Lista y tablero son dos vistas de esta misma seccion (ver SelectorVista.jsx),
- * asi que no hay una entrada "Tablero" aparte. Los enlaces del grupo llevan a
- * la vista en que se esta, o fuera de ella a la ultima que la persona eligio:
- * quien trabaja en columnas no tiene que cambiar de vista cada vez que entra.
- *
- * La lista se vuelve a pedir cada vez que se abre: quien acaba de crear un
- * proyecto lo espera ver ahi sin recargar la pagina, y la peticion es una sola
- * lista corta.
+ * Incidencias queda marcada en sus dos vistas y en todo lo que cuelga de ellas
+ * (detalle, registro, edicion). NavLink no sirve aqui: marca segun su propio
+ * destino, y el destino cambia con la vista preferida (/tablero o
+ * /incidencias), mientras que la seccion es una sola.
  */
-function GrupoIncidencias({ pathname, search }) {
-  const enVista = pathname === '/incidencias' || pathname === '/tablero';
-  const enIncidencias = enVista || pathname.startsWith('/incidencias/');
-  const base = enVista ? pathname : rutaVistaPreferida();
-  const [desplegado, setDesplegado] = useState(enIncidencias);
-  const [aperturas, setAperturas] = useState(0);
-
-  // Llegar a incidencias por otro camino (un enlace del inicio, el boton
-  // atras) tambien abre el grupo, para que se vea en que proyecto se esta.
-  useEffect(() => {
-    if (enIncidencias) setDesplegado(true);
-  }, [enIncidencias]);
-
-  const proyectos = usePeticion(
-    () => listarProyectos({ limite: 100 }),
-    `menu-proyectos-${aperturas}`
-  );
-
-  // Que enlace de la lista corresponde a la direccion actual: '' es "Todas",
-  // un numero es ese proyecto, y null es ninguno (el detalle o el registro de
-  // una incidencia, que no son el listado).
-  const idActivo = enVista ? new URLSearchParams(search).get('id_proyecto') ?? '' : null;
-
-  const alternar = () => {
-    if (!desplegado) setAperturas((n) => n + 1);
-    setDesplegado(!desplegado);
-  };
-
-  const claseSub = (activo, inactivo = false) =>
-    'lateral__subenlace' +
-    (activo ? ' lateral__subenlace--activo' : '') +
-    (inactivo ? ' lateral__subenlace--inactivo' : '');
-
-  return (
-    <div className="lateral__grupo">
-      <button
-        type="button"
-        className={
-          'lateral__enlace lateral__grupo-boton' +
-          // Marcado de lleno solo si ningun enlace de la lista lo esta: en el
-          // listado el marcado es el proyecto, y en el detalle, la seccion.
-          (enIncidencias && idActivo === null ? ' lateral__enlace--activo' : '') +
-          (enIncidencias ? ' lateral__grupo-boton--dentro' : '')
-        }
-        aria-expanded={desplegado}
-        aria-controls="menu-proyectos"
-        onClick={alternar}
-      >
-        <Icono nombre="incidencias" />
-        Incidencias
-        <Icono
-          nombre="flecha"
-          clase={`lateral__flecha${desplegado ? ' lateral__flecha--abierta' : ''}`}
-        />
-      </button>
-
-      {desplegado && (
-        <ul className="lateral__sublista" id="menu-proyectos">
-          <li>
-            <Link
-              className={claseSub(idActivo === '')}
-              to={base}
-              aria-current={idActivo === '' ? 'page' : undefined}
-            >
-              Todas
-            </Link>
-          </li>
-
-          {/* Los activos primero: son con los que se trabaja a diario. */}
-          {[...(proyectos.datos?.datos ?? [])]
-            .sort((a, b) => (a.estado === 'ACTIVO' ? 0 : 1) - (b.estado === 'ACTIVO' ? 0 : 1))
-            .map((proyecto) => {
-              const activo = idActivo === String(proyecto.id_proyecto);
-              const inactivo = proyecto.estado !== 'ACTIVO';
-  
-              return (
-                <li key={proyecto.id_proyecto}>
-                  <Link
-                    className={claseSub(activo, inactivo)}
-                    to={`${base}?id_proyecto=${proyecto.id_proyecto}`}
-                    aria-current={activo ? 'page' : undefined}
-                  >
-                    <span className="lateral__subnombre">{proyecto.nombre}</span>
-                    {inactivo && (
-                      <span className="lateral__subestado">
-                        {etiquetaEstadoProyecto(proyecto.estado)}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-
-          {proyectos.error && (
-            <li className="lateral__subaviso">No se pudieron cargar los proyectos.</li>
-          )}
-        </ul>
-      )}
-    </div>
-  );
+function enIncidencias(pathname) {
+  return pathname === '/tablero' || pathname === '/incidencias' || pathname.startsWith('/incidencias/');
 }
 
 export default function MenuLateral() {
   const { usuario, cerrarSesion } = useSesion();
-  const { pathname, search } = useLocation();
+  const { pathname } = useLocation();
 
   // Solo importa en pantallas angostas, donde el menu se pliega.
   const [abierto, setAbierto] = useState(false);
 
   // Al cambiar de seccion el menu plegable se cierra solo: quien eligio una
   // seccion quiere ver la seccion, no el menu tapandola.
-  // Tambien al cambiar solo la consulta: elegir un proyecto del acordeon
-  // deja la misma ruta y cambia ?id_proyecto.
-  useEffect(() => setAbierto(false), [pathname, search]);
+  useEffect(() => setAbierto(false), [pathname]);
 
   return (
     <aside className={`lateral${abierto ? ' lateral--abierto' : ''}`}>
@@ -251,7 +129,18 @@ export default function MenuLateral() {
         <nav className="lateral__nav" aria-label="Secciones">
           {SECCIONES.map((seccion) =>
             seccion.ruta === '/incidencias' ? (
-              <GrupoIncidencias key={seccion.ruta} pathname={pathname} search={search} />
+              // Lleva a la vista que la persona eligio la ultima vez.
+              <Link
+                key={seccion.ruta}
+                to={rutaVistaPreferida()}
+                className={
+                  enIncidencias(pathname) ? 'lateral__enlace lateral__enlace--activo' : 'lateral__enlace'
+                }
+                aria-current={enIncidencias(pathname) ? 'page' : undefined}
+              >
+                <Icono nombre={seccion.icono} />
+                {seccion.etiqueta}
+              </Link>
             ) : (
               <NavLink
                 key={seccion.ruta}
