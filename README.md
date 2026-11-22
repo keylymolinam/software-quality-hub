@@ -8,7 +8,7 @@ Ingeniería en Computación e Informática.
 > con bitácora de cambios, la autenticación con control de acceso por rol y los tres
 > diferenciadores. El **frontend** recorre el ciclo de trabajo completo en doce
 > pantallas, entre ellas un tablero por estados, y los tres diferenciadores se ven en
-> pantalla. Hay **161 pruebas automatizadas**: 55 del backend y 87 de las pantallas,
+> pantalla. Hay **162 pruebas automatizadas**: 55 del backend y 88 de las pantallas,
 > que corren con el ejecutor que viene con Node, y 19 de interacción, que recorren el
 > sistema en un navegador real con Playwright. La interfaz se evaluó con usuarios
 > (SUS promedio 92 en el perfil objetivo; ver [Evaluación de usabilidad](#evaluación-de-usabilidad)).
@@ -207,7 +207,7 @@ reparto en capas están en la figura
 | Login | — (fuera de sesión) | La única sin sesión; `App.jsx` decide cuál mostrar |
 | Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
 | Listado | `/incidencias?id_proyecto=N` | Un proyecto se abre desde el menú lateral, que despliega la lista bajo Incidencias. Tarjetas con la cuenta por estado, que filtran al pulsarlas; filtros, búsqueda, orden y paginación, todo en la dirección |
-| Tablero | `/tablero?proyecto=N` | Una columna por estado; se arrastran las tarjetas para cambiarlo |
+| Tablero | `/tablero?proyecto=N&asignado=yo` | Una columna por estado; se arrastran las tarjetas para cambiarlo. Filtra por proyecto y por persona asignada («Mis incidencias») |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
 | Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
@@ -452,7 +452,7 @@ es deliberada: pulsar un botón pide un navegador, y Node no trae uno.
 | Suite | Comando | Archivos | Pruebas |
 |---|---|---|---|
 | Backend | `npm test` desde `backend/` | 2 | 55 |
-| Pantallas | `npm test` desde `frontend/` | 5 | 87 |
+| Pantallas | `npm test` desde `frontend/` | 5 | 88 |
 | Interacción | `npm run test:e2e` desde `frontend/` | 6 | 19 |
 
 ### Cómo ejecutarlas

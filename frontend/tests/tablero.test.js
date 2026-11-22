@@ -12,8 +12,10 @@ import assert from 'node:assert/strict';
 
 import { cargando, cargar, cerrarEntorno, declararEscenario, dibujar, falla, respondeCon, texto } from './entorno.js';
 
-const CLAVE = 'tablero--0';
+// tablero-<proyecto>-<asignado>-<version>: sin filtros, los dos vacios.
+const CLAVE = 'tablero---0';
 const CLAVE_PROYECTOS = 'tablero-proyectos';
+const CLAVE_USUARIOS = 'tablero-usuarios';
 
 const tarjeta = (id, estado, titulo, extra = {}) => ({
   id_incidencia: id,
@@ -54,10 +56,11 @@ const COLUMNAS = respondeCon([
 ]);
 
 const PROYECTOS = respondeCon({ datos: [{ id_proyecto: 1, nombre: 'Portal de Autoatencion' }] });
+const USUARIOS = respondeCon({ datos: [{ id_usuario: 3, nombre: 'Desarrollador 1' }] });
 
-const dibujarTablero = async () => {
+const dibujarTablero = async (ruta = '/tablero') => {
   const { default: Tablero } = await cargar('/src/pages/Tablero.jsx');
-  return dibujar(Tablero, { ruta: '/tablero', patron: '/tablero' });
+  return dibujar(Tablero, { ruta, patron: '/tablero' });
 };
 
 /** El HTML de una columna, para afirmar sobre lo que contiene. */
@@ -67,7 +70,7 @@ after(cerrarEntorno);
 
 describe('Tablero', () => {
   test('una columna por estado, en el orden del flujo y con su total', async () => {
-    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS });
+    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS, [CLAVE_USUARIOS]: USUARIOS });
 
     const html = await dibujarTablero();
     const titulos = [...html.matchAll(/class="columna__titulo">([^<]+)</g)].map((m) => m[1]);
@@ -79,7 +82,7 @@ describe('Tablero', () => {
   });
 
   test('cada tarjeta va en su columna, con lo justo para decidir', async () => {
-    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS });
+    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS, [CLAVE_USUARIOS]: USUARIOS });
 
     const html = await dibujarTablero();
     const enDesarrollo = texto(columnaDe(html, 'EN_PROGRESO'));
@@ -92,7 +95,7 @@ describe('Tablero', () => {
   });
 
   test('el menu de cada tarjeta ofrece solo lo que dice el backend', async () => {
-    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS });
+    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS, [CLAVE_USUARIOS]: USUARIOS });
 
     const resuelta = texto(columnaDe(await dibujarTablero(), 'RESUELTA'));
 
@@ -102,7 +105,7 @@ describe('Tablero', () => {
   });
 
   test('Cerrada muestra solo los ultimos 30 dias y enlaza a todas', async () => {
-    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS });
+    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS, [CLAVE_USUARIOS]: USUARIOS });
 
     const cerrada = columnaDe(await dibujarTablero(), 'CERRADA');
 
@@ -112,7 +115,7 @@ describe('Tablero', () => {
   });
 
   test('si hay mas tarjetas de las que caben, lo dice y lleva al listado', async () => {
-    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS });
+    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS, [CLAVE_USUARIOS]: USUARIOS });
 
     const enDesarrollo = columnaDe(await dibujarTablero(), 'EN_PROGRESO');
 
@@ -120,11 +123,29 @@ describe('Tablero', () => {
     assert.ok(enDesarrollo.includes('href="/incidencias?estado=EN_PROGRESO"'));
   });
 
+  test('"Mis incidencias" pide las columnas de quien mira, no un id fijo', async () => {
+    // El usuario de prueba es el 1: ?asignado=yo tiene que pedir las columnas
+    // con asignado_a=1. Si no se tradujera, la clave seria otra y el escenario
+    // no la tendria declarada.
+    declararEscenario({
+      'tablero--1-0': COLUMNAS,
+      [CLAVE_PROYECTOS]: PROYECTOS,
+      [CLAVE_USUARIOS]: USUARIOS,
+    });
+
+    const html = await dibujarTablero('/tablero?asignado=yo');
+
+    assert.match(html, /<option value="yo" selected="">Mis incidencias<\/option>/);
+    assert.match(texto(columnaDe(html, 'EN_PROGRESO')), /El portal no carga/);
+    // Y cada persona del equipo esta en la lista para elegirla.
+    assert.match(html, /<option value="3">Desarrollador 1<\/option>/);
+  });
+
   test('un error ofrece reintentar, y mientras carga lo dice', async () => {
-    declararEscenario({ [CLAVE]: falla('El servidor no responde.', 503), [CLAVE_PROYECTOS]: PROYECTOS });
+    declararEscenario({ [CLAVE]: falla('El servidor no responde.', 503), [CLAVE_PROYECTOS]: PROYECTOS, [CLAVE_USUARIOS]: USUARIOS });
     assert.match(texto(await dibujarTablero()), /Reintentar/);
 
-    declararEscenario({ [CLAVE]: cargando(), [CLAVE_PROYECTOS]: PROYECTOS });
+    declararEscenario({ [CLAVE]: cargando(), [CLAVE_PROYECTOS]: PROYECTOS, [CLAVE_USUARIOS]: USUARIOS });
     assert.match(texto(await dibujarTablero()), /Cargando el tablero/);
   });
 });

@@ -30,6 +30,17 @@
  *
  * El proyecto elegido vive en la direccion (?proyecto=2), como los filtros del
  * listado: el enlace al tablero de un proyecto se puede compartir.
+ *
+ * ---------------------------------------------------------------------------
+ * FILTRO POR PERSONA ASIGNADA
+ *
+ * Lo pidio la autora: en un tablero cada quien quiere ver primero lo suyo. Se
+ * agrego solo este filtro, y no todos los del listado, porque el tablero es
+ * para mirar el avance de un vistazo; para buscar con detalle esta el listado.
+ *
+ * "Mis incidencias" se guarda como ?asignado=yo y no con el id de quien filtra:
+ * asi el enlace significa lo mismo para cualquiera que lo abra (sus propias
+ * incidencias), en vez de mostrarle a otra persona las de quien lo copio.
  */
 import { useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -37,6 +48,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import TarjetaIncidencia from '../components/TarjetaIncidencia.jsx';
 import { cambiarEstado, listarIncidencias } from '../api/incidencias.js';
 import { listarProyectos } from '../api/proyectos.js';
+import { listarUsuarios } from '../api/usuarios.js';
+import { useSesion } from '../context/SesionContext.jsx';
 import { accionDe, ESTADOS, etiquetaDe } from '../dominio/incidencias.js';
 import { usePeticion } from '../hooks/usePeticion.js';
 
@@ -46,11 +59,15 @@ const DIAS_CERRADAS = 30;
 /** Tarjetas por columna. Las que sobran se ven en el listado. */
 const POR_COLUMNA = 50;
 
+/** Valor del filtro "Mis incidencias" en la direccion. */
+const ASIGNADO_A_MI = 'yo';
+
 /** Pide una columna del tablero. */
-function pedirColumna(estado, idProyecto) {
+function pedirColumna(estado, idProyecto, idAsignado) {
   return listarIncidencias({
     estado,
     id_proyecto: idProyecto,
+    asignado_a: idAsignado,
     limite: POR_COLUMNA,
     ordenarPor: estado === 'CERRADA' ? 'fecha_creacion' : 'prioridad',
     direccion: 'DESC',
@@ -61,6 +78,11 @@ function pedirColumna(estado, idProyecto) {
 export default function Tablero() {
   const [parametrosUrl, setParametrosUrl] = useSearchParams();
   const proyecto = parametrosUrl.get('proyecto') ?? '';
+  const asignado = parametrosUrl.get('asignado') ?? '';
+
+  // "yo" se traduce aqui, en el momento de pedir, al id de quien mira.
+  const { usuario } = useSesion();
+  const idAsignado = asignado === ASIGNADO_A_MI ? String(usuario.id_usuario) : asignado;
 
   // Se incrementa tras cada movimiento para volver a pedir las columnas.
   const [version, setVersion] = useState(0);
@@ -89,16 +111,18 @@ export default function Tablero() {
   const [aviso, setAviso] = useState(null);
 
   const columnas = usePeticion(
-    () => Promise.all(ESTADOS.map(({ valor }) => pedirColumna(valor, proyecto))),
-    `tablero-${proyecto}-${version}`
+    () => Promise.all(ESTADOS.map(({ valor }) => pedirColumna(valor, proyecto, idAsignado))),
+    `tablero-${proyecto}-${idAsignado}-${version}`
   );
   const proyectos = usePeticion(() => listarProyectos({ limite: 100 }), 'tablero-proyectos');
+  const usuarios = usePeticion(() => listarUsuarios({ limite: 100 }), 'tablero-usuarios');
 
-  function elegirProyecto(valor) {
+  /** Cambia un filtro de la direccion; vacio lo quita. */
+  function elegir(campo, valor) {
     setParametrosUrl((anteriores) => {
       const siguientes = new URLSearchParams(anteriores);
-      if (valor) siguientes.set('proyecto', valor);
-      else siguientes.delete('proyecto');
+      if (valor) siguientes.set(campo, valor);
+      else siguientes.delete(campo);
       return siguientes;
     });
   }
@@ -161,21 +185,40 @@ export default function Tablero() {
           </p>
         </div>
 
-        <label className="campo campo--en-linea">
-          <span className="campo__etiqueta">Proyecto</span>
-          <select
-            className="campo__control"
-            value={proyecto}
-            onChange={(e) => elegirProyecto(e.target.value)}
-          >
-            <option value="">Todos los proyectos</option>
-            {(proyectos.datos?.datos ?? []).map((p) => (
-              <option key={p.id_proyecto} value={p.id_proyecto}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="tablero__filtros">
+          <label className="campo campo--en-linea">
+            <span className="campo__etiqueta">Proyecto</span>
+            <select
+              className="campo__control"
+              value={proyecto}
+              onChange={(e) => elegir('proyecto', e.target.value)}
+            >
+              <option value="">Todos los proyectos</option>
+              {(proyectos.datos?.datos ?? []).map((p) => (
+                <option key={p.id_proyecto} value={p.id_proyecto}>
+                  {p.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="campo campo--en-linea">
+            <span className="campo__etiqueta">Asignado a</span>
+            <select
+              className="campo__control"
+              value={asignado}
+              onChange={(e) => elegir('asignado', e.target.value)}
+            >
+              <option value="">Todas las personas</option>
+              <option value={ASIGNADO_A_MI}>Mis incidencias</option>
+              {(usuarios.datos?.datos ?? []).map((u) => (
+                <option key={u.id_usuario} value={u.id_usuario}>
+                  {u.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
 
       {aviso && (

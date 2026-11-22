@@ -2273,6 +2273,13 @@ a.tabla__titulo:hover {
   margin-bottom: 0;
 }
 
+/* Los filtros del tablero, uno al lado del otro; bajan de linea si no caben. */
+.tablero__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 /* Cinco columnas iguales. El minimo de 180px es el que deja caber las cinco
    en una pantalla de notebook (1280px) junto al menu lateral; con 230px la
    columna Cerrada quedaba fuera de la vista. Mas angosto que eso no se
