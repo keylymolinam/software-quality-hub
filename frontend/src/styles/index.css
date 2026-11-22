@@ -1271,23 +1271,17 @@ body {
 
 /* --- Paginacion ---------------------------------------------------------- */
 
-.paginacion {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.paginacion__resumen {
-  margin: 16px 0 0;
-  font-size: 0.85rem;
+/* Cuenta del listado, encima de la tabla. */
+.resumen-registros {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
   color: var(--color-texto-suave);
 }
 
-.paginacion .paginacion__resumen {
-  margin: 0;
+.paginacion {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .paginacion__controles {

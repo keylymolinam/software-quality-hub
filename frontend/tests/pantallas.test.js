@@ -569,6 +569,27 @@ describe('Listado con resumen por estado', () => {
     assert.match(visible, /Cerrada\s*31/);
   });
 
+  test('el resumen de registros va encima de la tabla con el tramo y el total', async () => {
+    const { default: Incidencias } = await cargar('/src/pages/Incidencias.jsx');
+
+    declararEscenario({
+      [CLAVE_LISTADO]: respondeCon({
+        datos: [INCIDENCIA_CERRADA],
+        paginacion: { total: 45, pagina: 2, limite: 20, paginas: 3 },
+        resumen_estados: RESUMEN,
+      }),
+      'referencias-de-filtro': respondeCon([{ datos: [] }, { datos: [] }]),
+    });
+
+    const html = dibujar(Incidencias, { ruta: '/incidencias' });
+
+    // El tramo sale de la paginacion que responde el backend (pagina 2 de 20 en
+    // 20: 21-40), no de la direccion ni de las filas recibidas.
+    assert.match(texto(html), /Mostrando 21\u201340 de 45 incidencias/);
+    // Arriba de la tabla, que es justamente el cambio pedido.
+    assert.ok(html.indexOf('resumen-registros') < html.indexOf('<table'));
+  });
+
   test('cada fila lleva franja de prioridad, iniciales y proyecto bajo el titulo', async () => {
     const { default: TablaIncidencias } = await cargar('/src/components/TablaIncidencias.jsx');
 

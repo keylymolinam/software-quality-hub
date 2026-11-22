@@ -29,6 +29,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 
 import FiltrosIncidencias from '../components/FiltrosIncidencias.jsx';
 import Paginacion from '../components/Paginacion.jsx';
+import ResumenRegistros from '../components/ResumenRegistros.jsx';
 import ResumenEstados from '../components/ResumenEstados.jsx';
 import TablaIncidencias from '../components/TablaIncidencias.jsx';
 import { listarIncidencias } from '../api/incidencias.js';
@@ -215,6 +216,8 @@ export default function Incidencias() {
           produce un parpadeo que cuesta mas de leer que esperar. */}
       {resultado.datos && (
         <div className={resultado.cargando ? 'cargando-suave' : undefined}>
+          <ResumenRegistros paginacion={resultado.datos.paginacion} />
+
           <TablaIncidencias incidencias={resultado.datos.datos} hayFiltros={hayFiltros} />
 
           <Paginacion

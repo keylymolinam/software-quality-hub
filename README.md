@@ -8,7 +8,7 @@ Ingeniería en Computación e Informática.
 > con bitácora de cambios, la autenticación con control de acceso por rol y los tres
 > diferenciadores. El **frontend** recorre el ciclo de trabajo completo en doce
 > pantallas, entre ellas un tablero por estados, y los tres diferenciadores se ven en
-> pantalla. Hay **160 pruebas automatizadas**: 55 del backend y 86 de las pantallas,
+> pantalla. Hay **161 pruebas automatizadas**: 55 del backend y 87 de las pantallas,
 > que corren con el ejecutor que viene con Node, y 19 de interacción, que recorren el
 > sistema en un navegador real con Playwright. La interfaz se evaluó con usuarios
 > (SUS promedio 92 en el perfil objetivo; ver [Evaluación de usabilidad](#evaluación-de-usabilidad)).
@@ -452,7 +452,7 @@ es deliberada: pulsar un botón pide un navegador, y Node no trae uno.
 | Suite | Comando | Archivos | Pruebas |
 |---|---|---|---|
 | Backend | `npm test` desde `backend/` | 2 | 55 |
-| Pantallas | `npm test` desde `frontend/` | 5 | 86 |
+| Pantallas | `npm test` desde `frontend/` | 5 | 87 |
 | Interacción | `npm run test:e2e` desde `frontend/` | 6 | 19 |
 
 ### Cómo ejecutarlas

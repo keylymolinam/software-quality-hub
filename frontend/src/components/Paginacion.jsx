@@ -1,7 +1,8 @@
 /**
  * Pie de paginacion del listado.
  *
- * Muestra que tramo se esta viendo del total y permite avanzar o retroceder.
+ * Permite avanzar o retroceder. Que tramo se esta viendo del total lo dice
+ * ResumenRegistros, encima de la tabla: aqui abajo solo quedan los controles.
  *
  * Solo anterior/siguiente, sin numeros de pagina: los numeros obligan a decidir
  * cuantos mostrar y como abreviar los del medio, y no resuelven nada que aqui
@@ -13,26 +14,14 @@
  * pagina que lo usa sigue siendo la unica que habla con la API.
  */
 export default function Paginacion({ paginacion, onCambiarPagina }) {
-  const { total, pagina, limite, paginas } = paginacion;
+  const { pagina, paginas } = paginacion;
 
   // Con una sola pagina no hay nada que ofrecer. Se devuelve null en lugar de
   // dibujar los botones desactivados: un control que nunca va a servir es ruido.
-  if (paginas <= 1) {
-    return <p className="paginacion__resumen">{total} incidencias</p>;
-  }
-
-  // Tramo que se esta viendo, contando desde 1 para que coincida con lo que la
-  // persona ve en la tabla. El final se recorta con el total, porque la ultima
-  // pagina casi nunca viene completa.
-  const desde = (pagina - 1) * limite + 1;
-  const hasta = Math.min(pagina * limite, total);
+  if (paginas <= 1) return null;
 
   return (
     <div className="paginacion">
-      <p className="paginacion__resumen">
-        Mostrando {desde}-{hasta} de {total}
-      </p>
-
       <div className="paginacion__controles">
         <button
           className="boton boton--discreto"
