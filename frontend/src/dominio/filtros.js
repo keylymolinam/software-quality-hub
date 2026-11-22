@@ -43,3 +43,22 @@ export function consultaParaApi(filtros, usuario) {
   if (filtros.asignado_a !== ASIGNADO_A_MI) return filtros;
   return { ...filtros, asignado_a: String(usuario.id_usuario) };
 }
+
+/**
+ * Los filtros vigentes, para construir los siguientes a partir de ellos.
+ *
+ * Se leen de la direccion del navegador y no de los que recibe el actualizador
+ * de react-router (`anteriores`). Esos son los del ultimo dibujado: al elegir
+ * un filtro la direccion cambia en el acto, pero la pantalla se vuelve a
+ * dibujar un momento despues, y un segundo filtro elegido en ese intervalo
+ * partia de la copia vieja y borraba el primero (Estado = Cerrada y luego
+ * Prioridad = Alta dejaba solo la prioridad). Lo encontro la prueba de
+ * interaccion del listado cuando la tabla, con sus desplegables por fila,
+ * empezo a tardar mas en dibujarse. La direccion siempre esta al dia.
+ *
+ * `anteriores` queda como respaldo para cuando no hay navegador.
+ */
+export function parametrosActuales(anteriores) {
+  const enLaDireccion = globalThis.location?.search;
+  return new URLSearchParams(enLaDireccion ?? anteriores);
+}

@@ -50,7 +50,7 @@ import ResumenEstados from '../components/ResumenEstados.jsx';
 import ResumenRegistros from '../components/ResumenRegistros.jsx';
 import SelectorVista from '../components/SelectorVista.jsx';
 import { useSesion } from '../context/SesionContext.jsx';
-import { consultaParaApi, FILTROS_COMPARTIDOS } from '../dominio/filtros.js';
+import { consultaParaApi, FILTROS_COMPARTIDOS, parametrosActuales } from '../dominio/filtros.js';
 import { accionDe, ESTADOS, etiquetaDe } from '../dominio/incidencias.js';
 import { usePeticion } from '../hooks/usePeticion.js';
 
@@ -124,7 +124,7 @@ export default function Tablero() {
     (campo, valor) => {
       setParametrosUrl(
         (anteriores) => {
-          const siguientes = new URLSearchParams(anteriores);
+          const siguientes = parametrosActuales(anteriores);
           if (valor) siguientes.set(campo, String(valor));
           else siguientes.delete(campo);
           return siguientes;
@@ -137,7 +137,7 @@ export default function Tablero() {
 
   const limpiarFiltros = useCallback(() => {
     setParametrosUrl((anteriores) => {
-      const siguientes = new URLSearchParams(anteriores);
+      const siguientes = parametrosActuales(anteriores);
       for (const campo of FILTROS_COMPARTIDOS) siguientes.delete(campo);
       return siguientes;
     });

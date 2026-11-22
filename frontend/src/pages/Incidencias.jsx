@@ -32,7 +32,7 @@ import Paginacion from '../components/Paginacion.jsx';
 import ResumenRegistros from '../components/ResumenRegistros.jsx';
 import SelectorVista from '../components/SelectorVista.jsx';
 import { useSesion } from '../context/SesionContext.jsx';
-import { consultaParaApi } from '../dominio/filtros.js';
+import { consultaParaApi, parametrosActuales } from '../dominio/filtros.js';
 import { accionDe, ESTADOS, etiquetaDe, PRIORIDADES } from '../dominio/incidencias.js';
 import ResumenEstados from '../components/ResumenEstados.jsx';
 import TablaIncidencias from '../components/TablaIncidencias.jsx';
@@ -94,7 +94,7 @@ export default function Incidencias() {
     (campo, valor) => {
       setParametrosUrl(
         (anteriores) => {
-          const siguientes = new URLSearchParams(anteriores);
+          const siguientes = parametrosActuales(anteriores);
 
           // Un filtro vacio se borra de la direccion en vez de quedar como
           // `estado=`. La direccion se mantiene legible y dice exactamente que
@@ -135,7 +135,7 @@ export default function Incidencias() {
    */
   const limpiarFiltros = useCallback(() => {
     setParametrosUrl((anteriores) => {
-      const siguientes = new URLSearchParams(anteriores);
+      const siguientes = parametrosActuales(anteriores);
 
       for (const campo of [...CAMPOS_FILTRABLES, 'pagina', 'ordenarPor', 'direccion']) {
         siguientes.delete(campo);
