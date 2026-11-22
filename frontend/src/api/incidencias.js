@@ -130,6 +130,22 @@ export function obtenerHistorial(id) {
 }
 
 /**
+ * Los comentarios de una incidencia, del mas antiguo al mas reciente.
+ * @returns {Promise<{ id_incidencia: number, total: number, comentarios: Array }>}
+ */
+export function listarComentarios(id) {
+  return api.get(`/incidencias/${id}/comentarios`);
+}
+
+/**
+ * Publica un comentario. El autor lo pone el backend desde la sesion.
+ * @returns {Promise<object>} El comentario creado, con el nombre del autor.
+ */
+export function agregarComentario(id, texto) {
+  return api.post(`/incidencias/${id}/comentarios`, { texto });
+}
+
+/**
  * Ultimos movimientos de la bitacora de todo el sistema, del mas reciente al
  * mas antiguo, con el titulo y el proyecto de cada incidencia.
  *

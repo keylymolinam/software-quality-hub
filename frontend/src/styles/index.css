@@ -1673,6 +1673,80 @@ a.tabla__titulo:hover {
   font-family: inherit;
 }
 
+/* En el panel lateral los rotulos van tenues y los valores alineados al
+   centro de la fila, para que los desplegables no queden desfasados. */
+.detalle--panel {
+  align-items: center;
+  margin-top: var(--espacio-2);
+}
+
+.detalle--panel dt {
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.detalle__panel > .tarjeta + .tarjeta,
+.detalle__panel > .acciones + .tarjeta {
+  margin-top: 16px;
+}
+
+/* --- Comentarios ---------------------------------------------------------- */
+
+.comentarios {
+  margin: var(--espacio-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Avatar a la izquierda y el cuerpo al lado, como en un chat de equipo. */
+.comentario {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-borde);
+}
+
+.comentario:first-child {
+  border-top: 0;
+}
+
+.comentario__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.comentario__cabecera time {
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+}
+
+/* pre-wrap por lo mismo que la descripcion: los saltos de linea separan
+   pasos, y colapsarlos los vuelve un parrafo. */
+.comentario__texto {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.comentarios__nuevo {
+  margin-top: var(--espacio-4);
+  padding-top: var(--espacio-4);
+  border-top: 1px solid var(--color-borde);
+}
+
+.comentarios__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 8px;
+}
+
 /* --- Acciones de estado --------------------------------------------------- */
 
 /* Etiqueta del estado actual que abre el menu de acciones. Parece una

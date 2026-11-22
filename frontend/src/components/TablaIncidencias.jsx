@@ -42,6 +42,7 @@
  */
 import { Link, useLocation } from 'react-router-dom';
 
+import Editable from './Editable.jsx';
 import EtiquetaEstado from './EtiquetaEstado.jsx';
 import EtiquetaPrioridad from './EtiquetaPrioridad.jsx';
 import { estadoDesde } from '../dominio/origen.js';
@@ -55,33 +56,6 @@ import {
   haceCuanto,
   inicialesDe,
 } from '../dominio/incidencias.js';
-
-/**
- * Etiqueta que se despliega: lo que se ve (children) mas un select invisible
- * encima. El select es lo que recibe el clic, el foco y el teclado.
- */
-function Editable({ etiqueta, valor, opciones, onElegir, deshabilitado, children }) {
-  return (
-    <span className={`editable${deshabilitado ? ' editable--ocupada' : ''}`}>
-      {children}
-      <select
-        className="editable__control"
-        aria-label={etiqueta}
-        value={valor}
-        disabled={deshabilitado}
-        onChange={(e) => {
-          if (e.target.value !== valor) onElegir(e.target.value);
-        }}
-      >
-        {opciones.map((opcion) => (
-          <option key={opcion.valor} value={opcion.valor}>
-            {opcion.etiqueta}
-          </option>
-        ))}
-      </select>
-    </span>
-  );
-}
 
 /** Quien la tiene asignada, con su circulo de iniciales, o "Sin asignar". */
 function Asignada({ nombre }) {

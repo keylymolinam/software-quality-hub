@@ -760,6 +760,22 @@ INSERT INTO HISTORIAL_INCIDENCIA (estado_anterior, estado_nuevo, fecha_cambio, c
 
 
 -- =============================================================================
+-- COMENTARIO
+-- La conversación de dos incidencias, para que la demostración tenga algo que
+-- mostrar. La #27 sigue su propia historia: se resolvió, el tester la reabrió
+-- al girar la pantalla, y se resolvió otra vez. Usuarios: 1 Superusuario,
+-- 2 Desarrollador 1, 3 Tester, 4 Analista, 5 Desarrollador 2.
+-- =============================================================================
+INSERT INTO COMENTARIO (texto, fecha_creacion, id_incidencia, autor) VALUES
+    ('El servidor responde 502 desde el balanceador. Reviso la configuración.',                datetime('now', '-44 days'), 1, 2),
+    ('Los clientes están llamando a soporte. ¿Hay una hora estimada para la solución?',         datetime('now', '-43 days'), 1, 4),
+    ('Lo reviso hoy. ¿En qué modelo de tablet ocurre?',                                          datetime('now', '-89 days'), 27, 2),
+    ('En las tablets del equipo de terreno. Con el celular la firma se guarda bien.',           datetime('now', '-89 days'), 27, 3),
+    ('El lienzo se exportaba antes de terminar el trazo. Corregido, queda para validar.',       datetime('now', '-82 days'), 27, 2),
+    ('La reabro: con la pantalla girada la firma vuelve a quedar en blanco.',                   datetime('now', '-78 days'), 27, 3),
+    ('Ahora se guarda también al girar la pantalla. Probado en tres tablets distintas.',        datetime('now', '-62 days'), 27, 2);
+
+-- =============================================================================
 -- METRICA
 -- Ejemplos del formato en que el modulo de metricas (semanas 8-9) almacenara
 -- sus calculos. Los valores aqui son ilustrativos.

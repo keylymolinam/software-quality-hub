@@ -432,14 +432,15 @@ export function eliminarUsuario(id) {
     throw errorNoEncontrado(`No existe el usuario con id ${idUsuario}.`);
   }
 
-  const { reportadas, cambiosHistorial, cambiosPesos, asignadas } =
+  const { reportadas, cambiosHistorial, cambiosPesos, comentarios, asignadas } =
     Usuario.contarDependencias(idUsuario);
 
-  if (reportadas > 0 || cambiosHistorial > 0 || cambiosPesos > 0) {
+  if (reportadas > 0 || cambiosHistorial > 0 || cambiosPesos > 0 || comentarios > 0) {
     const motivos = [];
     if (reportadas > 0) motivos.push(`${reportadas} incidencia(s) reportada(s)`);
     if (cambiosHistorial > 0) motivos.push(`${cambiosHistorial} cambio(s) registrado(s) en el historial`);
     if (cambiosPesos > 0) motivos.push(`${cambiosPesos} cambio(s) de los pesos del \u00edndice`);
+    if (comentarios > 0) motivos.push(`${comentarios} comentario(s)`);
 
     throw errorConflicto(
       `No se puede eliminar el usuario: tiene ${motivos.join(' y ')}.`,

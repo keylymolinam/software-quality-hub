@@ -63,7 +63,7 @@ if (esBaseNueva) {
  * Tablas en orden de dependencia: cada una solo apunta a las que estan antes.
  * Se borran en el orden inverso para no dejar claves foraneas colgando.
  */
-const TABLAS = ['USUARIO', 'PROYECTO', 'INCIDENCIA', 'HISTORIAL_INCIDENCIA', 'METRICA', 'PESO_SALUD'];
+const TABLAS = ['USUARIO', 'PROYECTO', 'INCIDENCIA', 'HISTORIAL_INCIDENCIA', 'COMENTARIO', 'METRICA', 'PESO_SALUD'];
 
 /**
  * Borra todas las tablas y las vuelve a crear con el esquema actual.

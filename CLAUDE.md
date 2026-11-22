@@ -23,7 +23,7 @@ que ya cubren todo lo que la API ofrece:
 | Incidencias: Lista | `/incidencias?id_proyecto=N` | El proyecto se elige con el filtro (el menú ya no lista proyectos). Tarjetas con la cuenta por estado (filtran al pulsarlas); filtros, búsqueda, orden y paginación en la dirección. Estado, prioridad y asignación se editan en la fila |
 | Incidencias: Tablero | `/tablero?id_proyecto=N` | Columnas por estado; arrastrar una tarjeta la cambia de estado. Mismos filtros que la lista |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
-| Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
+| Detalle | `/incidencias/:id` | Comentarios, bitácora, transiciones; asignación y prioridad en el panel de datos; descarte del duplicado |
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
 | Salud | `/salud?proyecto=N` | Desglose del índice: los tres componentes con su peso y su evidencia |
 | Guía de salud | `/salud/guia` | Qué es el índice, para qué sirve y cómo se calcula, con un ejemplo |

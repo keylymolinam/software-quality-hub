@@ -53,6 +53,7 @@ const Proyectos = await import('../src/services/proyecto.service.js');
 const Usuarios = await import('../src/services/usuario.service.js');
 const Salud = await import('../src/services/salud.service.js');
 const Auth = await import('../src/services/auth.service.js');
+const Comentarios = await import('../src/services/comentario.service.js');
 const { clasificar } = await import('../src/services/clasificacion.service.js');
 
 // ---------------------------------------------------------------------------
@@ -61,7 +62,7 @@ const { clasificar } = await import('../src/services/clasificacion.service.js');
 
 /** Vacia las tablas. El orden respeta las claves foraneas. */
 function limpiar() {
-  for (const tabla of ['PESO_SALUD', 'HISTORIAL_INCIDENCIA', 'METRICA', 'INCIDENCIA', 'PROYECTO', 'USUARIO']) {
+  for (const tabla of ['PESO_SALUD', 'COMENTARIO', 'HISTORIAL_INCIDENCIA', 'METRICA', 'INCIDENCIA', 'PROYECTO', 'USUARIO']) {
     db.exec(`DELETE FROM ${tabla}`);
   }
 }
@@ -737,6 +738,48 @@ describe('Indice de salud', () => {
 // ---------------------------------------------------------------------------
 // Pesos del indice, editables por el administrador
 // ---------------------------------------------------------------------------
+
+describe('Comentarios', () => {
+  test('el autor sale de la sesion y la conversacion se lee en orden', () => {
+    const incidencia = crear();
+
+    // Aunque el cuerpo diga otro autor, manda la sesion.
+    Comentarios.agregarComentario(incidencia.id_incidencia, { texto: '  Primera pregunta.  ', autor: autora.id_usuario }, revisor.id_usuario);
+    Comentarios.agregarComentario(incidencia.id_incidencia, { texto: 'Respuesta.' }, autora.id_usuario);
+
+    const conversacion = Comentarios.listarComentarios(incidencia.id_incidencia);
+    assert.deepEqual(conversacion.map((c) => c.texto), ['Primera pregunta.', 'Respuesta.']);
+    assert.equal(conversacion[0].autor, revisor.id_usuario);
+    assert.equal(conversacion[0].autor_nombre, revisor.nombre);
+  });
+
+  test('comentar no toca la bitacora, que es la fuente del indice', () => {
+    const incidencia = crear();
+    Comentarios.agregarComentario(incidencia.id_incidencia, { texto: 'Solo una nota.' }, autora.id_usuario);
+
+    assert.equal(Incidencias.obtenerHistorial(incidencia.id_incidencia).length, 1);
+  });
+
+  test('un comentario vacio o demasiado largo es un 400 sobre texto', () => {
+    const incidencia = crear();
+    falla(() => Comentarios.agregarComentario(incidencia.id_incidencia, { texto: '   ' }, autora.id_usuario), 400, 'texto');
+    falla(() => Comentarios.agregarComentario(incidencia.id_incidencia, {}, autora.id_usuario), 400, 'texto');
+    falla(() => Comentarios.agregarComentario(incidencia.id_incidencia, { texto: 'x'.repeat(2001) }, autora.id_usuario), 400, 'texto');
+  });
+
+  test('una incidencia que no existe da 404, no una lista vacia', () => {
+    falla(() => Comentarios.listarComentarios(99999), 404);
+    falla(() => Comentarios.agregarComentario(99999, { texto: 'Hola' }, autora.id_usuario), 404);
+  });
+
+  test('quien comento no se puede eliminar: lo dicho no queda sin autor', () => {
+    const incidencia = crear();
+    // El revisor no reporto ni movio nada: su unica huella es el comentario.
+    Comentarios.agregarComentario(incidencia.id_incidencia, { texto: 'Una observacion.' }, revisor.id_usuario);
+
+    falla(() => Usuarios.eliminarUsuario(revisor.id_usuario), 409, 'id_usuario');
+  });
+});
 
 describe('Pesos del indice de salud', () => {
   const pesos = (antiguedad, reapertura, densidad, motivo = 'Ajuste acordado con el equipo.') => ({

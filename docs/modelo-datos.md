@@ -79,6 +79,8 @@ Motor: SQLite 3
 | INCIDENCIA — INCIDENCIA (posible_duplicado_de) | 1 : N reflexiva | Opcional: solo si se detecta similitud |
 | PROYECTO — METRICA | 1 : N | Opcional: si es nula, la métrica es global |
 | USUARIO — HISTORIAL_INCIDENCIA (modificado_por) | 1 : N | Todo cambio de estado registra a su autor |
+| INCIDENCIA — COMENTARIO | 1 : N | Opcional: una incidencia puede no tener comentarios |
+| USUARIO — COMENTARIO (autor) | 1 : N | Todo comentario registra a su autor |
 
 ---
 
@@ -134,6 +136,21 @@ Motor: SQLite 3
 | comentario | TEXT | — | Justificación del cambio |
 | id_incidencia | INTEGER | FK → INCIDENCIA, NOT NULL | Incidencia afectada |
 | modificado_por | INTEGER | FK → USUARIO, NOT NULL | Usuario que efectuó el cambio |
+
+### COMENTARIO
+
+La conversación de una incidencia. Va aparte de `HISTORIAL_INCIDENCIA` porque la
+bitácora registra cambios de estado y de ella sale el índice de salud: mezclar la
+conversación ensuciaría las métricas. Como la bitácora, solo crece: un comentario
+no se edita ni se borra.
+
+| Campo | Tipo | Restricciones | Descripción |
+|---|---|---|---|
+| id_comentario | INTEGER | PK, autoincremental | Identificador único |
+| texto | TEXT | NOT NULL, CHECK no vacío | Lo que se dijo (1 a 2000 caracteres, validado en el service) |
+| fecha_creacion | TEXT | NOT NULL, por defecto ahora | Momento del comentario |
+| id_incidencia | INTEGER | FK → INCIDENCIA, NOT NULL, ON DELETE CASCADE | Incidencia comentada |
+| autor | INTEGER | FK → USUARIO, NOT NULL, ON DELETE RESTRICT | Quien comentó; sale de la sesión, nunca del cuerpo |
 
 ### METRICA
 
@@ -290,13 +307,14 @@ una incidencia se marque como duplicada de sí misma.
 
 ### 4.4 Índices
 
-Se definieron **nueve** índices sobre las columnas empleadas como filtro en las
+Se definieron **diez** índices sobre las columnas empleadas como filtro en las
 consultas frecuentes:
 
 | Tabla | Columnas indexadas | Nº |
 |---|---|---|
 | `INCIDENCIA` | `id_proyecto`, `estado`, `categoria`, `asignado_a`, `reportado_por` | 5 |
 | `HISTORIAL_INCIDENCIA` | `id_incidencia`, `modificado_por` | 2 |
+| `COMENTARIO` | `id_incidencia` | 1 |
 | `METRICA` | `id_proyecto`, `tipo_metrica` | 2 |
 
 Sin índice, el motor debe recorrer la tabla completa para resolver cada filtro.

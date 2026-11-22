@@ -240,6 +240,35 @@ export function inicialesDe(nombre) {
  * distinguen por ella, y sin eso la bitacora no permite decir cuanto tiempo
  * estuvo la incidencia en cada estado, que es justo lo que se le pregunta.
  */
+/**
+ * Cuanto lleva una incidencia, en una frase para el detalle:
+ *   - resuelta: cuanto tardo ("Resuelta en 3 dias");
+ *   - cerrada sin resolver (un rechazo): lo dice, porque no hubo solucion
+ *     que medir;
+ *   - abierta: desde cuando ("Abierta hace 12 dias"), que es lo que castiga
+ *     el indice de salud.
+ * `ahora` se recibe para que las pruebas no dependan del reloj.
+ */
+export function tiempoDeIncidencia({ estado, fecha_creacion, fecha_resolucion }, ahora = new Date()) {
+  const creada = interpretar(fecha_creacion);
+  if (!creada) return '-';
+
+  if (fecha_resolucion) {
+    const resuelta = interpretar(fecha_resolucion);
+    if (!resuelta) return '-';
+    const dias = Math.round((resuelta - creada) / 86400000);
+    if (dias <= 0) return 'Resuelta el mismo d\u00eda';
+    return `Resuelta en ${dias} ${dias === 1 ? 'd\u00eda' : 'd\u00edas'}`;
+  }
+
+  if (estado === 'CERRADA') return 'Cerrada sin resolver';
+
+  const hace = haceCuanto(fecha_creacion, ahora);
+  if (hace === 'hoy') return 'Registrada hoy';
+  if (hace === 'ayer') return 'Abierta desde ayer';
+  return `Abierta ${hace}`;
+}
+
 export function formatearFechaHora(texto) {
   const fecha = interpretar(texto);
 

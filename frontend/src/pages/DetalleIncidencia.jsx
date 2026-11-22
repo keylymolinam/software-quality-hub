@@ -26,18 +26,29 @@
 import { useCallback, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 
+import Comentarios from '../components/Comentarios.jsx';
+import Editable from '../components/Editable.jsx';
 import EtiquetaEstado from '../components/EtiquetaEstado.jsx';
 import EtiquetaPrioridad from '../components/EtiquetaPrioridad.jsx';
 import LineaTiempo from '../components/LineaTiempo.jsx';
 import PanelTransicion from '../components/PanelTransicion.jsx';
 import ProgresoFlujo from '../components/ProgresoFlujo.jsx';
 import {
+  actualizarIncidencia,
   cambiarEstado,
   descartarDuplicado,
   obtenerHistorial,
   obtenerIncidencia,
 } from '../api/incidencias.js';
-import { CATEGORIAS, etiquetaDe, formatearFechaHora } from '../dominio/incidencias.js';
+import { listarUsuarios } from '../api/usuarios.js';
+import {
+  CATEGORIAS,
+  etiquetaDe,
+  formatearFechaHora,
+  inicialesDe,
+  PRIORIDADES,
+  tiempoDeIncidencia,
+} from '../dominio/incidencias.js';
 import { volverA } from '../dominio/origen.js';
 import { usePeticion } from '../hooks/usePeticion.js';
 
@@ -73,6 +84,33 @@ export default function DetalleIncidencia() {
   const incidencia = usePeticion(() => obtenerIncidencia(id), `incidencia-${id}-${version}`);
 
   const historial = usePeticion(() => obtenerHistorial(id), `historial-${id}-${version}`);
+
+  // El equipo, para el desplegable de asignacion. No cambia mientras se mira
+  // la incidencia, asi que la clave es fija.
+  const usuarios = usePeticion(() => listarUsuarios({ limite: 100 }), 'usuarios-detalle');
+
+  // Asignar o cambiar la prioridad desde el panel de datos. Tiene su propio
+  // error por la misma razon que el duplicado: se muestra junto a lo que lo
+  // provoco. Despues de guardar se recarga todo con `version`, como tras una
+  // transicion: la cabecera tambien muestra la prioridad.
+  const [guardandoDato, setGuardandoDato] = useState(false);
+  const [errorDato, setErrorDato] = useState(null);
+
+  const cambiarDato = useCallback(
+    async (cambios) => {
+      setErrorDato(null);
+      setGuardandoDato(true);
+      try {
+        await actualizarIncidencia(id, cambios);
+        setVersion((n) => n + 1);
+      } catch (fallo) {
+        setErrorDato(fallo);
+      } finally {
+        setGuardandoDato(false);
+      }
+    },
+    [id]
+  );
 
   /**
    * Ejecuta una transicion y devuelve si funciono.
@@ -290,6 +328,12 @@ export default function DetalleIncidencia() {
         </div>
       )}
 
+      {/* A la izquierda lo que se lee (que se reporto, que se ha conversado,
+          que ha pasado); a la derecha lo que se decide (estado, responsable,
+          prioridad), siempre a la vista. Es la distribucion de las
+          herramientas que un equipo ya conoce, como Jira. Antes los datos iban
+          entre la descripcion y la bitacora, y para leer la historia habia
+          que pasar por ellos. */}
       <div className="detalle-con-panel">
         <div>
           <section className="tarjeta">
@@ -300,39 +344,7 @@ export default function DetalleIncidencia() {
             <p className="detalle__descripcion">{datos.descripcion}</p>
           </section>
 
-          <section className="tarjeta">
-            <h2>Datos</h2>
-            <dl className="detalle detalle--texto">
-              <dt>Proyecto</dt>
-              <dd>{datos.proyecto_nombre}</dd>
-
-              <dt>Reportada por</dt>
-              <dd>{datos.reportado_por_nombre}</dd>
-
-              <dt>Asignada a</dt>
-              <dd>{datos.asignado_a_nombre ?? <span className="sin-dato">Sin asignar</span>}</dd>
-
-              <dt>Registrada</dt>
-              <dd>{formatearFechaHora(datos.fecha_creacion)}</dd>
-
-              {/* Solo cuando existe. Una incidencia abierta no tiene fecha de
-                  resolucion, y una fila con un guion invita a preguntarse si
-                  falta el dato. */}
-              {datos.fecha_resolucion && (
-                <>
-                  <dt>Resuelta</dt>
-                  <dd>{formatearFechaHora(datos.fecha_resolucion)}</dd>
-                </>
-              )}
-
-              <dt>Clasificaci&oacute;n</dt>
-              <dd>
-                {datos.clasificacion_automatica === 1
-                  ? 'Deducida por el motor'
-                  : 'Indicada por una persona'}
-              </dd>
-            </dl>
-          </section>
+          <Comentarios idIncidencia={datos.id_incidencia} />
 
           <section className="tarjeta">
             <h2>Bit&aacute;cora</h2>
@@ -376,6 +388,93 @@ export default function DetalleIncidencia() {
             enviando={enviando}
             error={errorTransicion}
           />
+
+          <section className="tarjeta">
+            <h2>Datos</h2>
+
+            {errorDato && <p className="alerta alerta--error">{errorDato.message}</p>}
+
+            <dl className="detalle detalle--texto detalle--panel">
+              {/* Asignacion y prioridad se cambian aqui mismo, con los mismos
+                  desplegables que la lista: asignar a alguien no deberia pedir
+                  abrir otra pantalla. El resto se corrige en Editar. */}
+              <dt>Asignada a</dt>
+              <dd>
+                <Editable
+                  etiqueta="Cambiar a qui&eacute;n est&aacute; asignada"
+                  valor={datos.asignado_a ? String(datos.asignado_a) : ''}
+                  deshabilitado={guardandoDato}
+                  opciones={[
+                    { valor: '', etiqueta: 'Sin asignar' },
+                    ...(usuarios.datos?.datos ?? []).map((u) => ({
+                      valor: String(u.id_usuario),
+                      etiqueta: u.nombre,
+                    })),
+                  ]}
+                  onElegir={(valor) => cambiarDato({ asignado_a: valor === '' ? null : Number(valor) })}
+                >
+                  {datos.asignado_a_nombre ? (
+                    <span className="persona">
+                      <span className="persona__avatar" aria-hidden="true">
+                        {inicialesDe(datos.asignado_a_nombre)}
+                      </span>
+                      {datos.asignado_a_nombre}
+                    </span>
+                  ) : (
+                    <span className="sin-dato">Sin asignar</span>
+                  )}
+                </Editable>
+              </dd>
+
+              <dt>Prioridad</dt>
+              <dd>
+                <Editable
+                  etiqueta="Cambiar la prioridad"
+                  valor={datos.prioridad}
+                  deshabilitado={guardandoDato}
+                  opciones={PRIORIDADES}
+                  onElegir={(prioridad) => cambiarDato({ prioridad })}
+                >
+                  <EtiquetaPrioridad prioridad={datos.prioridad} />
+                </Editable>
+              </dd>
+
+              {/* Cuanto lleva: lo que el indice de salud castiga cuando una
+                  incidencia sigue abierta, y lo que tardo cuando ya se
+                  resolvio. */}
+              <dt>Tiempo</dt>
+              <dd>{tiempoDeIncidencia(datos)}</dd>
+
+              <dt>Proyecto</dt>
+              <dd>{datos.proyecto_nombre}</dd>
+
+              <dt>Categor&iacute;a</dt>
+              <dd>{etiquetaDe(CATEGORIAS, datos.categoria)}</dd>
+
+              <dt>Reportada por</dt>
+              <dd>{datos.reportado_por_nombre}</dd>
+
+              <dt>Registrada</dt>
+              <dd>{formatearFechaHora(datos.fecha_creacion)}</dd>
+
+              {/* Solo cuando existe. Una incidencia abierta no tiene fecha de
+                  resolucion, y una fila con un guion invita a preguntarse si
+                  falta el dato. */}
+              {datos.fecha_resolucion && (
+                <>
+                  <dt>Resuelta</dt>
+                  <dd>{formatearFechaHora(datos.fecha_resolucion)}</dd>
+                </>
+              )}
+
+              <dt>Clasificaci&oacute;n</dt>
+              <dd>
+                {datos.clasificacion_automatica === 1
+                  ? 'Deducida por el motor'
+                  : 'Indicada por una persona'}
+              </dd>
+            </dl>
+          </section>
         </div>
       </div>
     </main>

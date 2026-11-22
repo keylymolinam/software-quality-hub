@@ -17,6 +17,8 @@
  *   DELETE  /api/incidencias/:id             ADMINISTRADOR
  *   POST    /api/incidencias/:id/transicion  cualquier sesion
  *   GET     /api/incidencias/:id/historial   cualquier sesion
+ *   GET     /api/incidencias/:id/comentarios cualquier sesion
+ *   POST    /api/incidencias/:id/comentarios cualquier sesion
  *   POST    /api/incidencias/clasificar      cualquier sesion
  *
  * Todas exigen sesion iniciada. Trabajar sobre incidencias es la tarea diaria
@@ -43,6 +45,10 @@ import {
   actividad,
   clasificarTexto,
 } from '../controllers/incidencia.controller.js';
+import {
+  listar as listarComentarios,
+  crear as crearComentario,
+} from '../controllers/comentario.controller.js';
 import { requiereAutenticacion, requiereRol } from '../middlewares/autenticacion.js';
 
 const router = Router();
@@ -72,5 +78,7 @@ router.delete('/:id', requiereRol('ADMINISTRADOR'), eliminar);
 // --- Subrecursos ----------------------------------------------------------
 router.post('/:id/transicion', transicionar);
 router.get('/:id/historial', historial);
+router.get('/:id/comentarios', listarComentarios);
+router.post('/:id/comentarios', crearComentario);
 
 export default router;

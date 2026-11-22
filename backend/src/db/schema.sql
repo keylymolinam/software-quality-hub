@@ -178,6 +178,36 @@ CREATE INDEX IF NOT EXISTS idx_historial_usuario
 
 
 -- =============================================================================
+-- COMENTARIO
+-- La conversación de una incidencia: preguntas, avances, pasos para
+-- reproducir. Va aparte de HISTORIAL_INCIDENCIA porque la bitácora registra
+-- cambios de estado y de ella sale el índice de salud; mezclar la
+-- conversación ahí ensuciaría las métricas.
+--
+-- Como la bitácora, solo crece: un comentario no se edita ni se borra.
+-- Desaparece únicamente si se elimina la incidencia (CASCADE). El autor, como
+-- modificado_por, impide borrar al usuario (RESTRICT): lo dicho no puede
+-- quedar sin quien lo dijo.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS COMENTARIO (
+    id_comentario   INTEGER PRIMARY KEY AUTOINCREMENT,
+    texto           TEXT    NOT NULL CHECK (length(trim(texto)) > 0),
+    fecha_creacion  TEXT    NOT NULL DEFAULT (datetime('now')),
+
+    id_incidencia   INTEGER NOT NULL,
+    autor           INTEGER NOT NULL,
+
+    FOREIGN KEY (id_incidencia) REFERENCES INCIDENCIA (id_incidencia)
+        ON DELETE CASCADE,
+    FOREIGN KEY (autor) REFERENCES USUARIO (id_usuario)
+        ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_comentario_incidencia
+    ON COMENTARIO (id_incidencia);
+
+
+-- =============================================================================
 -- METRICA
 -- Valores calculados y almacenados para el dashboard (semanas 8-9).
 -- id_proyecto NULL significa que la metrica es global del sistema.

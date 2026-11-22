@@ -105,6 +105,8 @@ function escenarioDetalle(incidencia, historial) {
   return {
     ['incidencia-' + id + '-0']: respondeCon(incidencia),
     ['historial-' + id + '-0']: respondeCon(historial),
+    'usuarios-detalle': respondeCon({ datos: [{ id_usuario: 7, nombre: 'Javiera Soto' }] }),
+    ['comentarios-' + id + '-0']: respondeCon({ id_incidencia: id, total: 0, comentarios: [] }),
   };
 }
 
@@ -398,6 +400,82 @@ describe('Barra de progreso', () => {
 // --- Detalle de incidencia -------------------------------------------------
 
 describe('Pantalla de detalle', () => {
+  test('la conversacion se ve en orden y se puede comentar', async () => {
+    const { default: DetalleIncidencia } = await cargar('/src/pages/DetalleIncidencia.jsx');
+    declararEscenario({
+      ...escenarioDetalle(INCIDENCIA_DUPLICADA, historialDe([CREACION])),
+      'comentarios-2-0': respondeCon({
+        id_incidencia: 2,
+        total: 2,
+        comentarios: [
+          { id_comentario: 1, texto: 'Ocurre solo en la tablet.', fecha_creacion: '2026-11-20 10:00:00',
+            autor: 3, autor_nombre: 'Daniela Rojas' },
+          { id_comentario: 2, texto: 'Lo reviso hoy.', fecha_creacion: '2026-11-21 10:00:00',
+            autor: 7, autor_nombre: 'Javiera Soto' },
+        ],
+      }),
+    });
+
+    const html = dibujarDetalle(DetalleIncidencia, INCIDENCIA_DUPLICADA);
+    const visible = texto(html);
+
+    assert.match(visible, /Comentarios \(2\)/);
+    // Del mas antiguo al mas reciente, cada uno con su autor.
+    assert.ok(visible.indexOf('Ocurre solo en la tablet') < visible.indexOf('Lo reviso hoy'));
+    assert.match(visible, /Daniela Rojas/);
+    // El cuadro para sumarse, que parte desactivado mientras este vacio.
+    assert.match(visible, /Escribe un comentario/);
+    assert.match(html, /<button[^>]*type="submit"[^>]*disabled=""[^>]*>Comentar</);
+    // Va entre la descripcion y la bitacora.
+    assert.ok(visible.indexOf('Descripci') < visible.indexOf('Comentarios'));
+    assert.ok(visible.indexOf('Comentarios') < visible.indexOf('Bit'));
+  });
+
+  test('sin comentarios invita a escribir el primero', async () => {
+    const { default: DetalleIncidencia } = await cargar('/src/pages/DetalleIncidencia.jsx');
+    declararEscenario(escenarioDetalle(INCIDENCIA_DUPLICADA, historialDe([CREACION])));
+
+    const visible = texto(dibujarDetalle(DetalleIncidencia, INCIDENCIA_DUPLICADA));
+
+    assert.match(visible, /Nadie ha comentado todav/);
+    assert.doesNotMatch(visible, /Comentarios \(0\)/);
+  });
+
+  test('asignacion y prioridad se cambian desde el panel de datos', async () => {
+    const { default: DetalleIncidencia } = await cargar('/src/pages/DetalleIncidencia.jsx');
+    declararEscenario(escenarioDetalle(INCIDENCIA_DUPLICADA, historialDe([CREACION])));
+
+    const html = dibujarDetalle(DetalleIncidencia, INCIDENCIA_DUPLICADA);
+    const panel = html.split('class="detalle__panel"')[1] ?? '';
+
+    // Los dos desplegables estan en el panel lateral, no en la columna de lectura.
+    assert.match(panel, /aria-label="Cambiar a qui[^"]*asignada"/);
+    assert.match(panel, /aria-label="Cambiar la prioridad"/);
+    // Sin asignar, y con el equipo para elegir.
+    assert.ok(panel.includes('<option value="" selected="">Sin asignar</option>'));
+    assert.ok(panel.includes('<option value="7">Javiera Soto</option>'));
+    // Y cuanto lleva.
+    assert.match(texto(panel), /Tiempo/);
+  });
+
+  test('el tiempo dice cuanto lleva abierta o cuanto tardo en resolverse', async () => {
+    const { tiempoDeIncidencia } = await cargar('/src/dominio/incidencias.js');
+    const ahora = new Date(2026, 10, 22, 12, 0);
+
+    assert.equal(
+      tiempoDeIncidencia({ estado: 'ABIERTA', fecha_creacion: '2026-11-17 12:00:00' }, ahora),
+      'Abierta hace 5 d\u00edas'
+    );
+    assert.equal(
+      tiempoDeIncidencia({ estado: 'RESUELTA', fecha_creacion: '2026-11-01 12:00:00', fecha_resolucion: '2026-11-04 12:00:00' }, ahora),
+      'Resuelta en 3 d\u00edas'
+    );
+    assert.equal(
+      tiempoDeIncidencia({ estado: 'CERRADA', fecha_creacion: '2026-11-01 12:00:00', fecha_resolucion: null }, ahora),
+      'Cerrada sin resolver'
+    );
+  });
+
   test('volver lleva a la vista desde donde se llego, con sus filtros', async () => {
     const { default: DetalleIncidencia } = await cargar('/src/pages/DetalleIncidencia.jsx');
     declararEscenario(escenarioDetalle(INCIDENCIA_DUPLICADA, historialDe([CREACION])));
@@ -481,6 +559,7 @@ describe('Pantalla de detalle', () => {
     declararEscenario({
       'incidencia-999-0': falla('No existe la incidencia con id 999.', 404),
       'historial-999-0': falla('No existe la incidencia con id 999.', 404),
+      'usuarios-detalle': respondeCon({ datos: [] }),
     });
 
     const visible = texto(
@@ -500,6 +579,7 @@ describe('Pantalla de detalle', () => {
     declararEscenario({
       'incidencia-2-0': falla('No se pudo conectar con el servidor.', 0),
       'historial-2-0': falla('No se pudo conectar con el servidor.', 0),
+      'usuarios-detalle': respondeCon({ datos: [] }),
     });
 
     const visible = texto(dibujarDetalle(DetalleIncidencia, INCIDENCIA_DUPLICADA));

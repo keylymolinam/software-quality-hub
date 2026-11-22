@@ -12,6 +12,8 @@ erDiagram
     PROYECTO |o--o{ METRICA : "se mide"
     USUARIO ||--o{ PESO_SALUD : "cambia los pesos"
     INCIDENCIA ||--o{ HISTORIAL_INCIDENCIA : "deja constancia en"
+    INCIDENCIA ||--o{ COMENTARIO : "se conversa en"
+    USUARIO ||--o{ COMENTARIO : "escribe"
     INCIDENCIA |o--o{ INCIDENCIA : "posible duplicado de"
 
     USUARIO {
@@ -55,6 +57,14 @@ erDiagram
         TEXT comentario "opcional, salvo en el cierre sin resolver"
         INTEGER id_incidencia FK
         INTEGER modificado_por FK
+    }
+
+    COMENTARIO {
+        INTEGER id_comentario PK
+        TEXT texto "1 a 2000 caracteres"
+        TEXT fecha_creacion
+        INTEGER id_incidencia FK
+        INTEGER autor FK
     }
 
     METRICA {
