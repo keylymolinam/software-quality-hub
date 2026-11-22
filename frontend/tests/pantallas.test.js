@@ -657,6 +657,17 @@ describe('Menu lateral por proyecto', () => {
     assert.equal(html.match(/aria-current="page"/g).length, 1);
   });
 
+  test('el tablero es una vista de Incidencias, no una seccion aparte', async () => {
+    const html = await dibujarMenu('/tablero?id_proyecto=2');
+
+    // Sin entrada propia en el menu: se llega desde el selector de vista.
+    assert.doesNotMatch(texto(html), /Tablero/);
+    // Desde el tablero, los proyectos llevan al tablero de cada uno, y el
+    // elegido queda marcado igual que en la lista.
+    assert.ok(html.includes('href="/tablero?id_proyecto=1"'));
+    assert.ok(html.includes('aria-current="page" href="/tablero?id_proyecto=2"'));
+  });
+
   test('los proyectos inactivos se atenuan y dicen su estado', async () => {
     const html = await dibujarMenu('/incidencias');
 

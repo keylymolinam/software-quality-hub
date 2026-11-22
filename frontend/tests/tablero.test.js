@@ -12,8 +12,21 @@ import assert from 'node:assert/strict';
 
 import { cargando, cargar, cerrarEntorno, declararEscenario, dibujar, falla, respondeCon, texto } from './entorno.js';
 
-// tablero-<proyecto>-<asignado>-<version>: sin filtros, los dos vacios.
-const CLAVE = 'tablero---0';
+/**
+ * Clave de las columnas: la consulta que se envia (ya con "Mis incidencias"
+ * traducido al id) y la version. Sin filtros, todos vacios.
+ */
+const claveTablero = (filtros = {}) =>
+  `tablero-${JSON.stringify({
+    busqueda: '',
+    prioridad: '',
+    categoria: '',
+    id_proyecto: '',
+    asignado_a: '',
+    posible_duplicado: '',
+    ...filtros,
+  })}-0`;
+const CLAVE = claveTablero();
 const CLAVE_PROYECTOS = 'tablero-proyectos';
 const CLAVE_USUARIOS = 'tablero-usuarios';
 
@@ -29,10 +42,14 @@ const tarjeta = (id, estado, titulo, extra = {}) => ({
   ...extra,
 });
 
+// Cada respuesta trae la cuenta por estado, igual que en la lista.
+const RESUMEN = { ABIERTA: 12, EN_PROGRESO: 63, RESUELTA: 1, VALIDADA: 0, CERRADA: 31 };
+
 const columna = (estado, datos, total = datos.length) => ({
   estado,
   datos,
   paginacion: { total, pagina: 1, limite: 50, paginas: 1 },
+  resumen_estados: RESUMEN,
 });
 
 const COLUMNAS = respondeCon([
@@ -124,21 +141,75 @@ describe('Tablero', () => {
   });
 
   test('"Mis incidencias" pide las columnas de quien mira, no un id fijo', async () => {
-    // El usuario de prueba es el 1: ?asignado=yo tiene que pedir las columnas
+    // El usuario de prueba es el 1: ?asignado_a=yo tiene que pedir las columnas
     // con asignado_a=1. Si no se tradujera, la clave seria otra y el escenario
     // no la tendria declarada.
     declararEscenario({
-      'tablero--1-0': COLUMNAS,
+      [claveTablero({ asignado_a: '1' })]: COLUMNAS,
       [CLAVE_PROYECTOS]: PROYECTOS,
       [CLAVE_USUARIOS]: USUARIOS,
     });
 
-    const html = await dibujarTablero('/tablero?asignado=yo');
+    const html = await dibujarTablero('/tablero?asignado_a=yo');
 
     assert.match(html, /<option value="yo" selected="">Mis incidencias<\/option>/);
     assert.match(texto(columnaDe(html, 'EN_PROGRESO')), /El portal no carga/);
     // Y cada persona del equipo esta en la lista para elegirla.
     assert.match(html, /<option value="3">Desarrollador 1<\/option>/);
+  });
+
+  test('usa la barra de filtros de la lista, sin Estado ni orden', async () => {
+    declararEscenario({
+      [claveTablero({ id_proyecto: '1', prioridad: 'ALTA' })]: COLUMNAS,
+      [CLAVE_PROYECTOS]: PROYECTOS,
+      [CLAVE_USUARIOS]: USUARIOS,
+    });
+
+    const html = await dibujarTablero('/tablero?id_proyecto=1&prioridad=ALTA');
+    const visible = texto(html);
+
+    // Los filtros de la direccion llegan a la consulta (si no, la clave no
+    // estaria declarada) y se ven elegidos en la barra.
+    assert.match(visible, /Buscar/);
+    assert.ok(html.includes('<option value="1" selected="">Portal de Autoatencion</option>'));
+    assert.ok(html.includes('<option value="ALTA" selected="">'));
+    // Cada columna ya es un estado, y las columnas van por prioridad.
+    assert.doesNotMatch(visible, /Estado/);
+    assert.doesNotMatch(visible, /Ordenar por/);
+  });
+
+  test('muestra las tarjetas por estado de la lista, solo como cifras', async () => {
+    declararEscenario({ [CLAVE]: COLUMNAS, [CLAVE_PROYECTOS]: PROYECTOS, [CLAVE_USUARIOS]: USUARIOS });
+
+    const html = await dibujarTablero();
+    const tarjetas = html.split('class="resumen-estados"')[1] ?? '';
+
+    // Cerrada cuenta todas (31), aunque su columna muestre solo las recientes.
+    assert.match(texto(tarjetas), /Pendiente\s*12/);
+    assert.match(texto(tarjetas), /Cerrada\s*31/);
+    // Van antes de la barra de filtros, como en la lista.
+    assert.ok(html.indexOf('resumen-estados') < html.indexOf('class="filtros"'));
+    // En el tablero no filtran: no son botones.
+    assert.equal((html.match(/resumen-estado--fijo/g) ?? []).length, 5);
+    assert.doesNotMatch(html, /aria-pressed/);
+  });
+
+  test('cambiar de vista conserva los filtros y descarta lo que es solo de la lista', async () => {
+    const { default: SelectorVista } = await cargar('/src/components/SelectorVista.jsx');
+
+    const desdeLista = dibujar(SelectorVista, {
+      ruta: '/incidencias?estado=ABIERTA&id_proyecto=2&ordenarPor=prioridad&pagina=3',
+      propiedades: { vista: 'lista' },
+    });
+    // Al tablero: el proyecto sigue; estado, orden y pagina no aplican ahi.
+    assert.ok(desdeLista.includes('href="/tablero?id_proyecto=2"'));
+    assert.match(desdeLista, /aria-current="page"[^>]*>Lista</);
+
+    const desdeTablero = dibujar(SelectorVista, {
+      ruta: '/tablero?id_proyecto=2&asignado_a=yo',
+      propiedades: { vista: 'tablero' },
+    });
+    assert.ok(desdeTablero.includes('href="/incidencias?id_proyecto=2&amp;asignado_a=yo"'));
   });
 
   test('un error ofrece reintentar, y mientras carga lo dice', async () => {

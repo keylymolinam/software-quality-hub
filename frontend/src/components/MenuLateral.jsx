@@ -23,6 +23,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 
 import { listarProyectos } from '../api/proyectos.js';
+import { rutaVistaPreferida } from './SelectorVista.jsx';
 import { useSesion } from '../context/SesionContext.jsx';
 import { inicialesDe } from '../dominio/incidencias.js';
 import { etiquetaEstadoProyecto } from '../dominio/proyectos.js';
@@ -37,13 +38,6 @@ const TRAZOS = {
       <circle cx="4.5" cy="6" r="1" />
       <circle cx="4.5" cy="12" r="1" />
       <circle cx="4.5" cy="18" r="1" />
-    </>
-  ),
-  tablero: (
-    <>
-      <rect x="3" y="4" width="5" height="16" rx="1.5" />
-      <rect x="10" y="4" width="5" height="10" rx="1.5" />
-      <rect x="17" y="4" width="4" height="13" rx="1.5" />
     </>
   ),
   salud: <path d="M3 12h4l3-7 4 14 3-7h4" />,
@@ -86,7 +80,6 @@ function Icono({ nombre, clase = 'icono' }) {
 const SECCIONES = [
   { ruta: '/', etiqueta: 'Inicio', icono: 'inicio', exacta: true },
   { ruta: '/incidencias', etiqueta: 'Incidencias', icono: 'incidencias' },
-  { ruta: '/tablero', etiqueta: 'Tablero', icono: 'tablero' },
   { ruta: '/salud', etiqueta: 'Salud', icono: 'salud' },
   { ruta: '/proyectos', etiqueta: 'Proyectos', icono: 'proyectos' },
   { ruta: '/usuarios', etiqueta: 'Usuarios', icono: 'usuarios' },
@@ -109,12 +102,19 @@ const SECCIONES = [
  * aria-expanded le dice al lector de pantalla en que estado esta. "Todas" es
  * el primer enlace de la lista, para quien quiere el listado completo.
  *
+ * Lista y tablero son dos vistas de esta misma seccion (ver SelectorVista.jsx),
+ * asi que no hay una entrada "Tablero" aparte. Los enlaces del grupo llevan a
+ * la vista en que se esta, o fuera de ella a la ultima que la persona eligio:
+ * quien trabaja en columnas no tiene que cambiar de vista cada vez que entra.
+ *
  * La lista se vuelve a pedir cada vez que se abre: quien acaba de crear un
  * proyecto lo espera ver ahi sin recargar la pagina, y la peticion es una sola
  * lista corta.
  */
 function GrupoIncidencias({ pathname, search }) {
-  const enIncidencias = pathname === '/incidencias' || pathname.startsWith('/incidencias/');
+  const enVista = pathname === '/incidencias' || pathname === '/tablero';
+  const enIncidencias = enVista || pathname.startsWith('/incidencias/');
+  const base = enVista ? pathname : rutaVistaPreferida();
   const [desplegado, setDesplegado] = useState(enIncidencias);
   const [aperturas, setAperturas] = useState(0);
 
@@ -132,8 +132,7 @@ function GrupoIncidencias({ pathname, search }) {
   // Que enlace de la lista corresponde a la direccion actual: '' es "Todas",
   // un numero es ese proyecto, y null es ninguno (el detalle o el registro de
   // una incidencia, que no son el listado).
-  const idActivo =
-    pathname === '/incidencias' ? new URLSearchParams(search).get('id_proyecto') ?? '' : null;
+  const idActivo = enVista ? new URLSearchParams(search).get('id_proyecto') ?? '' : null;
 
   const alternar = () => {
     if (!desplegado) setAperturas((n) => n + 1);
@@ -173,7 +172,7 @@ function GrupoIncidencias({ pathname, search }) {
           <li>
             <Link
               className={claseSub(idActivo === '')}
-              to="/incidencias"
+              to={base}
               aria-current={idActivo === '' ? 'page' : undefined}
             >
               Todas
@@ -191,7 +190,7 @@ function GrupoIncidencias({ pathname, search }) {
                 <li key={proyecto.id_proyecto}>
                   <Link
                     className={claseSub(activo, inactivo)}
-                    to={`/incidencias?id_proyecto=${proyecto.id_proyecto}`}
+                    to={`${base}?id_proyecto=${proyecto.id_proyecto}`}
                     aria-current={activo ? 'page' : undefined}
                   >
                     <span className="lateral__subnombre">{proyecto.nombre}</span>

@@ -1099,6 +1099,16 @@ body {
   transform: translateY(-1px);
 }
 
+/* En el tablero solo informan: sin mano ni movimiento que inviten a pulsar. */
+.resumen-estado--fijo {
+  cursor: default;
+}
+
+.resumen-estado--fijo:hover {
+  border-color: var(--color-borde);
+  transform: none;
+}
+
 .resumen-estado:focus-visible {
   outline: 2px solid var(--color-primario);
   outline-offset: 2px;
@@ -2273,11 +2283,40 @@ a.tabla__titulo:hover {
   margin-bottom: 0;
 }
 
-/* Los filtros del tablero, uno al lado del otro; bajan de linea si no caben. */
-.tablero__filtros {
+/* Acciones a la derecha del titulo: selector de vista y boton principal. */
+.cabecera__acciones {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
+}
+
+/* Selector Lista | Tablero: dos opciones pegadas, la activa resaltada. */
+.vistas {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  background: var(--color-fondo);
+}
+
+.vistas__opcion {
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-texto-suave);
+  text-decoration: none;
+}
+
+.vistas__opcion:hover {
+  color: var(--color-texto);
+}
+
+.vistas__opcion--activa {
+  background: var(--color-superficie);
+  color: var(--color-primario);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
 }
 
 /* Cinco columnas iguales. El minimo de 180px es el que deja caber las cinco

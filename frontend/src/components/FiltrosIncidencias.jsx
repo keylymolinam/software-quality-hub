@@ -21,9 +21,18 @@
  * Se descarto esconder los filtros sin aviso: una lista filtrada por algo que
  * no se ve parece incompleta y nadie sabe por que. Por eso el boton cuenta
  * cuantos filtros ocultos estan en uso, y el panel parte abierto si hay alguno.
+ *
+ * LA MISMA BARRA EN LA LISTA Y EN EL TABLERO
+ *
+ * El tablero usa esta barra con vista="tablero", para que las dos vistas
+ * filtren exactamente igual y al cambiar de una a otra no se pierda nada. Ahi
+ * se omiten Estado (cada columna ya es un estado) y el orden (las columnas van
+ * por prioridad), y "Asignada a" sube a la fila visible en el lugar que deja
+ * Estado: en un tablero, ver solo lo de una persona es lo mas pedido.
  */
 import { useEffect, useState } from 'react';
 
+import { ASIGNADO_A_MI } from '../dominio/filtros.js';
 import { CATEGORIAS, ESTADOS, ORDENES, PRIORIDADES } from '../dominio/incidencias.js';
 
 /** Milisegundos de espera antes de buscar mientras se escribe. */
@@ -38,7 +47,10 @@ const ORDEN_POR_DEFECTO = { ordenarPor: 'fecha_creacion', direccion: 'DESC' };
  * El orden cuenta solo si se aparta del de siempre: tiene un valor aunque nadie
  * lo haya tocado, y contarlo siempre dejaria el aviso encendido sin motivo.
  */
-function contarOcultosEnUso(valores) {
+function contarOcultosEnUso(valores, enTablero) {
+  if (enTablero) {
+    return [valores.categoria !== '', valores.posible_duplicado !== ''].filter(Boolean).length;
+  }
   return [
     valores.categoria !== '',
     valores.asignado_a !== '',
@@ -55,7 +67,10 @@ export default function FiltrosIncidencias({
   proyectos,
   usuarios,
   hayFiltros,
+  vista = 'lista',
 }) {
+  const enTablero = vista === 'tablero';
+
   // El texto de busqueda se guarda aparte del resto de los filtros. Los demas
   // son desplegables: cambian de golpe y conviene pedir los datos de inmediato.
   // Escribir es distinto, y por eso necesita su propio estado (ver abajo).
@@ -83,7 +98,24 @@ export default function FiltrosIncidencias({
     return () => clearTimeout(temporizador);
   }, [textoBusqueda, valores.busqueda, onCambiar]);
 
-  const ocultosEnUso = contarOcultosEnUso(valores);
+  const ocultosEnUso = contarOcultosEnUso(valores, enTablero);
+
+  // "Mis incidencias" va primero, antes de los nombres: es la opcion que cada
+  // persona busca para si misma, y no depende de saber su nombre en la lista.
+  const filtroAsignada = (
+    <Desplegable
+      etiqueta="Asignada a"
+      valor={valores.asignado_a}
+      opciones={[
+        { valor: ASIGNADO_A_MI, etiqueta: 'Mis incidencias' },
+        ...usuarios.map((u) => ({
+          valor: String(u.id_usuario),
+          etiqueta: u.nombre,
+        })),
+      ]}
+      onCambiar={(v) => onCambiar('asignado_a', v)}
+    />
+  );
 
   // Abierto o cerrado vive en useState y no en la direccion, a diferencia de
   // los filtros: no cambia que incidencias se ven, solo cuanto ocupa la barra.
@@ -106,12 +138,16 @@ export default function FiltrosIncidencias({
           />
         </label>
 
-        <Desplegable
-          etiqueta="Estado"
-          valor={valores.estado}
-          opciones={ESTADOS}
-          onCambiar={(v) => onCambiar('estado', v)}
-        />
+        {enTablero ? (
+          filtroAsignada
+        ) : (
+          <Desplegable
+            etiqueta="Estado"
+            valor={valores.estado}
+            opciones={ESTADOS}
+            onCambiar={(v) => onCambiar('estado', v)}
+          />
+        )}
 
         <Desplegable
           etiqueta="Prioridad"
@@ -161,15 +197,7 @@ export default function FiltrosIncidencias({
             onCambiar={(v) => onCambiar('categoria', v)}
           />
 
-          <Desplegable
-            etiqueta="Asignada a"
-            valor={valores.asignado_a}
-            opciones={usuarios.map((u) => ({
-              valor: String(u.id_usuario),
-              etiqueta: u.nombre,
-            }))}
-            onCambiar={(v) => onCambiar('asignado_a', v)}
-          />
+          {!enTablero && filtroAsignada}
 
           {/* Es el destino del enlace "Ver todos los posibles duplicados" del
               detalle, que llega con ?posible_duplicado=1 y abre este panel. */}
@@ -180,26 +208,30 @@ export default function FiltrosIncidencias({
             onCambiar={(v) => onCambiar('posible_duplicado', v)}
           />
 
-          <Desplegable
-            etiqueta="Ordenar por"
-            valor={valores.ordenarPor}
-            opciones={ORDENES}
-            // El orden siempre tiene un valor: no existe "sin ordenar", el
-            // backend usa fecha_creacion cuando no se indica nada.
-            sinVacio
-            onCambiar={(v) => onCambiar('ordenarPor', v)}
-          />
+          {!enTablero && (
+            <>
+              <Desplegable
+                etiqueta="Ordenar por"
+                valor={valores.ordenarPor}
+                opciones={ORDENES}
+                // El orden siempre tiene un valor: no existe "sin ordenar", el
+                // backend usa fecha_creacion cuando no se indica nada.
+                sinVacio
+                onCambiar={(v) => onCambiar('ordenarPor', v)}
+              />
 
-          <Desplegable
-            etiqueta="Direcci&oacute;n"
-            valor={valores.direccion}
-            opciones={[
-              { valor: 'DESC', etiqueta: 'Descendente' },
-              { valor: 'ASC', etiqueta: 'Ascendente' },
-            ]}
-            sinVacio
-            onCambiar={(v) => onCambiar('direccion', v)}
-          />
+              <Desplegable
+                etiqueta="Direcci&oacute;n"
+                valor={valores.direccion}
+                opciones={[
+                  { valor: 'DESC', etiqueta: 'Descendente' },
+                  { valor: 'ASC', etiqueta: 'Ascendente' },
+                ]}
+                sinVacio
+                onCambiar={(v) => onCambiar('direccion', v)}
+              />
+            </>
+          )}
         </div>
       )}
     </section>

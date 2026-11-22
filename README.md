@@ -8,7 +8,7 @@ Ingeniería en Computación e Informática.
 > con bitácora de cambios, la autenticación con control de acceso por rol y los tres
 > diferenciadores. El **frontend** recorre el ciclo de trabajo completo en doce
 > pantallas, entre ellas un tablero por estados, y los tres diferenciadores se ven en
-> pantalla. Hay **162 pruebas automatizadas**: 55 del backend y 88 de las pantallas,
+> pantalla. Hay **166 pruebas automatizadas**: 55 del backend y 92 de las pantallas,
 > que corren con el ejecutor que viene con Node, y 19 de interacción, que recorren el
 > sistema en un navegador real con Playwright. La interfaz se evaluó con usuarios
 > (SUS promedio 92 en el perfil objetivo; ver [Evaluación de usabilidad](#evaluación-de-usabilidad)).
@@ -206,8 +206,8 @@ reparto en capas están en la figura
 |---|---|---|
 | Login | — (fuera de sesión) | La única sin sesión; `App.jsx` decide cuál mostrar |
 | Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
-| Listado | `/incidencias?id_proyecto=N` | Un proyecto se abre desde el menú lateral, que despliega la lista bajo Incidencias. Tarjetas con la cuenta por estado, que filtran al pulsarlas; filtros, búsqueda, orden y paginación, todo en la dirección |
-| Tablero | `/tablero?proyecto=N&asignado=yo` | Una columna por estado; se arrastran las tarjetas para cambiarlo. Filtra por proyecto y por persona asignada («Mis incidencias») |
+| Incidencias: vista Lista | `/incidencias?id_proyecto=N` | Un proyecto se abre desde el menú lateral, que despliega la lista bajo Incidencias. Tarjetas con la cuenta por estado, que filtran al pulsarlas; filtros, búsqueda, orden y paginación, todo en la dirección |
+| Incidencias: vista Tablero | `/tablero?id_proyecto=N` | Una columna por estado; se arrastran las tarjetas para cambiarlo. Las mismas tarjetas por estado y los mismos filtros que la lista, incluido «Mis incidencias» |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
 | Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
@@ -217,7 +217,7 @@ reparto en capas están en la figura
 | Proyectos | `/proyectos` | El listado para todos; crear, editar y eliminar para el administrador |
 | Usuarios | `/usuarios` | El equipo, con las seis reglas de acceso reflejadas en la tabla |
 
-Tres decisiones que se notan al usarla:
+Cuatro decisiones que se notan al usarla:
 
 - **El estado de una pantalla vive en la dirección, no en memoria.** El listado
   guarda filtros, orden y página en la cadena de consulta
@@ -228,6 +228,11 @@ Tres decisiones que se notan al usarla:
   ofrecer algo que iba a responder 403. Por eso `/proyectos` y `/usuarios` son una
   sola pantalla por entidad con las acciones condicionadas al rol, y no una sección
   de administración aparte.
+- **Lista y tablero son dos vistas de una misma sección.** Un selector *Lista |
+  Tablero* cambia de una a otra conservando los filtros, que usan los mismos
+  nombres en las dos, y el sistema recuerda la vista que prefiere cada persona.
+  Antes eran dos secciones del menú, y parecían dos cosas distintas cuando son las
+  mismas incidencias dibujadas de dos maneras.
 - **La máquina de estados no se duplica en el cliente.** Qué transiciones existen
   lo dice el backend en `transiciones_posibles`; el frontend solo aporta el texto
   de los botones.
@@ -452,7 +457,7 @@ es deliberada: pulsar un botón pide un navegador, y Node no trae uno.
 | Suite | Comando | Archivos | Pruebas |
 |---|---|---|---|
 | Backend | `npm test` desde `backend/` | 2 | 55 |
-| Pantallas | `npm test` desde `frontend/` | 5 | 88 |
+| Pantallas | `npm test` desde `frontend/` | 5 | 92 |
 | Interacción | `npm run test:e2e` desde `frontend/` | 6 | 19 |
 
 ### Cómo ejecutarlas
@@ -612,7 +617,8 @@ perfil para el que se diseñó el sistema. Se informa aparte y no se descarta.
 Lo que se cambió con esa evidencia: la explicación del índice de salud pasó a una
 guía propia (tres personas dijeron que no se entendía), los filtros quedaron en tres
 a la vista y el resto en *Más filtros*, el estado `VALIDADA` se agregó, los botones
-de estado nombran el estado al que llevan y se agregó el tablero.
+de estado nombran el estado al que llevan y se agregó el tablero, como segunda
+vista de las incidencias junto a la lista.
 
 ## Trabajo futuro
 

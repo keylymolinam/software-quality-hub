@@ -28,28 +28,27 @@
  * cerrado en los ultimos 30 dias: sin ese limite crece sin fin y entierra al
  * resto. Las demas columnas se ordenan por prioridad, lo urgente arriba.
  *
- * El proyecto elegido vive en la direccion (?proyecto=2), como los filtros del
- * listado: el enlace al tablero de un proyecto se puede compartir.
- *
  * ---------------------------------------------------------------------------
- * FILTRO POR PERSONA ASIGNADA
+ * LOS MISMOS FILTROS QUE LA LISTA
  *
- * Lo pidio la autora: en un tablero cada quien quiere ver primero lo suyo. Se
- * agrego solo este filtro, y no todos los del listado, porque el tablero es
- * para mirar el avance de un vistazo; para buscar con detalle esta el listado.
- *
- * "Mis incidencias" se guarda como ?asignado=yo y no con el id de quien filtra:
- * asi el enlace significa lo mismo para cualquiera que lo abra (sus propias
- * incidencias), en vez de mostrarle a otra persona las de quien lo copio.
+ * Lista y tablero son las dos vistas de una misma seccion (ver
+ * SelectorVista.jsx), y por eso filtran con la misma barra y los mismos nombres
+ * en la direccion (?id_proyecto=2&asignado_a=yo). Cambiar de vista conserva lo
+ * filtrado, y un enlace al tablero de un proyecto se puede compartir. Lo pidio
+ * la autora al unir las dos secciones del menu.
  */
-import { useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import TarjetaIncidencia from '../components/TarjetaIncidencia.jsx';
 import { cambiarEstado, listarIncidencias } from '../api/incidencias.js';
 import { listarProyectos } from '../api/proyectos.js';
 import { listarUsuarios } from '../api/usuarios.js';
+import FiltrosIncidencias from '../components/FiltrosIncidencias.jsx';
+import ResumenEstados from '../components/ResumenEstados.jsx';
+import SelectorVista from '../components/SelectorVista.jsx';
 import { useSesion } from '../context/SesionContext.jsx';
+import { consultaParaApi, FILTROS_COMPARTIDOS } from '../dominio/filtros.js';
 import { accionDe, ESTADOS, etiquetaDe } from '../dominio/incidencias.js';
 import { usePeticion } from '../hooks/usePeticion.js';
 
@@ -59,15 +58,11 @@ const DIAS_CERRADAS = 30;
 /** Tarjetas por columna. Las que sobran se ven en el listado. */
 const POR_COLUMNA = 50;
 
-/** Valor del filtro "Mis incidencias" en la direccion. */
-const ASIGNADO_A_MI = 'yo';
-
-/** Pide una columna del tablero. */
-function pedirColumna(estado, idProyecto, idAsignado) {
+/** Pide una columna del tablero, con los filtros de la barra. */
+function pedirColumna(estado, consulta) {
   return listarIncidencias({
+    ...consulta,
     estado,
-    id_proyecto: idProyecto,
-    asignado_a: idAsignado,
     limite: POR_COLUMNA,
     ordenarPor: estado === 'CERRADA' ? 'fecha_creacion' : 'prioridad',
     direccion: 'DESC',
@@ -77,12 +72,15 @@ function pedirColumna(estado, idProyecto, idAsignado) {
 
 export default function Tablero() {
   const [parametrosUrl, setParametrosUrl] = useSearchParams();
-  const proyecto = parametrosUrl.get('proyecto') ?? '';
-  const asignado = parametrosUrl.get('asignado') ?? '';
+  const filtros = useMemo(
+    () => Object.fromEntries(FILTROS_COMPARTIDOS.map((c) => [c, parametrosUrl.get(c) ?? ''])),
+    [parametrosUrl]
+  );
+  const hayFiltros = FILTROS_COMPARTIDOS.some((campo) => filtros[campo] !== '');
 
-  // "yo" se traduce aqui, en el momento de pedir, al id de quien mira.
+  // "Mis incidencias" (?asignado_a=yo) se traduce al id de quien mira.
   const { usuario } = useSesion();
-  const idAsignado = asignado === ASIGNADO_A_MI ? String(usuario.id_usuario) : asignado;
+  const consulta = consultaParaApi(filtros, usuario);
 
   // Se incrementa tras cada movimiento para volver a pedir las columnas.
   const [version, setVersion] = useState(0);
@@ -111,21 +109,38 @@ export default function Tablero() {
   const [aviso, setAviso] = useState(null);
 
   const columnas = usePeticion(
-    () => Promise.all(ESTADOS.map(({ valor }) => pedirColumna(valor, proyecto, idAsignado))),
-    `tablero-${proyecto}-${idAsignado}-${version}`
+    () => Promise.all(ESTADOS.map(({ valor }) => pedirColumna(valor, consulta))),
+    `tablero-${JSON.stringify(consulta)}-${version}`
   );
   const proyectos = usePeticion(() => listarProyectos({ limite: 100 }), 'tablero-proyectos');
   const usuarios = usePeticion(() => listarUsuarios({ limite: 100 }), 'tablero-usuarios');
 
-  /** Cambia un filtro de la direccion; vacio lo quita. */
-  function elegir(campo, valor) {
+  // Igual que en la lista: un filtro vacio se borra de la direccion, y el
+  // buscador reemplaza la entrada del historial en vez de agregar una por
+  // pausa. Estable con useCallback porque el buscador de la barra lo usa en un
+  // efecto y reiniciaria su espera en cada dibujado.
+  const cambiarFiltro = useCallback(
+    (campo, valor) => {
+      setParametrosUrl(
+        (anteriores) => {
+          const siguientes = new URLSearchParams(anteriores);
+          if (valor) siguientes.set(campo, String(valor));
+          else siguientes.delete(campo);
+          return siguientes;
+        },
+        { replace: campo === 'busqueda' }
+      );
+    },
+    [setParametrosUrl]
+  );
+
+  const limpiarFiltros = useCallback(() => {
     setParametrosUrl((anteriores) => {
       const siguientes = new URLSearchParams(anteriores);
-      if (valor) siguientes.set(campo, valor);
-      else siguientes.delete(campo);
+      for (const campo of FILTROS_COMPARTIDOS) siguientes.delete(campo);
       return siguientes;
     });
-  }
+  }, [setParametrosUrl]);
 
   async function ejecutar(incidencia, destino, comentario = '') {
     setEnviando(true);
@@ -172,6 +187,8 @@ export default function Tablero() {
     setColumnaEncima(null);
   }
 
+  const resumenEstados = columnas.datos?.find((c) => c.estado === 'ABIERTA')?.resumen_estados;
+
   const sePuedeSoltar = (estado) =>
     Boolean(arrastradaAhora.current?.transiciones_posibles?.includes(estado));
 
@@ -179,47 +196,36 @@ export default function Tablero() {
     <main className="contenedor contenedor--tablero contenido">
       <header className="contenido__cabecera">
         <div>
-          <h1 className="titulo">Tablero</h1>
+          <h1 className="titulo">Incidencias</h1>
           <p className="subtitulo">
             Arrastra una tarjeta a otra columna para cambiar su estado.
           </p>
         </div>
 
-        <div className="tablero__filtros">
-          <label className="campo campo--en-linea">
-            <span className="campo__etiqueta">Proyecto</span>
-            <select
-              className="campo__control"
-              value={proyecto}
-              onChange={(e) => elegir('proyecto', e.target.value)}
-            >
-              <option value="">Todos los proyectos</option>
-              {(proyectos.datos?.datos ?? []).map((p) => (
-                <option key={p.id_proyecto} value={p.id_proyecto}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="campo campo--en-linea">
-            <span className="campo__etiqueta">Asignado a</span>
-            <select
-              className="campo__control"
-              value={asignado}
-              onChange={(e) => elegir('asignado', e.target.value)}
-            >
-              <option value="">Todas las personas</option>
-              <option value={ASIGNADO_A_MI}>Mis incidencias</option>
-              {(usuarios.datos?.datos ?? []).map((u) => (
-                <option key={u.id_usuario} value={u.id_usuario}>
-                  {u.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="cabecera__acciones">
+          <SelectorVista vista="tablero" />
+          <Link className="boton boton--primario boton--auto" to="/incidencias/nueva">
+            Nueva incidencia
+          </Link>
         </div>
       </header>
+
+      {/* Los mismos numeros y en el mismo lugar que en la lista. Se toman de la
+          columna Pendiente: el backend los cuenta con los demas filtros sin
+          mirar el estado, y esa peticion no lleva el recorte de 30 dias que
+          tiene la de Cerrada. Por eso la tarjeta Cerrada cuenta todas, y la
+          columna solo las recientes, como dice su nota. */}
+      {resumenEstados && <ResumenEstados resumen={resumenEstados} />}
+
+      <FiltrosIncidencias
+        vista="tablero"
+        valores={filtros}
+        onCambiar={cambiarFiltro}
+        onLimpiar={limpiarFiltros}
+        hayFiltros={hayFiltros}
+        proyectos={proyectos.datos?.datos ?? []}
+        usuarios={usuarios.datos?.datos ?? []}
+      />
 
       {aviso && (
         <p className={`alerta alerta--${aviso.tipo === 'ok' ? 'ok' : 'error'}`} role="status">

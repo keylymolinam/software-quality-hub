@@ -19,11 +19,11 @@ flowchart TB
     subgraph sesion["Con sesión — las rutas se declaran solo aquí"]
         direction TB
 
-        menu{{"Menú lateral — las seis secciones<br/>presente en todas las pantallas"}}
+        menu{{"Menú lateral — las cinco secciones<br/>presente en todas las pantallas"}}
 
         home["Inicio<br/>/"]
-        listado["Listado<br/>/incidencias"]
-        tablero["Tablero<br/>/tablero"]
+        listado["Incidencias: Lista<br/>/incidencias"]
+        tablero["Incidencias: Tablero<br/>/tablero"]
         salud["Salud<br/>/salud"]
         guia["Guía de salud<br/>/salud/guia"]
         pesos["Pesos del índice<br/>/salud/pesos"]
@@ -36,7 +36,6 @@ flowchart TB
 
         menu --> home
         menu --> listado
-        menu --> tablero
         menu --> salud
         menu --> proyectos
         menu --> usuarios
@@ -45,6 +44,7 @@ flowchart TB
         salud -->|"¿qué es y cómo se calcula?"| guia
         salud -->|"pesos del índice"| pesos
         guia -->|"cambiar los pesos"| pesos
+        listado <-->|"selector Lista / Tablero<br/>conserva los filtros"| tablero
         tablero -->|"el título de una tarjeta"| detalle
 
         listado -->|"registrar"| nueva

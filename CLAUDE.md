@@ -20,8 +20,8 @@ que ya cubren todo lo que la API ofrece:
 |---|---|---|
 | Login | — (fuera de sesión) | Única pantalla sin sesión; `App.jsx` decide |
 | Inicio | `/` | El índice global como número y la lista por proyecto, de peor a mejor |
-| Listado | `/incidencias?id_proyecto=N` | Un proyecto se abre desde el menú lateral, que despliega la lista bajo Incidencias. Tarjetas con la cuenta por estado (filtran al pulsarlas); filtros, búsqueda, orden y paginación en la dirección |
-| Tablero | `/tablero?proyecto=N` | Columnas por estado; arrastrar una tarjeta la cambia de estado |
+| Incidencias: Lista | `/incidencias?id_proyecto=N` | Un proyecto se abre desde el menú lateral, que despliega la lista bajo Incidencias. Tarjetas con la cuenta por estado (filtran al pulsarlas); filtros, búsqueda, orden y paginación en la dirección |
+| Incidencias: Tablero | `/tablero?id_proyecto=N` | Columnas por estado; arrastrar una tarjeta la cambia de estado. Mismos filtros que la lista |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |
 | Detalle | `/incidencias/:id` | Transiciones de estado, bitácora y descarte del duplicado |
 | Edición | `/incidencias/:id/editar` | Corrige los campos que el sistema no controla |
@@ -216,6 +216,14 @@ umbrales** siguen fijos en el código, y la guía los copia a mano (una prueba c
   filtros, orden y página en la cadena de consulta (`?estado=ABIERTA&pagina=2`). Cuesta lo
   mismo y da tres cosas: enlaces que se pueden compartir, el botón atrás deshaciendo el
   último filtro, y recargar sin perder el trabajo.
+- **Lista y tablero son dos vistas de una sola sección**, no dos secciones del menú.
+  Siguen siendo dos páginas con su propia ruta, unidas por `SelectorVista.jsx`, y
+  comparten la barra (`FiltrosIncidencias` con `vista="tablero"`) y los **nombres de
+  filtro en la dirección** (`dominio/filtros.js`): por eso cambiar de vista solo copia
+  la cadena de consulta. Un filtro nuevo se agrega con el mismo nombre en las dos.
+  «Mis incidencias» viaja como `asignado_a=yo` y se traduce al id con
+  `consultaParaApi()` justo antes de pedir. La vista preferida se recuerda en
+  `localStorage`: es una comodidad por persona, no estado de la pantalla.
 - **Las dos capas de la máquina de estados no se duplican.** Qué transiciones existen lo
   dice el backend (`transiciones_posibles`, que viene en el detalle y en la respuesta de
   la transición); el frontend solo aporta el texto de los botones y si el motivo es

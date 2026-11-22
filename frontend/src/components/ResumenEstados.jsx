@@ -13,14 +13,31 @@
  *
  * Son botones con aria-pressed y no enlaces: no llevan a otra pantalla, cambian
  * un filtro de esta, y el lector de pantalla anuncia cual esta activo.
+ *
+ * El tablero las muestra tambien, en el mismo lugar, para que al cambiar de
+ * vista los numeros no se muevan (lo pidio la autora). Ahi llegan sin onElegir
+ * y se dibujan como cifras, no como botones: cada columna ya es un estado, y un
+ * boton que filtrara por estado dejaria un tablero de una sola columna.
  */
 import { ESTADOS } from '../dominio/incidencias.js';
 
-export default function ResumenEstados({ resumen, estadoActivo, onElegir }) {
+export default function ResumenEstados({ resumen, estadoActivo = '', onElegir }) {
   return (
     <div className="resumen-estados" role="group" aria-label="Incidencias por estado">
       {ESTADOS.map(({ valor, etiqueta }) => {
         const activo = estadoActivo === valor;
+
+        if (!onElegir) {
+          return (
+            <div
+              key={valor}
+              className={`resumen-estado resumen-estado--${valor.toLowerCase()} resumen-estado--fijo`}
+            >
+              <span className="resumen-estado__nombre">{etiqueta}</span>
+              <span className="resumen-estado__total">{resumen[valor] ?? 0}</span>
+            </div>
+          );
+        }
 
         return (
           <button

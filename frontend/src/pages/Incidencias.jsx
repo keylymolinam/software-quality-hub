@@ -30,6 +30,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import FiltrosIncidencias from '../components/FiltrosIncidencias.jsx';
 import Paginacion from '../components/Paginacion.jsx';
 import ResumenRegistros from '../components/ResumenRegistros.jsx';
+import SelectorVista from '../components/SelectorVista.jsx';
+import { useSesion } from '../context/SesionContext.jsx';
+import { consultaParaApi } from '../dominio/filtros.js';
 import ResumenEstados from '../components/ResumenEstados.jsx';
 import TablaIncidencias from '../components/TablaIncidencias.jsx';
 import { listarIncidencias } from '../api/incidencias.js';
@@ -136,7 +139,13 @@ export default function Incidencias() {
 
   // La clave le dice al hook cuando volver a pedir: cuando cambie cualquiera de
   // los valores que forman la consulta.
-  const resultado = usePeticion(() => listarIncidencias(filtros), JSON.stringify(filtros));
+  // "Mis incidencias" llega como ?asignado_a=yo y se traduce aqui al id de
+  // quien mira (ver dominio/filtros.js).
+  const { usuario } = useSesion();
+  const resultado = usePeticion(
+    () => listarIncidencias(consultaParaApi(filtros, usuario)),
+    JSON.stringify(filtros)
+  );
 
   // Proyectos y usuarios alimentan los desplegables de filtro. Se piden una
   // sola vez (la clave es constante) porque no cambian mientras se navega el
@@ -171,12 +180,16 @@ export default function Incidencias() {
           </p>
         </div>
 
-        {/* Es un enlace y no un boton porque lleva a otra direccion. Parece un
-            boton porque es la accion principal de esta pantalla, pero se
-            comporta como enlace: se puede abrir en otra pestana. */}
-        <Link className="boton boton--primario boton--auto" to="/incidencias/nueva">
-          Nueva incidencia
-        </Link>
+        <div className="cabecera__acciones">
+          <SelectorVista vista="lista" />
+
+          {/* Es un enlace y no un boton porque lleva a otra direccion. Parece un
+              boton porque es la accion principal de esta pantalla, pero se
+              comporta como enlace: se puede abrir en otra pestana. */}
+          <Link className="boton boton--primario boton--auto" to="/incidencias/nueva">
+            Nueva incidencia
+          </Link>
+        </div>
       </header>
 
       {/* El resumen aparece con la primera respuesta y despues se mantiene,
