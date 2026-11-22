@@ -89,3 +89,38 @@ export function listarPorIncidencia(idIncidencia) {
     )
     .all(idIncidencia);
 }
+
+/**
+ * Los ultimos movimientos de todo el sistema, del mas reciente al mas antiguo.
+ * Alimenta la "Actividad reciente" del inicio.
+ *
+ * Trae junto a cada movimiento el titulo de la incidencia y su proyecto, para
+ * que la pantalla pueda decir "paso #12 'El pago falla' a Resuelta" sin pedir
+ * cada incidencia por separado. Se desempata por id_historial por la misma
+ * razon que en listarPorIncidencia: dos cambios del mismo segundo.
+ *
+ * @param {number} limite  Cuantos movimientos devolver.
+ */
+export function listarRecientes(limite) {
+  return db
+    .prepare(
+      `SELECT
+          h.id_historial,
+          h.id_incidencia,
+          h.estado_anterior,
+          h.estado_nuevo,
+          h.fecha_cambio,
+          h.comentario,
+          h.modificado_por,
+          u.nombre AS modificado_por_nombre,
+          i.titulo,
+          p.nombre AS proyecto_nombre
+        FROM HISTORIAL_INCIDENCIA h
+        INNER JOIN USUARIO    u ON u.id_usuario    = h.modificado_por
+        INNER JOIN INCIDENCIA i ON i.id_incidencia = h.id_incidencia
+        INNER JOIN PROYECTO   p ON p.id_proyecto   = i.id_proyecto
+       ORDER BY h.fecha_cambio DESC, h.id_historial DESC
+       LIMIT ?`
+    )
+    .all(limite);
+}

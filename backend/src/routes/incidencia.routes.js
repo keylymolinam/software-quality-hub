@@ -11,6 +11,7 @@
  *   ------  -------------------------------  ---------------------------
  *   GET     /api/incidencias                 cualquier sesion
  *   POST    /api/incidencias                 cualquier sesion
+ *   GET     /api/incidencias/actividad       cualquier sesion
  *   GET     /api/incidencias/:id             cualquier sesion
  *   PUT     /api/incidencias/:id             cualquier sesion
  *   DELETE  /api/incidencias/:id             ADMINISTRADOR
@@ -39,6 +40,7 @@ import {
   eliminar,
   transicionar,
   historial,
+  actividad,
   clasificarTexto,
 } from '../controllers/incidencia.controller.js';
 import { requiereAutenticacion, requiereRol } from '../middlewares/autenticacion.js';
@@ -58,6 +60,9 @@ router.post('/', crear);
 // chocarian hoy, mantener las rutas fijas arriba evita que una ruta futura
 // quede capturada por el parametro.
 router.post('/clasificar', clasificarTexto);
+// La bitacora de todo el sistema. Si quedara bajo GET /:id, "actividad" se
+// tomaria como un id y responderia 400.
+router.get('/actividad', actividad);
 
 // --- Recurso individual ---------------------------------------------------
 router.get('/:id', obtener);

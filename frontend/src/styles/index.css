@@ -2180,6 +2180,55 @@ a.tabla__titulo:hover {
   }
 }
 
+/* Una tarjeta que ocupa las dos columnas de la rejilla. */
+.inicio__ancha {
+  grid-column: 1 / -1;
+}
+
+/* Actividad reciente: avatar, la frase y cuando, una linea por movimiento. */
+.actividad {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.actividad__fila {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-borde);
+  font-size: 0.9rem;
+}
+
+.actividad__fila:first-child {
+  border-top: 0;
+}
+
+.actividad__texto {
+  line-height: 1.6;
+}
+
+.actividad__comentario {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.actividad__cuando {
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.actividad__exacta {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-texto-tenue);
+}
+
 .inicio__explicacion {
   margin: var(--espacio-3) 0 0;
   font-size: 0.85rem;

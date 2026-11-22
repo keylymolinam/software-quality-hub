@@ -812,9 +812,45 @@ describe('Pantalla de inicio', () => {
     abiertasPorPrioridad: { ALTA: 8, MEDIA: 10, BAJA: 3 },
   });
 
+  // Lo que entrega GET /api/incidencias/actividad: lo mas reciente primero.
+  const ACTIVIDAD = respondeCon({
+    total: 3,
+    movimientos: [
+      { id_historial: 9, id_incidencia: 12, estado_anterior: 'RESUELTA', estado_nuevo: 'EN_PROGRESO',
+        fecha_cambio: '2026-11-22 10:00:00', comentario: 'Volvio a fallar en produccion.',
+        modificado_por_nombre: 'Javiera Soto', titulo: 'El pago falla', proyecto_nombre: 'Portal' },
+      { id_historial: 8, id_incidencia: 12, estado_anterior: 'EN_PROGRESO', estado_nuevo: 'RESUELTA',
+        fecha_cambio: '2026-11-22 09:00:00', comentario: null,
+        modificado_por_nombre: 'Daniela Rojas', titulo: 'El pago falla', proyecto_nombre: 'Portal' },
+      { id_historial: 7, id_incidencia: 45, estado_anterior: null, estado_nuevo: 'ABIERTA',
+        fecha_cambio: '2026-11-22 08:00:00', comentario: null,
+        modificado_por_nombre: 'Daniela Rojas', titulo: 'Error al exportar', proyecto_nombre: 'Portal' },
+    ],
+  });
+
+  test('la actividad reciente cuenta cada movimiento como una frase', async () => {
+    const { default: Inicio } = await cargar('/src/pages/Inicio.jsx');
+    declararEscenario({ 'estado-api': ESTADO_API, 'salud-global': SALUD, 'resumen-inicio': RESUMEN, 'actividad-inicio': ACTIVIDAD });
+
+    const html = dibujar(Inicio);
+    const visible = texto(html);
+
+    // La reapertura se nombra como tal, con su motivo; el resto, "paso a".
+    assert.match(visible, /Javiera Soto reabri\u00f3 #12 El pago falla a En desarrollo/);
+    assert.match(visible, /Volvio a fallar en produccion/);
+    assert.match(visible, /Daniela Rojas pas\u00f3 #12 El pago falla a Resuelta/);
+    // Al registrar no se repite el estado inicial.
+    assert.match(visible, /Daniela Rojas registr\u00f3 #45 Error al exportar/);
+    assert.doesNotMatch(visible, /#45 Error al exportar a Pendiente/);
+    // Cada linea lleva al detalle, donde esta la bitacora completa.
+    assert.ok(html.includes('href="/incidencias/45"'));
+    // Sin globos del navegador: la fecha exacta va escrita.
+    assert.doesNotMatch(html.split('class="actividad"')[1], / title=/);
+  });
+
   test('el mini tablero muestra los estados en anillo y la prioridad en barras', async () => {
     const { default: Inicio } = await cargar('/src/pages/Inicio.jsx');
-    declararEscenario({ 'estado-api': ESTADO_API, 'salud-global': SALUD, 'resumen-inicio': RESUMEN });
+    declararEscenario({ 'estado-api': ESTADO_API, 'salud-global': SALUD, 'resumen-inicio': RESUMEN, 'actividad-inicio': ACTIVIDAD });
 
     const html = dibujar(Inicio);
     const visible = texto(html);
@@ -839,7 +875,7 @@ describe('Pantalla de inicio', () => {
   test('muestra el indice global y el desglose por proyecto', async () => {
     const { default: Inicio } = await cargar('/src/pages/Inicio.jsx');
 
-    declararEscenario({ 'estado-api': ESTADO_API, 'salud-global': SALUD, 'resumen-inicio': RESUMEN });
+    declararEscenario({ 'estado-api': ESTADO_API, 'salud-global': SALUD, 'resumen-inicio': RESUMEN, 'actividad-inicio': ACTIVIDAD });
 
     const html = dibujar(Inicio);
     const visible = texto(html);
@@ -870,7 +906,7 @@ describe('Pantalla de inicio', () => {
 
     declararEscenario({
       'estado-api': ESTADO_API,
-      'resumen-inicio': RESUMEN,
+      'resumen-inicio': RESUMEN, 'actividad-inicio': ACTIVIDAD,
       'salud-global': respondeCon({
         global: { indice: 100, etiqueta: 'SIN_DATOS', datos_suficientes: false },
         proyectos: [],
@@ -889,7 +925,7 @@ describe('Pantalla de inicio', () => {
 
     declararEscenario({
       'estado-api': ESTADO_API,
-      'resumen-inicio': RESUMEN,
+      'resumen-inicio': RESUMEN, 'actividad-inicio': ACTIVIDAD,
       'salud-global': falla('Error 500 al calcular el indice.', 500),
     });
 
@@ -906,18 +942,18 @@ describe('Pantalla de inicio', () => {
     const { default: Inicio } = await cargar('/src/pages/Inicio.jsx');
 
     const caido = falla('No se pudo conectar con el servidor.', 0);
-    declararEscenario({ 'estado-api': caido, 'salud-global': caido, 'resumen-inicio': caido });
+    declararEscenario({ 'estado-api': caido, 'salud-global': caido, 'resumen-inicio': caido, 'actividad-inicio': caido });
 
     const html = dibujar(Inicio);
 
-    assert.equal((html.match(/No se pudo conectar/g) || []).length, 3);
-    assert.equal((html.match(/Reintentar/g) || []).length, 3);
+    assert.equal((html.match(/No se pudo conectar/g) || []).length, 4);
+    assert.equal((html.match(/Reintentar/g) || []).length, 4);
   });
 
   test('mientras espera lo dice en las dos tarjetas', async () => {
     const { default: Inicio } = await cargar('/src/pages/Inicio.jsx');
 
-    declararEscenario({ 'estado-api': cargando(), 'salud-global': cargando(), 'resumen-inicio': cargando() });
+    declararEscenario({ 'estado-api': cargando(), 'salud-global': cargando(), 'resumen-inicio': cargando(), 'actividad-inicio': cargando() });
 
     const visible = texto(dibujar(Inicio));
 

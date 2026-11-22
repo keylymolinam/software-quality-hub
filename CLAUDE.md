@@ -19,7 +19,7 @@ que ya cubren todo lo que la API ofrece:
 | Pantalla | Ruta | Qué resuelve |
 |---|---|---|
 | Login | — (fuera de sesión) | Única pantalla sin sesión; `App.jsx` decide |
-| Inicio | `/` | El índice global y la lista por proyecto, de peor a mejor; debajo, un mini tablero: estados en anillo y abiertas por prioridad en barras |
+| Inicio | `/` | El índice global y la lista por proyecto, de peor a mejor; debajo, un mini tablero (estados en anillo, abiertas por prioridad en barras) y la actividad reciente de la bitácora |
 | Incidencias: Lista | `/incidencias?id_proyecto=N` | El proyecto se elige con el filtro (el menú ya no lista proyectos). Tarjetas con la cuenta por estado (filtran al pulsarlas); filtros, búsqueda, orden y paginación en la dirección. Estado, prioridad y asignación se editan en la fila |
 | Incidencias: Tablero | `/tablero?id_proyecto=N` | Columnas por estado; arrastrar una tarjeta la cambia de estado. Mismos filtros que la lista |
 | Registro | `/incidencias/nueva` | Clasificación sugerida en vivo y aviso de duplicados |

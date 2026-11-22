@@ -130,6 +130,18 @@ export function transicionar(req, res) {
 }
 
 /**
+ * GET /api/incidencias/actividad
+ *
+ * Los ultimos movimientos de la bitacora de todo el sistema, del mas reciente
+ * al mas antiguo. Acepta ?limite= (1 a 50, por defecto 10).
+ */
+export function actividad(req, res) {
+  const movimientos = servicioIncidencias.listarActividad(req.query);
+
+  res.json({ total: movimientos.length, movimientos });
+}
+
+/**
  * GET /api/incidencias/:id/historial
  *
  * Devuelve la bitacora ordenada del cambio mas antiguo al mas reciente, para

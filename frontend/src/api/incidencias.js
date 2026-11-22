@@ -130,6 +130,17 @@ export function obtenerHistorial(id) {
 }
 
 /**
+ * Ultimos movimientos de la bitacora de todo el sistema, del mas reciente al
+ * mas antiguo, con el titulo y el proyecto de cada incidencia.
+ *
+ * @param {number} [limite]  1 a 50; el backend usa 10 si no se indica.
+ * @returns {Promise<{ total: number, movimientos: Array }>}
+ */
+export function obtenerActividad(limite) {
+  return api.get(`/incidencias/actividad${construirConsulta({ limite })}`);
+}
+
+/**
  * Modifica una incidencia. Actualizacion parcial: solo lo que se envia.
  *
  * A diferencia de crearIncidencia(), aqui NO se quitan los campos vacios, y esa

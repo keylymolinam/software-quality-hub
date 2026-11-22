@@ -792,6 +792,28 @@ export function obtenerHistorial(id) {
 }
 
 /**
+ * La actividad reciente de todo el sistema: los ultimos movimientos de la
+ * bitacora, de cualquier incidencia y proyecto.
+ *
+ * Es una lectura de la misma bitacora que alimenta el indice de salud, no un
+ * registro aparte: lo que se ve aqui es exactamente lo que el sistema recuerda.
+ * Por eso muestra creaciones y cambios de estado, que es lo que la bitacora
+ * guarda; las ediciones de prioridad o asignacion no dejan linea.
+ *
+ * El limite tiene tope para que nadie pida la bitacora entera de una vez.
+ *
+ * @param {object} consulta  { limite } desde la cadena de consulta.
+ * @throws {ErrorHttp} 400 si el limite no es un entero de 1 a 50.
+ */
+export function listarActividad(consulta = {}) {
+  const errores = [];
+  const limite = validarEntero(consulta.limite, 'limite', { min: 1, max: 50, porDefecto: 10 }, errores);
+  lanzarSiHayErrores(errores);
+
+  return Historial.listarRecientes(limite);
+}
+
+/**
  * Elimina una incidencia.
  *
  * Efectos en cascada definidos en el esquema:

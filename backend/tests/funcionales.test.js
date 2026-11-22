@@ -309,6 +309,33 @@ describe('Maquina de estados', () => {
     assert.deepEqual(estados, ['ABIERTA', 'EN_PROGRESO', 'RESUELTA', 'EN_PROGRESO']);
   });
 
+  test('la actividad reciente junta la bitacora de todo, de lo nuevo a lo viejo', () => {
+    const primera = crear({ titulo: 'Primera incidencia de la actividad' });
+    const segunda = crear({ titulo: 'Segunda incidencia de la actividad' });
+    Incidencias.cambiarEstado(segunda.id_incidencia, { estado: 'EN_PROGRESO' }, revisor.id_usuario);
+
+    const actividad = Incidencias.listarActividad();
+
+    // Las tres lineas, la ultima primero: el cambio de la segunda, su
+    // creacion y la creacion de la primera.
+    assert.deepEqual(
+      actividad.map((m) => [m.id_incidencia, m.estado_nuevo]),
+      [
+        [segunda.id_incidencia, 'EN_PROGRESO'],
+        [segunda.id_incidencia, 'ABIERTA'],
+        [primera.id_incidencia, 'ABIERTA'],
+      ]
+    );
+    // Cada linea dice quien, sobre que incidencia y de que proyecto.
+    assert.equal(actividad[0].modificado_por_nombre, revisor.nombre);
+    assert.equal(actividad[0].titulo, 'Segunda incidencia de la actividad');
+    assert.equal(actividad[0].proyecto_nombre, proyecto.nombre);
+
+    // El limite corta, y tiene tope.
+    assert.equal(Incidencias.listarActividad({ limite: '2' }).length, 2);
+    falla(() => Incidencias.listarActividad({ limite: '500' }), 400, 'limite');
+  });
+
   test('el estado no se puede cambiar por la via de actualizar', () => {
     const incidencia = crear();
 

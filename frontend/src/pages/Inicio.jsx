@@ -22,7 +22,8 @@
  * bajo el pliegue). La lectura va de arriba a la izquierda hacia abajo:
  *   1. Indice de salud | proyectos de peor a mejor (cada uno con su barra).
  *   2. Incidencias por estado | abiertas por prioridad.
- *   3. La conexion con el backend, en una franja de una linea: se conserva
+ *   3. Actividad reciente, a lo ancho: las ultimas 10 lineas de la bitacora.
+ *   4. La conexion con el backend, en una franja de una linea: se conserva
  *      por decision de la autora, pero es informacion tecnica y no compite.
  * El boton "Nueva incidencia" va arriba porque es la accion mas frecuente. En
  * pantalla angosta todo pasa a una columna.
@@ -44,7 +45,8 @@
 import { Link } from 'react-router-dom';
 
 import { obtenerEstadoApi } from '../api/health.js';
-import { listarIncidencias } from '../api/incidencias.js';
+import { listarIncidencias, obtenerActividad } from '../api/incidencias.js';
+import ActividadReciente from '../components/ActividadReciente.jsx';
 import { obtenerSalud } from '../api/metricas.js';
 import { AnilloEstados, BarrasPrioridad } from '../components/ResumenInicio.jsx';
 import { PRIORIDADES } from '../dominio/incidencias.js';
@@ -82,6 +84,9 @@ export default function Inicio() {
   const estadoApi = usePeticion(() => obtenerEstadoApi(), 'estado-api');
   const salud = usePeticion(() => obtenerSalud(), 'salud-global');
   const resumen = usePeticion(pedirResumen, 'resumen-inicio');
+  // Diez lineas: alcanzan para ver que se movio hoy sin convertir el inicio
+  // en la bitacora entera, que ya esta en el detalle de cada incidencia.
+  const actividad = usePeticion(() => obtenerActividad(10), 'actividad-inicio');
 
   // El error de cada peticion se muestra una sola vez, en la primera tarjeta
   // que la usa; la otra dice que no tiene datos, sin repetir el aviso.
@@ -239,6 +244,16 @@ export default function Inicio() {
               </p>
             </>
           )}
+        </section>
+
+        <section className="tarjeta inicio__ancha">
+          <h2>Actividad reciente</h2>
+
+          {actividad.error && errorCon(actividad)}
+          {actividad.cargando && !actividad.datos && (
+            <span className="estado estado--cargando">Cargando...</span>
+          )}
+          {actividad.datos && <ActividadReciente movimientos={actividad.datos.movimientos} />}
         </section>
       </div>
 
