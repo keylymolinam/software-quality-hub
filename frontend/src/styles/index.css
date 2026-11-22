@@ -1074,6 +1074,16 @@ body {
   border-radius: var(--radio);
 }
 
+/* Dentro de una tarjeta: una linea de texto, sin el recuadro grande que se
+   usa cuando una pantalla entera esta vacia. */
+.vacio--discreto {
+  padding: 4px 0 0;
+  text-align: left;
+  font-size: 0.9rem;
+  background: none;
+  border: 0;
+}
+
 /* --- Distintivos de estado y prioridad ----------------------------------- */
 
 /* Pildora con un punto del mismo color delante del nombre, como en las
@@ -1618,6 +1628,9 @@ a.tabla__titulo:hover {
   align-items: center;
   gap: 10px;
   margin-top: 10px;
+  /* Separa la cabecera de la barra de progreso: sin esto las etiquetas
+     quedaban pegadas a la tarjeta de abajo. */
+  margin-bottom: 20px;
 }
 
 .detalle__categoria {
@@ -1655,6 +1668,13 @@ a.tabla__titulo:hover {
 
 /* Queda a la vista al desplazarse por una bitacora larga. Sin esto, cambiar el
    estado de una incidencia con mucha historia obliga a volver arriba. */
+/* Las tarjetas de cada columna, separadas entre si. Sin esto la descripcion,
+   los comentarios y la bitacora quedaban pegadas y se leian como un solo
+   bloque desordenado. */
+.detalle-con-panel > div > .tarjeta + .tarjeta {
+  margin-top: 16px;
+}
+
 .detalle__panel {
   position: sticky;
   top: 16px;

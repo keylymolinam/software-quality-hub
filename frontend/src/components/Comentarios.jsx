@@ -83,7 +83,7 @@ export default function Comentarios({ idIncidencia }) {
       )}
 
       {comentarios.datos && lista.length === 0 && (
-        <p className="vacio">
+        <p className="vacio vacio--discreto">
           Nadie ha comentado todav&iacute;a. Una pregunta, un avance o los pasos para
           reproducir ayudan a quien la tome despu&eacute;s.
         </p>
