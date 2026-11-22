@@ -6,11 +6,12 @@ Ingeniería en Computación e Informática.
 > **Estado:** funcional de punta a punta. La **API REST** está completa: las tres
 > entidades principales (incidencias, proyectos y usuarios), la máquina de estados
 > con bitácora de cambios, la autenticación con control de acceso por rol y los tres
-> diferenciadores. El **frontend** recorre el ciclo de trabajo completo en once
+> diferenciadores. El **frontend** recorre el ciclo de trabajo completo en doce
 > pantallas, entre ellas un tablero por estados, y los tres diferenciadores se ven en
-> pantalla. Hay **130 pruebas automatizadas**: 45 del backend y 70 de las pantallas,
-> que corren con el ejecutor que viene con Node, y 15 de interacción, que recorren el sistema en un navegador
-> real con Playwright.
+> pantalla. Hay **160 pruebas automatizadas**: 55 del backend y 86 de las pantallas,
+> que corren con el ejecutor que viene con Node, y 19 de interacción, que recorren el
+> sistema en un navegador real con Playwright. La interfaz se evaluó con usuarios
+> (SUS promedio 92 en el perfil objetivo; ver [Evaluación de usabilidad](#evaluación-de-usabilidad)).
 
 ## Diferenciadores
 
@@ -33,9 +34,11 @@ Ingeniería en Computación e Informática.
    Resume el estado de un proyecto en un número de 0 a 100 —donde 100 es el estado
    ideal— y **entrega siempre el desglose que lo produjo**: cada componente con su
    puntaje, su peso y los datos de los que sale. Los pesos y los límites son una
-   convención declarada, no un resultado derivado de los datos; están en un solo
-   lugar (`backend/src/services/salud.service.js`) para poder discutirlos y
-   recalcular. Un proyecto sin incidencias se informa como `SIN_DATOS`, no como
+   convención declarada, no un resultado derivado de los datos. Los límites están
+   en `backend/src/services/salud.service.js`; los **pesos** (40 / 35 / 25 al
+   inicio) los cambia el administrador desde la pantalla *Pesos del índice*, uno
+   solo para todo el sistema para que los proyectos sigan siendo comparables, y
+   cada cambio queda registrado con quién, cuándo y por qué. Un proyecto sin incidencias se informa como `SIN_DATOS`, no como
    saludable: no está sano, está sin medir.
 
 ## Stack técnico
@@ -86,7 +89,7 @@ software-quality-hub/
 │   │   ├── hooks/        peticiones y sugerencia de clasificación
 │   │   ├── dominio/      el texto legible de cada valor
 │   │   └── styles/       CSS plano
-│   ├── tests/            cuatro archivos + sus dobles
+│   ├── tests/            cinco archivos + sus dobles
 │   └── e2e/              pruebas de interacción (Playwright)
 └── docs/
     ├── modelo-datos.md   Diccionario de datos y decisiones de diseño
@@ -146,7 +149,7 @@ Respuesta esperada:
   "baseDatos": {
     "conectada": true,
     "motor": "SQLite",
-    "registros": { "usuarios": 5, "proyectos": 4, "incidencias": 12 }
+    "registros": { "usuarios": 5, "proyectos": 4, "incidencias": 45 }
   },
   "marcaTiempo": "2026-08-31T18:47:00.179Z"
 }
@@ -228,6 +231,28 @@ Tres decisiones que se notan al usarla:
 - **La máquina de estados no se duplica en el cliente.** Qué transiciones existen
   lo dice el backend en `transiciones_posibles`; el frontend solo aporta el texto
   de los botones.
+
+## Flujo de una incidencia
+
+El flujo sigue el ciclo de vida del defecto, con un paso de QA antes de cerrar:
+
+```
+ABIERTA → EN_PROGRESO → RESUELTA → VALIDADA → CERRADA
+              ↑             │
+              └── reabrir ──┘
+```
+
+- **`VALIDADA`** es la verificación de QA: lo resuelto no se cierra sin validar.
+  Lo pidió una de las personas de la prueba de usabilidad.
+- **Rechazar** (`ABIERTA → CERRADA` o `EN_PROGRESO → CERRADA`: duplicada, no es un
+  defecto, no se reproduce) exige escribir el motivo.
+- **`CERRADA` es final.** La única forma de cambiar el estado es
+  `POST /api/incidencias/:id/transicion`, y cada cambio queda en la bitácora.
+- En pantalla `ABIERTA` se llama **«Pendiente»** y `EN_PROGRESO` **«En
+  desarrollo»**. Solo cambia la etiqueta, no el valor guardado.
+
+La figura completa, con el mapeo a las etapas del ciclo de vida del defecto, está en
+[`docs/diagramas/maquina-de-estados.md`](docs/diagramas/maquina-de-estados.md).
 
 ## Autenticación
 
@@ -426,9 +451,9 @@ es deliberada: pulsar un botón pide un navegador, y Node no trae uno.
 
 | Suite | Comando | Archivos | Pruebas |
 |---|---|---|---|
-| Backend | `npm test` desde `backend/` | 2 | 33 |
-| Pantallas | `npm test` desde `frontend/` | 4 | 49 |
-| Interacción | `npm run test:e2e` desde `frontend/` | 4 | 10 |
+| Backend | `npm test` desde `backend/` | 2 | 55 |
+| Pantallas | `npm test` desde `frontend/` | 5 | 86 |
+| Interacción | `npm run test:e2e` desde `frontend/` | 6 | 19 |
 
 ### Cómo ejecutarlas
 
@@ -570,6 +595,36 @@ punto que ganó la prioridad no alcanza para atribuirlo al cambio.
 - La mayoría de los errores son textos sin ningún término del léxico, que el motor
   deja en `OTRO` a propósito: prefiere no clasificar antes que adivinar. Es el límite
   propio de un clasificador por palabras clave.
+
+## Evaluación de usabilidad
+
+Seis personas usaron el sistema resolviendo cinco tareas cada una y respondieron el
+cuestionario **SUS** (System Usability Scale, de 0 a 100). La meta del plan era 80.
+
+| Grupo | Personas | SUS promedio | Tareas sin ayuda |
+|---|---|---|---|
+| **Perfil objetivo** (desarrollo, QA, jefatura de proyecto, análisis) | 5 | **92,0** | 24 de 25 |
+| Total, incluida una persona de otra área | 6 | 86,25 | 27 de 30 |
+
+La persona de otra área (SUS 57,5) no trabaja con software, así que queda fuera del
+perfil para el que se diseñó el sistema. Se informa aparte y no se descarta.
+
+Lo que se cambió con esa evidencia: la explicación del índice de salud pasó a una
+guía propia (tres personas dijeron que no se entendía), los filtros quedaron en tres
+a la vista y el resto en *Más filtros*, el estado `VALIDADA` se agregó, los botones
+de estado nombran el estado al que llevan y se agregó el tablero.
+
+## Trabajo futuro
+
+- **Tareas además de incidencias.** Dos participantes lo pidieron; iría en una
+  tabla `TAREA` aparte para no mezclar sus métricas con las del índice de salud.
+- **Estado `APLAZADA`** del ciclo de vida del defecto, hoy no representado.
+- **Registrar en la bitácora quién descartó un posible duplicado**, para tener la
+  misma trazabilidad que los cambios de estado.
+- **Recuperar la contraseña por correo**, en vez de que la restablezca el
+  administrador.
+- **Un segundo etiquetador** para la evaluación del clasificador, y así medir el
+  acuerdo entre dos personas.
 
 ## Autor
 
