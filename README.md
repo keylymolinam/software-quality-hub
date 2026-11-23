@@ -60,7 +60,7 @@ Dos ausencias que son decisiones, no omisiones:
 - **El frontend no tiene dependencias más allá de React y el enrutador.** Sin
   librería de estado, sin cliente HTTP, sin librería de estilos y sin librería de
   gráficos: las figuras de datos son barras hechas con dos `div` y un `width` en
-  porcentaje.
+  porcentaje, y el anillo de estados del inicio es un `conic-gradient` de CSS.
 
 `node:sqlite` se prefiere a una librería externa porque no requiere compilar
 código nativo: la instalación del proyecto no puede fallar por falta de
@@ -294,9 +294,10 @@ de la API devuelve esa columna.
 > En producción, `JWT_SECRET` es obligatorio en el archivo `.env`; el servidor se
 > niega a arrancar sin él. En desarrollo usa una clave fija y avisa por consola.
 
-Quién es el autor de una incidencia o de un cambio de estado **sale siempre del
-token**, nunca del cuerpo de la petición: de lo contrario, la bitácora que
-alimenta el índice de salud podría falsificarse.
+Quién es el autor de una incidencia, de un cambio de estado o de un comentario
+**sale siempre del token**, nunca del cuerpo de la petición: de lo contrario, la
+bitácora que alimenta el índice de salud podría falsificarse, y se podría escribir
+en nombre de otra persona.
 
 ### Permisos por rol
 
@@ -372,7 +373,7 @@ Filtros del listado: `estado`, `prioridad`, `categoria`, `id_proyecto`,
 | `PUT` | `/api/usuarios/:id` | Actualización parcial (no la contraseña) |
 | `PUT` | `/api/usuarios/:id/contrasena` | Cambia la contraseña; exige la actual |
 | `PUT` | `/api/usuarios/:id/restablecer-contrasena` | Restablece la de otra persona (`ADMINISTRADOR`) |
-| `DELETE` | `/api/usuarios/:id` | Elimina; falla si tiene incidencias o historial |
+| `DELETE` | `/api/usuarios/:id` | Elimina; falla si reportó incidencias, cambió estados, comentó o cambió los pesos del índice |
 
 ### Métricas e índice de salud
 
@@ -526,8 +527,18 @@ base (`data/pruebas-e2e.sqlite`, recargada con el seed al empezar), y recorre el
 sistema en Chromium: entrar y salir, la sugerencia del motor mientras se escribe,
 el aviso de duplicado al registrar, el error del servidor junto al campo, la
 máquina de estados completa con su bitácora, el motivo obligatorio en sus dos
-capas (navegador y servidor), descartar un duplicado y los filtros en la
-dirección con el botón atrás. La primera vez hay que descargar el navegador:
+capas (navegador y servidor), descartar un duplicado, los filtros en la
+dirección con el botón atrás, arrastrar tarjetas en el tablero, cambiar los pesos
+del índice y pasar de la lista al tablero conservando el proyecto elegido.
+
+Esta suite encontró un error real en la versión final: en la lista, un filtro
+elegido justo después de otro lo borraba (Estado = Cerrada y luego Prioridad =
+Alta dejaba solo la prioridad). La pantalla armaba los filtros nuevos desde la
+copia del último dibujado, que por un instante queda atrás de la dirección; se
+corrigió leyéndolos de la dirección (`parametrosActuales` en
+`frontend/src/dominio/filtros.js`).
+
+La primera vez hay que descargar el navegador:
 
 ```bash
 npx playwright install chromium
@@ -609,6 +620,12 @@ punto que ganó la prioridad no alcanza para atribuirlo al cambio.
 Seis personas usaron el sistema resolviendo cinco tareas cada una y respondieron el
 cuestionario **SUS** (System Usability Scale, de 0 a 100). La meta del plan era 80.
 
+> **Versión evaluada.** La prueba se hizo el 18 y 19 de noviembre de 2026, sobre la
+> versión de ese momento. Las mejoras posteriores (lista y tablero unidos, edición
+> en la fila, comentarios, el nuevo inicio con mini tablero y actividad reciente)
+> surgieron en parte de esta misma evaluación, pero **no se volvieron a medir con
+> usuarios**. El SUS informado corresponde a la versión evaluada, no a la final.
+
 | Grupo | Personas | SUS promedio | Tareas sin ayuda |
 |---|---|---|---|
 | **Perfil objetivo** (desarrollo, QA, jefatura de proyecto, análisis) | 5 | **92,0** | 24 de 25 |
@@ -634,6 +651,12 @@ vista de las incidencias junto a la lista.
   administrador.
 - **Un segundo etiquetador** para la evaluación del clasificador, y así medir el
   acuerdo entre dos personas.
+- **Registrar en la bitácora los cambios de asignación y de prioridad.** Hoy solo
+  quedan los de estado: `HISTORIAL_INCIDENCIA` tiene un estado anterior y uno nuevo
+  obligatorio, y no hay dónde guardar una reasignación. Requiere cambiar el esquema
+  sin alterar el cálculo de la reapertura.
+- **Volver a evaluar la usabilidad** con la versión final, que incorpora cambios
+  que los participantes no alcanzaron a probar.
 
 ## Autor
 
